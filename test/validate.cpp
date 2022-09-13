@@ -1,0 +1,618 @@
+namespace Settings {
+	[[noreturn]] void exitVerdict(int exit_code) {
+		throw exit_code;
+	}
+}
+#include "../src/validate.h"
+
+#if __cplusplus > 202000L
+#include <source_location>
+#else
+namespace std {
+	struct source_location {
+		static constexpr std::source_location current() noexcept {return {};}
+		constexpr std::uint_least32_t line() const noexcept {return 0;}
+		constexpr std::uint_least32_t column() const noexcept {return 0;}
+		constexpr const char* file_name() const noexcept {return "";}
+		constexpr const char* function_name() const noexcept {return "";}
+	};
+
+	template <class C>
+	constexpr auto ssize(const C& c) -> std::common_type_t<std::ptrdiff_t, std::make_signed_t<decltype(c.size())>> {
+		using R = std::common_type_t<std::ptrdiff_t, std::make_signed_t<decltype(c.size())>>;
+		return static_cast<R>(c.size());
+	}
+}
+#endif
+
+template<typename A, typename B>
+constexpr bool startsWith(const A& a, const B& b) {
+	if (std::size(a) < std::size(b)) return false;
+	auto itA = std::begin(a);
+	auto itB = std::begin(b);
+	while (itB != std::end(b)) {
+		if (*itA != *itB) return false;
+		itA++;
+		itB++;
+	}
+	return true;
+}
+
+template<typename A, typename B>
+constexpr bool endsWith(const A& a, const B& b) {
+	if (std::size(a) < std::size(b)) return false;
+	auto itA = std::rbegin(a);
+	auto itB = std::rbegin(b);
+	while (itB != std::rend(b)) {
+		if (*itA != *itB) return false;
+		itA++;
+		itB++;
+	}
+	return true;
+}
+
+void assert(bool b, const std::source_location location = std::source_location::current()) {
+	if (!b) {
+		std::cout << location.file_name() << "("
+		          << location.line() << ":"
+		          << location.column() << ") `"
+		          << location.function_name() << "` failed!"
+		          << std::endl;
+		std::exit(1);
+	}
+}
+
+template<typename F>
+void assertException(const F& f, const std::source_location location = std::source_location::current()) {
+	try {f();} catch (...) {}
+	assert(false, location);
+}
+
+template<typename F>
+void assertExit(const F& f, int expected, const std::source_location location = std::source_location::current()) {
+	try {f();} catch (int exitCode) {
+		assert(exitCode == expected, location);
+		return;
+	}
+	assert(false, location);
+}
+
+template<typename F>
+void assertNoException(const F& f, const std::source_location location = std::source_location::current()) {
+	try {f();} catch (...) {assert(false, location);}
+}
+
+void checkStrings() {
+	assert(LETTER.size() == 2*26);
+	assert(LOWER.size() == 26);
+	assert(UPPER.size() == 26);
+	for (int i = 0; i < 26; i++) {
+		assert(LOWER[i] == 'a' + i);
+		assert(UPPER[i] == 'A' + i);
+		assert(toLower(UPPER[i]) == LOWER[i]);
+		assert(toUpper(LOWER[i]) == UPPER[i]);
+	}
+
+	assert(VOWEL.size() == 2*5);
+	assert(LOWER_VOWELS.size() == 5);
+	assert(UPPER_VOWELS.size() == 5);
+	for (int i = 0; i < 5; i++) {
+		assert(toLower(UPPER_VOWELS[i]) == LOWER_VOWELS[i]);
+		assert(toUpper(LOWER_VOWELS[i]) == UPPER_VOWELS[i]);
+	}
+
+	assert(CONSONANT.size() == 2*(26-5));
+	assert(LOWER_CONSONANT.size() == 26-5);
+	assert(UPPER_CONSONANT.size() == 26-5);
+	for (int i = 0; i < 26-5; i++) {
+		assert(toLower(UPPER_CONSONANT[i]) == LOWER_CONSONANT[i]);
+		assert(toUpper(LOWER_CONSONANT[i]) == UPPER_CONSONANT[i]);
+	}
+
+	assert(ALPHA_NUMERIC.size() == 10+2*26);
+	assert(LOWER_ALPHA_NUMERIC.size() == 10+26);
+	assert(UPPER_ALPHA_NUMERIC.size() == 10+26);
+	for (int i = 0; i < 10+26; i++) {
+		assert(toLower(UPPER_ALPHA_NUMERIC[i]) == LOWER_ALPHA_NUMERIC[i]);
+		assert(toUpper(LOWER_ALPHA_NUMERIC[i]) == UPPER_ALPHA_NUMERIC[i]);
+	}
+
+	assert(DIGITS.size() == 10);
+	for (int i = 0; i < 10; i++) {
+		assert(toLower(DIGITS[i]) == DIGITS[i]);
+		assert(toUpper(DIGITS[i]) == DIGITS[i]);
+	}
+
+	assert(isLower(LOWER));
+	assert(isLower(LOWER_VOWELS));
+	assert(isLower(LOWER_CONSONANT));
+	assert(!isUpper(LOWER));
+	assert(!isUpper(LOWER_VOWELS));
+	assert(!isUpper(LOWER_CONSONANT));
+
+	assert(isUpper(UPPER));
+	assert(isUpper(UPPER_VOWELS));
+	assert(isUpper(UPPER_CONSONANT));
+	assert(!isLower(UPPER));
+	assert(!isLower(UPPER_VOWELS));
+	assert(!isLower(UPPER_CONSONANT));
+
+	assert(isLetter(LETTER));
+	assert(!isLetter(DIGITS));
+
+	assert(isDigit(DIGITS));
+	assert(!isDigit(LETTER));
+
+	for (char c : VOWEL) assert(isVowel(c));
+	for (char c : CONSONANT) assert(!isVowel(c));
+	for (char c : VOWEL) assert(!isConsonant(c));
+	for (char c : CONSONANT) assert(isConsonant(c));
+	assert(isVowel(VOWEL));
+	assert(!isVowel(LETTER));
+	assert(!isConsonant(LETTER));
+	assert(isConsonant(CONSONANT));
+
+	assert(startsWith(LETTER, LOWER));
+	assert(endsWith(LETTER, UPPER));
+	assert(startsWith(VOWEL, LOWER_VOWELS));
+	assert(endsWith(VOWEL, UPPER_VOWELS));
+	assert(startsWith(CONSONANT, LOWER_CONSONANT));
+	assert(endsWith(CONSONANT, UPPER_CONSONANT));
+}
+
+void checkVerdict() {
+	assert(WA.exitCode != AC.exitCode);
+	assert(PE.exitCode != AC.exitCode);
+	assert(FAIL.exitCode != AC.exitCode);
+	assert(FAIL.exitCode != WA.exitCode);
+	assert(WA.exitCode != 0);
+	assert(PE.exitCode != 0);
+	assert(FAIL.exitCode != 0);
+}
+
+void checkUtility() {
+	assert(!shorter{}(LETTER, LETTER));
+	assert(!longer{}(LETTER, LETTER));
+	assert(shorter{}(DIGITS, LETTER));
+	assert(!longer{}(DIGITS, LETTER));
+	assert(!shorter{}(LETTER, DIGITS));
+	assert(longer{}(LETTER, DIGITS));
+
+	assert(isPerm(LOWER, 'a'));
+	assert(isPerm(UPPER, 'A'));
+	assert(!isPerm(LOWER, 'A'));
+	assert(!isPerm(UPPER, 'a'));
+	assert(isPerm(DIGITS, '0'));
+
+	assert(isPerm(DIGITS, DIGITS));
+	assert(!isPerm(LOWER, UPPER));
+	assert(areNonDecreasing(DIGITS));
+	assert(areIncreasing(DIGITS));
+	assert(areDistinct(DIGITS));
+}
+
+void checkMath() {
+	assert(applyMod(1, 3) == 1);
+	assert(applyMod(-1, 3) == 2);
+
+	assert(mulMod(0x7FFF'FFFF'FFFF'FFFE, 0x7FFF'FFFF'FFFF'FFFE, 0x7FFF'FFFF'FFFF'FFFF) == 1);
+	assert(mulMod(0x7FFF'FFFF'FFFF'FFFE, 0x7FFF'FFFF'FFFF'FFFD, 0x7FFF'FFFF'FFFF'FFFF) == 2);
+	assert(mulMod(0x7FFF'FFFF'FFFF'FFFD, 0x7FFF'FFFF'FFFF'FFFD, 0x7FFF'FFFF'FFFF'FFFF) == 4);
+
+	assert(powMod(0xFFFF'FFFF, 2, 0x1'0000'0000) == 1);
+	assert(powMod(0xFFFF'FFFD, 31, 0xFFFF'FFFF) == 0x7FFF'FFFF);
+	assert(powMod(0xFFFF'FFFD, 63, 0xFFFF'FFFF) == 0x7FFF'FFFF);
+	assert(powMod(0x7FFF'FFFF'FFFF'FFFE, 2, 0x7FFF'FFFF'FFFF'FFFF) == 1);
+	assert(powMod(0x7FFF'FFFF'FFFF'FFFE, 3, 0x7FFF'FFFF'FFFF'FFFF) == 0x7FFF'FFFF'FFFF'FFFE);
+	assert(powMod(0x7FFF'FFFF'FFFF'FFFD, 63, 0x7FFF'FFFF'FFFF'FFFF) == 0x7FFF'FFFF'FFFF'FFFE);
+
+	assert(multInv(5, 17) == powMod(5, 15, 17));
+	assert(multInv(5, 10) == -1);
+
+	assert(!isPrime(-3));
+	assert(!isPrime(-2));
+	assert(!isPrime(0));
+	assert(!isPrime(1));
+	assert(isPrime(2));
+	assert(isPrime(3));
+	assert(!isPrime(4));
+	assert(!isPrime(512461));
+	assert(isPrime(0x7FFF'FFFF'FFFF'FFFF-164));
+	assert(!isPrime(0x7FFF'FFFF'FFFF'FFFF-25));
+	assert(isPrime(0x7FFF'FFFF'FFFF'FFFF-24));
+	assert(!isPrime(0x7FFF'FFFF'FFFF'FFFF-23));
+	assert(!isPrime(0x7FFF'FFFF'FFFF'FFFF));
+	assert(!isPrime(2147483647 * 4294967291));
+}
+
+template<typename T, typename F>
+void checkUniform(const F& f, Integer iterations, Integer different, const std::source_location location = std::source_location::current()) {
+	std::map<T, Integer> count;
+	for (Integer i = 0; i < iterations; i++) count[f()]++;
+	assert(std::ssize(count) == different, location);
+	std::vector<Integer> counts;
+	for (auto e : count) counts.push_back(e.second);
+	sort(counts.begin(), counts.end());
+	Integer diff = counts.back() - counts.front();
+	Integer ma = 4*sqrt(counts.front() + counts.back());
+	assert(diff < ma, location);
+}
+
+void checkRandom() {
+	for (Integer i = 0; i < 100000; i++) {
+		std::string tmp(LOWER);
+		Random::shuffle(tmp);
+		assert(isPerm(LOWER, tmp));
+	}
+	for (Integer i = 0; i < 10000; i++) {
+		auto tmp = Random::partition(17, 5);
+		Integer sum = 0;
+		for (auto x : tmp) {
+			assert(x >= 0 && x < 17);
+			sum += x;
+		}
+		assert(sum == 17);
+	}
+	for (Integer i = 0; i < 10000; i++) {
+		auto tmp = Random::bracketSequence(17);
+		Integer sum = 0;
+		for (auto x : tmp) {
+			if (x == '(') sum++;
+			else sum--;
+			assert(sum >= 0);
+		}
+		assert(sum == 0);
+	}
+
+	for (Integer i = 0; i < 10000; i++) assert(isPerm(Random::perm(13)));
+	for (Integer i = 0; i < 10000; i++) assert(areIncreasing(Random::increasing(13, 100)));
+	for (Integer i = 0; i < 10000; i++) assert(areDecreasing(Random::decreasing(13, 100)));
+	for (Integer i = 0; i < 10000; i++) assert(areNonDecreasing(Random::nonDecreasing(13, 100)));
+	for (Integer i = 0; i < 10000; i++) assert(areNonIncreasing(Random::nonIncreasing(13, 100)));
+
+	checkUniform<Integer>([](){return Random::integer(4'000'000'000'000);}, 1'000'000, 1'000'000);
+	checkUniform<Integer>([](){return Random::integer(3, 17);}, 1'000'000, 14);
+	checkUniform<Integer>([](){return Random::prime(3, 17);}, 1'000'000, 5);
+	checkUniform<Integer>([](){return Random::select({1,5,7,8,11});}, 1'000'000, 5);
+	std::string test = "test";
+	checkUniform<std::string>([&](){return Random::shuffle(test), test;}, 1'000'000, 12);
+	checkUniform<std::vector<Integer>>([](){return Random::perm(4);}, 1'000'000, 24);
+	checkUniform<std::vector<Integer>>([](){return Random::multiple(3, 3);}, 1'000'000, 3*3*3);
+	checkUniform<std::vector<Integer>>([](){return Random::partition(10, 3);}, 1'000'000, 6*6);
+	checkUniform<std::string>([](){return Random::bracketSequence(4);}, 1'000'000, 14);
+
+	Random::seed(123456789u);
+	//this sequence may change but all compilers should generate the same sequence!
+	std::vector<Integer> expected = {26331273, 13851376, 28760602, 68400187, 48500008, 15205832, 32867368};
+	assert(expected == Random::multiple(expected.size(), 123, 123456789));
+}
+
+void checkCommandParser() {
+	char arg0[] = "prog";
+    char arg1[] = "--test1";
+    char arg2[] = "1";
+    char arg3[] = "1.5";
+    char arg4[] = "test";
+    char arg5[] = "--test2";
+    char arg6[] = "--test3";
+    char* argv[] = {&arg0[0], &arg1[0], &arg2[0], &arg3[0], &arg4[0], &arg5[0], &arg6[0], nullptr};
+	CommandParser arguments(7, argv);
+
+	assert(!arguments["--test0"]);
+	assert(!!arguments["--test1"]);
+	assert(!!arguments["--test2"]);
+	assert(!!arguments["--test3"]);
+	assert(!arguments["--test4"]);
+
+	assert(arguments["--test0"].parameterCount() == 0);
+	assert(arguments["--test1"].parameterCount() == 3);
+	assert(arguments["--test2"].parameterCount() == 0);
+	assert(arguments["--test3"].parameterCount() == 0);
+	assert(arguments["--test4"].parameterCount() == 0);
+
+	assert(arguments["--test1"].asInteger() == 1);
+	assert(arguments["--test1"].asInteger(5) == 1);
+	assert(arguments["--test1"].asReal() == 1);
+	assert(arguments["--test1"][1].asReal() == 1.5);
+	assert(arguments["--test1"][2].asString() == "test");
+	assert(arguments["--test1"][3].asInteger(5) == 5);
+	assert(arguments["--test2"].asInteger(5) == 5);	
+	assert(arguments["--test4"].asInteger(5) == 5);
+}
+
+void checkInputStream() {
+	assertNoException([](){
+		std::istringstream rawIn("Das   ist 1 test\n");
+		InputStream in(rawIn, true, true, FAIL);
+
+		in.expectString("Das");
+		in.space();
+		in.space();
+		in.space();
+		assert(in.string(3, 4) == "ist");
+		in.space();
+		assert(in.integer(1, 2) == 1);
+		in.space();
+		assert(in.string(std::regex("[a-z]*"), 4, 5) == "test");
+		in.newline();
+		in.eof();
+	});
+	assertNoException([](){
+		std::istringstream rawIn("123");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.expectInt(123);
+	});
+	assertNoException([](){
+		std::istringstream rawIn("Das");
+		InputStream in(rawIn, true, false, Verdict(23));
+		in.expectString("das");
+	});
+	assertNoException([](){
+		std::istringstream rawIn("Das  das");
+		InputStream in(rawIn, false, true, Verdict(23));
+		in.expectString("Das");
+		in.space();
+		in.expectString("das");
+	});
+	assertNoException([](){
+		std::istringstream rawIn("Das\ndas");
+		InputStream in(rawIn, false, true, Verdict(23));
+		in.expectString("Das");
+		in.space();
+		in.expectString("das");
+	});
+	assertNoException([](){
+		std::istringstream rawIn("Das das");
+		InputStream in(rawIn, false, true, Verdict(23));
+		in.expectString("Das");
+		in.expectString("das");
+	});
+	assertNoException([](){
+		std::istringstream rawIn("Das  das");
+		InputStream in(rawIn, false, true, Verdict(23));
+		in.expectString("Das");
+		in.expectString("das");
+	});
+	assertNoException([](){
+		std::istringstream rawIn("Das das");
+		InputStream in(rawIn, false, true, Verdict(23));
+		in.expectString("Das");
+		in.space();
+		in.space();
+		in.expectString("das");
+	});
+	assertNoException([](){
+		std::istringstream rawIn("\n");
+		InputStream in(rawIn, false, true, Verdict(23));
+		in.eof();
+	});
+	assertNoException([](){
+		std::istringstream rawIn("das");
+		InputStream in(rawIn, false, true, Verdict(23));
+		in.space();
+		in.expectString("das");
+	});
+	assertNoException([](){
+		std::istringstream rawIn("1.5");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.real();
+	});
+	assertNoException([](){
+		std::istringstream rawIn("0.00000000000000000000001");
+		InputStream in(rawIn, false, true, Verdict(23));
+		in.real();
+	});
+	assertNoException([](){
+		std::istringstream rawIn("9223372036854775807");
+		InputStream in(rawIn, false, true, Verdict(23));
+		in.integer();
+	});
+
+	assertExit([](){
+		std::istringstream rawIn("Das");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.expectString("das");
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn;
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.expectString("das");
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn("das\n");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.expectString("das");
+		in.eof();
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn("0123");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.integer();
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn("0x123");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.integer();
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn("1.0");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.integer();
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn("1.5");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.integer();
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn("1-1");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.integer();
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn("+123");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.expectInt(123);
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn("123");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.integer(0, 123);
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn("9223372036854775808");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.integer();
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn("Das  ist");
+		InputStream in(rawIn, true, true, Verdict(23));
+
+		in.string();
+		in.space();
+		in.string();
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn("Das ist");
+		InputStream in(rawIn, true, true, Verdict(23));
+
+		in.string();
+		in.space();
+		in.space();
+		in.string();
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn("\n");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.eof();
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn(" ");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.eof();
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn("x");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.eof();
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn("0.123456");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.real(-10, 10, 0, 3);
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn("00.1");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.real();
+	}, 23);
+	assertExit([](){
+		std::istringstream rawIn("+0.1");
+		InputStream in(rawIn, true, true, Verdict(23));
+		in.real();
+	}, 23);
+}
+
+void checkJoin() {
+	std::vector<Integer> a = {1,2,0};
+	std::array<Integer, 3> b = {1, 2, 0};
+	Integer c[3] = {1, 2, 0};
+	std::string d = "120";
+	char e[4] = "120";
+	std::tuple<char, Integer, Integer> f = {'1', 2, 0};
+	std::pair<char, Integer> g = {'1', 2};
+
+	using namespace std::literals;
+	assert(join(std::begin(a), std::end(a)).asString() == "1 2 0"sv);
+	assert(join(std::begin(b), std::end(b)).asString() == "1 2 0"sv);
+	assert(join(std::begin(c), std::end(c)).asString() == "1 2 0"sv);
+	assert(join(std::begin(d), std::end(d)).asString() == "1 2 0"sv);
+	assert(join(std::begin(e), std::end(e)).asString() == "1 2 0 \0"sv);
+
+	assert(join(std::cbegin(a), std::cend(a)).asString() == "1 2 0"sv);
+	assert(join(std::cbegin(b), std::cend(b)).asString() == "1 2 0"sv);
+	assert(join(std::cbegin(c), std::cend(c)).asString() == "1 2 0"sv);
+	assert(join(std::cbegin(d), std::cend(d)).asString() == "1 2 0"sv);
+	assert(join(std::cbegin(e), std::cend(e)).asString() == "1 2 0 \0"sv);
+
+	assert(join(a).asString() == "1 2 0"sv);
+	assert(join(b).asString() == "1 2 0"sv);
+	assert(join(c).asString() == "1 2 0"sv);
+	assert(join(d).asString() == "1 2 0"sv);
+	assert(join(e).asString() == "1 2 0"sv);
+	assert(join(f).asString() == "1 2 0"sv);
+	assert(join(g).asString() == "1 2"sv);
+
+	assert(join(const_cast<const decltype(a)&>(a)).asString() == "1 2 0"sv);
+	assert(join(const_cast<const decltype(b)&>(b)).asString() == "1 2 0"sv);
+	assert(join(const_cast<const decltype(c)&>(c)).asString() == "1 2 0"sv);
+	assert(join(const_cast<const decltype(d)&>(d)).asString() == "1 2 0"sv);
+	assert(join(const_cast<const decltype(e)&>(e)).asString() == "1 2 0"sv);
+	assert(join(const_cast<const decltype(f)&>(f)).asString() == "1 2 0"sv);
+	assert(join(const_cast<const decltype(g)&>(g)).asString() == "1 2"sv);
+
+	assert(join(std::move(a)).asString() == "1 2 0"sv);
+	assert(join(std::move(b)).asString() == "1 2 0"sv);
+	assert(join(std::move(c)).asString() == "1 2 0"sv);
+	assert(join(std::move(d)).asString() == "1 2 0"sv);
+	assert(join(std::move(e)).asString() == "1 2 0"sv);
+	assert(join(std::move(f)).asString() == "1 2 0"sv);
+	assert(join(std::move(g)).asString() == "1 2");
+
+	assert(join({1, 2, 0}).asString() == "1 2 0"sv);
+	assert(join({1, "2", '0'}).asString() == "1 2 0"sv);
+	assert(join("120").asString() == "1 2 0"sv);
+	assert(join(std::make_tuple(1, "2", '0')).asString() == "1 2 0"sv);
+	assert(join(std::make_pair(1, "2")).asString() == "1 2"sv);
+}
+
+template<typename T, typename = void>
+struct CompileJoin : std::false_type {};
+
+template<typename T>
+struct CompileJoin<T, std::void_t<decltype(join(std::declval<T>()))>> : std::true_type {};
+
+static_assert(!CompileJoin<int>{}, "join(int) should be invalid!");
+
+void checkGeomatry() {
+	using pts = std::vector<std::pair<Integer, Integer>>;
+	assert(!areConvex(pts{}));
+	assert(!areConvex(pts{{1,1}}));
+	assert(!areConvex(pts{{0,0}, {1,1}}));
+	assert(!areConvex(pts{{0,0}, {1,1}, {-1,-1}}));
+	assert(!areConvex(pts{{0,0}, {1,1}, {0,0}, {1,1}}));
+	assert(!areConvex(pts{{0,0}, {2,0}, {2,2}, {1,2}, {1,1}, {3,1}, {3,3}, {0,3}}));
+	assert(areConvex(pts{{0,0}, {1,0}, {2,0}, {2,2}, {0,2}, {0,1}}));
+	assert(areConvex(pts{{0,0}, {2,0}, {2,2}}));
+
+	assert(!areStrictlyConvex(pts{}));
+	assert(!areStrictlyConvex(pts{{1,1}}));
+	assert(!areStrictlyConvex(pts{{0,0}, {1,1}}));
+	assert(!areStrictlyConvex(pts{{0,0}, {1,1}, {-1,-1}}));
+	assert(!areStrictlyConvex(pts{{0,0}, {1,1}, {0,0}, {1,1}}));
+	assert(!areStrictlyConvex(pts{{0,0}, {2,0}, {2,2}, {1,2}, {1,1}, {3,1}, {3,3}, {0,3}}));
+	assert(!areStrictlyConvex(pts{{0,0}, {1,0}, {2,0}, {2,2}, {0,2}, {0,1}}));
+	assert(areStrictlyConvex(pts{{0,0}, {2,0}, {2,2}}));
+
+	assert(areConvex(Random::convex(100, 1000'000'000)));//this is always true
+	assert(areStrictlyConvex(Random::convex(100, 1000'000'000)));//this is likely true
+}
+
+int main() {
+	details::initialized(true);
+	std::ostringstream err, out;
+	ValidateBase::juryErr = OutputStream(err);
+	ValidateBase::juryOut = OutputStream(out);
+
+	checkStrings();
+	checkVerdict();
+	checkUtility();
+	checkMath();
+	checkRandom();
+	checkCommandParser();
+	checkInputStream();
+	checkJoin();
+	checkGeomatry();
+
+	std::cout << "All tests passed!" << std::endl;
+}

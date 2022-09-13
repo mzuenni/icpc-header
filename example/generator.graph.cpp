@@ -1,0 +1,32 @@
+//============================================================================//
+// graph_gen.h example usage                                                  //
+//============================================================================//
+
+#include "../src/validate.h"
+#include "../src/graph_gen.h"
+
+int main(int argc, char **argv) {
+	Generator::init(argc, argv);			// initialize streams, rng and parse arguments
+	using namespace Generator;
+
+	//needs c++20
+	// generate a hypercube on vertices [0, 8) append a second one with vertices [8, 16) and a cycle on vertices [16,19)
+	Graph<NoData> res = hypercube(3).append(hypercube(3)).append(cycle(3));
+	// connect the cycle to a face of the first hypercube
+	res.addEdge(16, 0);
+	res.addEdge(17, 1);
+	res.addEdge(18, 2);
+	// connect the cycle to a face of the second hypercube
+	res.addEdge(16, 8);
+	res.addEdge(17, 9);
+	res.addEdge(18, 10);
+
+	// mage the graph use vertices [1, 20)
+	res.setMinId(1);
+	// randomly permutate edges and vertices
+	res.permutate();
+	// print:
+	// nodeCount EdgeCount
+	// edges... 
+	testOut << res << std::endl;
+}

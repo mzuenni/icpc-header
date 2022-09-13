@@ -1,0 +1,2719 @@
+//============================================================================//
+// validate.h                                                                 //
+//============================================================================//
+// This header can be used to safely parse team output tokenwise. We support: //
+// - string tokens (get converted to lowercase)                               //
+// - integer tokens in [-2^63, 2^63)                                          //
+// - float tokens (relative and absolute error of 10^6 is allowed)            //
+// Tokens need to be separated by whitespace (any amount). The follwoing      //
+// command line flags allow stricter checking:                                //
+// - caseSensitive: string tokens don't get converted to lowercase            //
+// - space_change_sensitive: tokens need to be separated by the corecct       //
+//   amount of whitespaces                                                    //
+// - FLOAT_{|RELATIVE|ABSOLUTE}_TOLERANCE: allowed relative/absolute error    //
+//                                                                            //
+// This header can be used to safely verify input files. In this case tokens  //
+// are case sensitive and all whitespaces have to be checked. Also            //
+// whitespaces are not interchangeable.                                       //
+//                                                                            //
+// This header can be used to generate random numbers in a deterministic and  //
+// reproducable fashion. (The randomness is consistent across compilers and   //
+// machines)                                                                  //
+//============================================================================//
+//version 1.2.1                                                               //
+//https://github.com/mzuenni/icpc-header                                      //
+//============================================================================//
+
+#ifndef VALIDATE_H
+#define VALIDATE_H
+
+//#define DOUBLE_FALLBACK
+
+#include <algorithm>
+#include <bitset>
+#include <cctype>
+#include <cmath>
+#include <charconv>
+#include <complex>
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+#include <functional>
+#include <iomanip>
+#include <iostream>
+#include <limits>
+#include <map>
+#include <numeric>
+#include <optional>
+#include <queue>
+#include <random>
+#include <regex>
+#include <set>
+#include <string>
+#include <string_view>
+#include <typeinfo>
+#include <typeindex>
+#include <type_traits>
+#include <utility>
+#include <variant>
+#include <vector>
+
+
+//============================================================================//
+// Basic definitions and constants                                            //
+//============================================================================//
+// default types
+using Integer = std::int64_t;
+using Real = long double;
+
+// derived types
+using UInteger = std::make_unsigned<Integer>::type;
+constexpr Integer operator ""_int(unsigned long long int value) {return static_cast<Integer>(value);}
+constexpr UInteger operator ""_uint(unsigned long long int value) {return static_cast<UInteger>(value);}
+constexpr Real operator ""_real(unsigned long long int value) {return static_cast<Real>(value);}
+constexpr Real operator ""_real(long double value) {return static_cast<Real>(value);}
+
+// settings which can be overwritten before the include!
+namespace Settings {
+	namespace details {
+		using RandomEngine								= std::mt19937_64;
+		constexpr Integer LARGE							= 0x3FFF'FFFF'FFFF'FFFF;
+		constexpr bool DEFAULT_CASE_LOWER				= true;
+		constexpr int DEFAULT_PRECISION					= 6;
+		constexpr Real DEFAULT_EPS						= 1e-6_real;
+
+		[[noreturn]] void exitVerdict(int exit_code) {
+			//throw exit_code;
+			//quick_exit(exit_code);
+			std::exit(exit_code);
+		}
+	}
+	using namespace details;
+}
+// make settings publically available
+using Settings::RandomEngine;
+using Settings::LARGE;
+using Settings::DEFAULT_CASE_LOWER;
+using Settings::DEFAULT_PRECISION;
+using Settings::DEFAULT_EPS;
+using Settings::exitVerdict;
+
+// useful string constants
+constexpr std::string_view LETTER						= "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+constexpr std::string_view LOWER						= LETTER.substr(0, 26);
+constexpr std::string_view UPPER						= LETTER.substr(26);
+constexpr std::string_view VOWEL						= "aeiouAEIOU";
+constexpr std::string_view LOWER_VOWELS					= VOWEL.substr(0, 5);
+constexpr std::string_view UPPER_VOWELS					= VOWEL.substr(5);
+constexpr std::string_view CONSONANT					= "bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ";
+constexpr std::string_view LOWER_CONSONANT				= CONSONANT.substr(0, 21);
+constexpr std::string_view UPPER_CONSONANT				= CONSONANT.substr(21);
+constexpr std::string_view ALPHA_NUMERIC				= "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+constexpr std::string_view LOWER_ALPHA_NUMERIC			= ALPHA_NUMERIC.substr(0, 10 + 26);
+constexpr std::string_view UPPER_ALPHA_NUMERIC			= "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+constexpr std::string_view DIGITS						= ALPHA_NUMERIC.substr(0, 10);
+
+
+//============================================================================//
+// internal definitions and constants                                         //
+//============================================================================//
+constexpr UInteger DEFAULT_SEED							= 3141592653589793238_uint;
+constexpr std::string_view CASE_SENSITIVE				= "case_sensitive";
+constexpr std::string_view SPACE_SENSITIVE				= "space_change_sensitive";
+constexpr std::string_view FLOAT_ABSOLUTE_TOLERANCE		= "float_absolute_tolerance";
+constexpr std::string_view FLOAT_RELATIVE_TOLERANCE		= "float_relative_tolerance";
+constexpr std::string_view FLOAT_TOLERANCE				= "float_tolerance";
+constexpr std::string_view JUDGE_MESSAGE				= "judgemessage.txt";
+constexpr char DEFAULT_SEPARATOR						= ' ';
+constexpr std::string_view EMPTY_COMMAND				= "";
+constexpr std::string_view COMMAND_PREFIX				= "--";
+constexpr std::string_view CONSTRAINT_COMMAND			= "--constraints_file";
+constexpr std::string_view SEED_COMMAND					= "--seed";
+inline const std::regex INTEGER_REGEX("0|-?[1-9][0-9]*", std::regex_constants::optimize);
+inline const std::regex REAL_REGEX("-?(0|([1-9][0-9]*))(\\.[0-9]*)?([eE][+-]?(0|([1-9][0-9]*)))?", std::regex_constants::optimize);
+inline const std::regex STRICT_REAL_REGEX("-?(0|([1-9][0-9]*))\\.?[0-9]*", std::regex_constants::optimize);
+
+static_assert(2'000'000'000'000'000'000_int < LARGE / 2, "LARGE too small");
+static_assert(LARGE <= std::numeric_limits<Integer>::max() / 2, "LARGE too big");
+
+static_assert(-1 == 0xFFFF'FFFF'FFFF'FFFF_int, "Two's complement for signed numbers is required" );
+static_assert(std::is_convertible_v<Integer, UInteger>, "Incompatible Integer and UInteger types?!");
+static_assert(std::is_convertible_v<UInteger, Integer>, "Incompatible Integer and UInteger types?!");
+static_assert(sizeof(Integer) == sizeof(UInteger), "Incompatible Integer and UInteger types?!");
+
+template<typename T = std::logic_error>
+constexpr void judgeAssert(bool asserted, std::string_view message) {
+	if (!asserted) throw T(message.data());
+}
+
+
+//============================================================================//
+// Verdicts                                                                   //
+//============================================================================//
+struct Verdict final {
+	int exitCode;
+
+	constexpr explicit Verdict(int exitCode_ = 1) : exitCode(exitCode_) {}
+
+	constexpr operator int() const {
+		return exitCode;
+	}
+
+	[[noreturn]] void exit() const {
+		exitVerdict(exitCode);
+	}
+
+	friend void operator<<(std::ostream& os, const Verdict& v) {
+		os << std::endl;
+		v.exit();
+	}
+};
+
+// default verdicts (we do not support scoring)
+constexpr Verdict AC(42);
+constexpr Verdict WA(43);
+constexpr Verdict PE = WA;
+constexpr Verdict FAIL(1);
+
+
+//============================================================================//
+// Output streams                                                             //
+//============================================================================//
+class NullStream : public std::ostream {
+	class NullBuffer : public std::streambuf {
+	protected:
+		virtual std::streamsize xsputn(const char* /**/, std::streamsize n) override {
+			return n;
+		}
+		virtual int overflow(int c = std::char_traits<char>::eof()) override {
+			return std::char_traits<char>::not_eof(c);
+		}
+	} nullBuffer;
+public:
+	NullStream() : std::ostream(&nullBuffer) {}
+} nullStream;
+
+class OutputStream final {
+	std::unique_ptr<std::ofstream> managed;
+	std::ostream* os;
+
+	void init() {
+		*os << std::boolalpha;
+		*os << std::fixed;
+		*os << std::setprecision(DEFAULT_PRECISION);
+	}
+
+public:
+	OutputStream() : os(&nullStream) {}
+	OutputStream(std::ostream& os_) : os(&os_) {init();}
+	explicit OutputStream(std::filesystem::path path) : managed(std::make_unique<std::ofstream>(path)), os(managed.get()) {
+		judgeAssert<std::runtime_error>(managed->good(), "Could not open File: " + path.string());
+		init();
+	}
+
+	OutputStream(OutputStream&& other) = default;
+	OutputStream& operator=(OutputStream&& other) = default;
+
+	OutputStream(const OutputStream&) = delete;
+	OutputStream& operator=(const OutputStream&) = delete;
+
+	template<typename T>
+	OutputStream& operator<<(T&& x) {
+		*os << std::forward<T>(x);
+		return *this;
+	}
+
+	OutputStream& operator<<(std::ostream& (*manip)(std::ostream&)) {
+		*os << manip;
+		return *this;
+	}
+
+	template<char SEP = DEFAULT_SEPARATOR>
+	OutputStream& print() {return *this;}
+
+	template<char SEP = DEFAULT_SEPARATOR, typename Arg>
+	OutputStream& print(Arg&& arg) {
+		return *this << std::forward<Arg>(arg);
+	}
+
+	template<char SEP = DEFAULT_SEPARATOR, typename Arg, typename... Args>
+	OutputStream& print(Arg&& arg, Args&&... args) {
+		*this << std::forward<Arg>(arg);		
+		return ((*this << SEP << std::forward<Args>(args)), ...);
+	}
+
+	template<char SEP = DEFAULT_SEPARATOR, typename... Args>
+	OutputStream& println(Args&&... args) {
+		print<SEP>(std::forward<Args>(args)...);
+		return *this << std::endl;
+	}
+};
+
+namespace ValidateBase {
+	// define this early so everyone can use it!
+	OutputStream juryErr(std::cerr);
+	OutputStream juryOut(std::cout);
+}
+
+
+//============================================================================//
+// SFINAE                                                                     //
+//============================================================================//
+namespace details {
+	template<typename T, typename = void>
+	struct IsContainer : std::false_type {};
+
+	template<typename T>
+	struct IsContainer<T, std::void_t<decltype(std::begin(std::declval<std::add_lvalue_reference_t<T>>()))>> : std::true_type {};
+
+	template<typename T>
+	struct IsStdArray : std::false_type {};
+
+	template<typename T, std::size_t N>
+	struct IsStdArray<std::array<T, N>> : std::true_type {};
+
+	template<typename T, typename = void>
+	struct IsTupleLike : std::false_type {};
+
+	template<typename T>
+	struct IsTupleLike<T, std::void_t<decltype(sizeof(std::tuple_size<T>))>> : std::true_type {};
+}
+
+
+//============================================================================//
+// Basic datastructures                                                       //
+//============================================================================//
+// make usage of std::priority_queue easier...
+namespace details {
+	template<typename T, typename Compare = std::less<T>>
+	struct invertCompare {
+		constexpr bool operator()(const T &lhs, const T &rhs) const {
+			return Compare{}(rhs, lhs);
+		}
+	};
+}
+template<typename T, typename Compare = std::less<T>>
+using MinPQ = std::priority_queue<T, std::vector<T>, details::invertCompare<T, Compare>>;
+template<typename T, typename Compare = std::less<T>>
+using MaxPQ = std::priority_queue<T, std::vector<T>, Compare>;
+
+template<typename C, typename K>
+bool contains(const C& container, const K& key) {
+	return container.find(key) != container.end();
+}
+
+template<typename C1, typename C2>
+void append(C1& c1, const C2& c2) {
+	static_assert(std::is_same_v<typename C1::value_type, typename C2::value_type>, "cannot append container of different value type!");
+	if (static_cast<const void*>(&c1) != static_cast<const void*>(&c2)) {
+		for (auto e : c2) c1.insert(c1.end(), e);
+	} else {
+		C2 tmp = c2;
+		for (auto e : tmp) c1.insert(c1.end(), e);
+	}
+}
+
+template<typename C1, std::size_t N>
+void append(C1& c1, const typename C1::value_type(&c2)[N]) {
+	for (auto e : c2) c1.insert(c1.end(), e);
+}
+
+struct shorter {
+	template<typename U, typename V>
+	bool operator()(const U& a, const V& b) const {
+		return std::size(a) < std::size(b);
+	}
+};
+
+struct longer {
+	template<typename U, typename V>
+	bool operator()(const U& a, const V& b) const {
+		return std::size(b) < std::size(a);
+	}
+};
+
+namespace details {
+	template<typename T, typename = void>
+	struct Flatten {using value_type = T;};
+
+	template<typename T>
+	struct Flatten<T, std::enable_if_t<IsContainer<T>{}>> : Flatten<typename T::value_type> {};
+
+	template<typename CR, typename V>
+	void flatAppend(CR&& c, std::vector<V>& res) {
+		using C = std::remove_reference_t<CR>;
+		if constexpr(std::is_same_v<C, V>) {
+			res.push_back(std::forward<CR>(c));
+		} else if constexpr (!IsContainer<C>{}) {
+			static_assert(IsContainer<C>{}, "invalid base type for flatten()!");
+		} else {
+			if constexpr (std::is_same_v<typename C::value_type, V>) {
+				res.reserve(res.size() + c.size());
+			}
+			if constexpr (std::is_rvalue_reference_v<CR&&>) {
+				for (auto&& v : c) flatAppend(std::move(v), res);
+			} else {
+				for (auto&& v : c) flatAppend(v, res);
+			}
+		}
+	}
+}
+
+template<typename R, typename CR>
+auto flatten(CR&& c) {
+	std::vector<R> res;
+	details::flatAppend(std::forward<CR>(c), res);
+	return res;
+}
+
+template<typename CR>
+auto flatten(CR&& c) {
+	using C = std::remove_reference_t<CR>;
+	return flatten<typename details::Flatten<C>::value_type, CR>(std::forward<CR>(c));
+}
+
+
+//============================================================================//
+// Utility                                                                    //
+//============================================================================//
+// for sequences
+template<typename RandomIt, 
+         typename = std::enable_if_t<std::is_integral_v<typename std::iterator_traits<RandomIt>::value_type>>>
+bool isPerm(RandomIt first, RandomIt last, typename std::iterator_traits<RandomIt>::value_type offset = 0) {
+	auto count = std::distance(first, last);
+	std::vector<bool> seen(count, false);
+	for (; first != last; first++) {
+		auto x = *first;
+		if (x < offset) return false;
+		x -= offset;
+		if (x >= count) return false;
+		if (seen[x]) return false;
+		seen[x] = true;
+	}
+	return true;
+}
+template<typename C, typename std::enable_if_t<std::is_integral_v<typename C::value_type>, bool> = true>
+bool isPerm(const C& c, typename C::value_type offset = 0) {
+	return isPerm(std::begin(c), std::end(c), offset);
+}
+
+template<typename itA, typename itB>
+bool isPerm(itA firstA, itA lastA, itB firstB, itB lastB) {
+	std::vector<typename std::iterator_traits<itA>::value_type> a(firstA, lastA);
+	std::vector<typename std::iterator_traits<itB>::value_type> b(firstB, lastB);
+	if (a.size() != b.size()) return false;
+	std::sort(a.begin(), a.end());
+	std::sort(b.begin(), b.end());
+	for (std::size_t i = 0; i < a.size(); i++) {
+		if (a[i] != b[i]) return false;
+	}
+	return true;
+}
+template<typename C1,
+         typename C2,
+         typename = std::enable_if_t<details::IsContainer<C1>{}>,
+         typename = std::enable_if_t<details::IsContainer<C2>{}>>
+bool isPerm(const C1& c1, const C2& c2) {
+	return isPerm(std::begin(c1), std::end(c1), std::begin(c2), std::end(c2));
+}
+
+template<typename RandomIt, typename BinaryPredicate>
+constexpr bool anyAdjacent(RandomIt first, RandomIt last, BinaryPredicate p) {
+	return std::adjacent_find(first, last, p) != last;
+}
+template<typename C>
+constexpr bool anyAdjacent(const C& c) {
+	return anyAdjacent(std::begin(c), std::end(c));
+}
+
+template<typename RandomIt, typename BinaryPredicate>
+constexpr bool noneAdjacent(RandomIt first, RandomIt last, BinaryPredicate p) {
+	return std::adjacent_find(first, last, p) == last;
+}
+template<typename C>
+constexpr bool noneAdjacent(const C& c) {
+	return noneAdjacent(std::begin(c), std::end(c));
+}
+
+template<typename RandomIt, typename BinaryPredicate>
+constexpr bool allAdjacent(RandomIt first, RandomIt last, BinaryPredicate p) {
+	return std::adjacent_find(first, last, std::not_fn(p)) == last;
+}
+template<typename C>
+constexpr bool allAdjacent(const C& c) {
+	return allAdjacent(std::begin(c), std::end(c));
+}
+
+template<typename RandomIt>
+constexpr bool areIncreasing(RandomIt first, RandomIt last) {
+	using T = typename std::iterator_traits<RandomIt>::value_type;
+	return allAdjacent(first, last, std::less<T>());
+}
+template<typename C>
+constexpr bool areIncreasing(const C& c) {
+	return areIncreasing(std::begin(c), std::end(c));
+}
+
+template<typename RandomIt>
+constexpr bool areNonDecreasing(RandomIt first, RandomIt last) {
+	using T = typename std::iterator_traits<RandomIt>::value_type;
+	return allAdjacent(first, last, std::less_equal<T>());
+}
+template<typename C>
+constexpr bool areNonDecreasing(const C& c) {
+	return areNonDecreasing(std::begin(c), std::end(c));
+}
+
+template<typename RandomIt>
+constexpr bool areDecreasing(RandomIt first, RandomIt last) {
+	using T = typename std::iterator_traits<RandomIt>::value_type;
+	return allAdjacent(first, last, std::greater<T>());
+}
+template<typename C>
+constexpr bool areDecreasing(const C& c) {
+	return areDecreasing(std::begin(c), std::end(c));
+}
+
+template<typename RandomIt>
+constexpr bool areNonIncreasing(RandomIt first, RandomIt last) {
+	using T = typename std::iterator_traits<RandomIt>::value_type;
+	return allAdjacent(first, last, std::greater_equal<T>());
+}
+template<typename C>
+constexpr bool areNonIncreasing(const C& c) {
+	return areNonIncreasing(std::begin(c), std::end(c));
+}
+
+template<typename RandomIt>
+constexpr bool areDistinct(RandomIt first, RandomIt last) {
+	using T = typename std::iterator_traits<RandomIt>::value_type;
+	std::vector<T> tmp(first, last);
+	std::sort(tmp.begin(), tmp.end());
+	return areIncreasing(tmp.begin(), tmp.end());
+}
+template<typename C>
+constexpr bool areDistinct(const C& c) {
+	return areDistinct(std::begin(c), std::end(c));
+}
+
+
+// for strings (cctype functions are not safe to use with char...)
+constexpr bool isLower(char c) {
+	return c >= 'a' and c <= 'z';
+}
+
+constexpr bool isUpper(char c) {
+	return c >= 'A' and c <= 'Z';
+}
+
+constexpr bool isLetter(char c) {
+	return isLower(c) or isUpper(c);
+}
+
+constexpr bool isDigit(char c) {
+	return c >= '0' and c <= '9';
+}
+
+constexpr char toLower(char c) {
+	if (isUpper(c)) c += 'a' - 'A';
+	return c;
+}
+
+constexpr bool isVowel(char c) {
+	c = toLower(c);
+	for (char x : LOWER_VOWELS) {
+		if (c == x) return true;
+	}
+	return false;
+}
+
+constexpr bool isConsonant(char c) {
+	return isLetter(c) and !isVowel(c);
+}
+
+constexpr char toUpper(char c) {
+	if (isLower(c)) c -= 'a' - 'A';
+	return c;
+}
+
+constexpr char toDefaultCase(char c) {
+	if constexpr (DEFAULT_CASE_LOWER) return toLower(c);
+	return toUpper(c);
+}
+
+void toLower(std::string& s) {
+	for (char& c : s) c = toLower(c);
+}
+
+void toUpper(std::string& s) {
+	for (char& c : s) c = toUpper(c);
+}
+
+void toDefaultCase(std::string& s) {
+	if constexpr (DEFAULT_CASE_LOWER) return toLower(s);
+	return toUpper(s);
+}
+
+constexpr bool isLower(std::string_view s) {
+	for (char c : s) if (!isLower(c)) return false;
+	return true;
+}
+
+constexpr bool isUpper(std::string_view s) {
+	for (char c : s) if (!isUpper(c)) return false;
+	return true;
+}
+
+constexpr bool isLetter(std::string_view s) {
+	for (char c : s) if (!isLetter(c)) return false;
+	return true;
+}
+
+constexpr bool isDigit(std::string_view s) {
+	for (char c : s) if (!isDigit(c)) return false;
+	return true;
+}
+
+constexpr bool isVowel(std::string_view s) {
+	for (char c : s) if (!isVowel(c)) return false;
+	return true;
+}
+
+constexpr bool isConsonant(std::string_view s) {
+	for (char c : s) if (!isConsonant(c)) return false;
+	return true;
+}
+
+// allow using std::pair and std::complex similiar
+// (may be useful for geometric problem)
+template<typename T>
+constexpr auto& getX(T& point) {
+	return std::get<0>(point);
+}
+template<typename T>
+constexpr auto& getY(T& point) {
+	return std::get<1>(point);
+}
+template<typename T>
+constexpr auto& getZ(T& point) {
+	return std::get<2>(point);
+}
+template<typename T>
+constexpr auto getX(const T& point) {
+	return std::get<0>(point);
+}
+template<typename T>
+constexpr auto getY(const T& point) {
+	return std::get<1>(point);
+}
+template<typename T>
+constexpr auto getZ(const T& point) {
+	return std::get<2>(point);
+}
+
+template<typename T>
+constexpr auto& getX(std::complex<T>& point) {
+	return reinterpret_cast<T(&)[2]>(point)[0];
+}
+template<typename T>
+constexpr auto& getY(std::complex<T>& point) {
+	return reinterpret_cast<T(&)[2]>(point)[1];
+}
+template<typename T>
+constexpr auto getX(const std::complex<T>& point) {
+	return reinterpret_cast<const T(&)[2]>(point)[0];
+}
+template<typename T>
+constexpr auto getY(const std::complex<T>& point) {
+	return reinterpret_cast<const T(&)[2]>(point)[1];
+}
+
+template<typename T>
+constexpr std::pair<T,T> convert(const std::complex<T>& t) {
+	return {getX(t), getY(t)};
+}
+
+template<typename L, typename R>
+constexpr std::complex<typename std::common_type<L, R>::type>
+convert(const std::pair<L,R>& t) {
+	return {getX(t), getY(t)};
+}
+
+
+// allow printing colletions as:
+// join(begin(), end(), [sep])
+namespace details {
+	template<typename C>
+	class TempWriter final {
+		C callable;
+	public:
+		constexpr TempWriter(C callable_) : callable(callable_) {}
+
+		TempWriter(const TempWriter&) = delete;
+		TempWriter(TempWriter&&) = delete;
+		TempWriter& operator=(const TempWriter&) = delete;
+		TempWriter& operator=(TempWriter&&) = delete;
+
+		std::string asString() const {
+			std::ostringstream os;
+			OutputStream tmp(os);
+			os << *this;
+			return os.str();
+		}
+
+		explicit operator std::string() const {
+			return asString();
+		}
+
+		friend std::ostream& operator<<(std::ostream& os, const TempWriter<C>& writer) {
+			writer.callable(os);
+			return os;
+		}
+	};
+
+	template<typename Tuple, std::size_t... Is>
+	std::ostream& print(std::ostream& os, const Tuple& t, std::index_sequence<Is...>, char separator = DEFAULT_SEPARATOR) {
+		static_assert(std::tuple_size_v<Tuple> == sizeof...(Is));
+		return ((os << (Is == 0 ? std::string_view() : std::string_view(&separator, 1)) << std::get<Is>(t)), ...);
+	}
+
+	template<typename T>
+	std::ostream& print(std::ostream& os, T first, T last, char separator = DEFAULT_SEPARATOR) {
+		for (auto it = first; it != last; it++) {
+			if (it != first) os << separator;
+			os << *it;
+		}
+		return os;
+	}
+
+	struct JoinListCaptcha {
+		std::function<void(std::ostream&, char separator)> callable;
+
+		template<typename... Args>
+		JoinListCaptcha(Args&&... args)
+			: callable([t = std::forward_as_tuple(args...)](std::ostream& os, char separator) {
+			print(os, t, std::index_sequence_for<Args...>(), separator);
+		}) {}
+	};
+}
+
+template<typename T>
+constexpr auto join(T first, T last, char separator = DEFAULT_SEPARATOR) {
+	return details::TempWriter([=](std::ostream& os) {
+		details::print(os, first, last, separator);
+	});
+}
+
+template<typename CR,
+         typename = std::enable_if_t<details::IsContainer<CR>{}>,
+         typename = std::enable_if_t<!details::IsStdArray<std::remove_cv_t<std::remove_reference_t<CR>>>{}>>
+constexpr auto join(CR&& c, char separator = DEFAULT_SEPARATOR) {
+	if constexpr(std::is_rvalue_reference_v<CR&&>) {
+		if constexpr (std::is_array_v<CR>) {
+			return details::TempWriter([c, separator](std::ostream& os) {
+				details::print(os, std::begin(c), std::end(c), separator);
+			});
+		} else {
+			return details::TempWriter([c = std::move(c), separator](std::ostream& os) {
+				details::print(os, std::begin(c), std::end(c), separator);
+			});
+		}
+	} else {
+		return join(std::begin(c), std::end(c), separator);
+	}
+}
+
+template<typename CR, std::size_t N = std::tuple_size<std::decay_t<CR>>::value>
+constexpr auto join(CR&& c, char separator = DEFAULT_SEPARATOR) {
+	if constexpr(std::is_rvalue_reference_v<CR&&>) {
+		return details::TempWriter([c = std::move(c), separator](std::ostream& os) {
+			details::print(os, c, std::make_index_sequence<N>{}, separator);
+		});
+	} else {
+		return details::TempWriter([&c, separator](std::ostream& os) {
+			details::print(os, c, std::make_index_sequence<N>{}, separator);
+		});
+	}
+}
+
+template<typename T, std::size_t N,
+         typename = std::enable_if_t<std::is_same_v<std::remove_cv_t<T>, char>>>
+constexpr auto join(T (&c)[N], char separator = DEFAULT_SEPARATOR) {
+	static_assert(N > 0, "c-strings should be null terminated!");
+	return join(std::begin(c), std::prev(std::end(c)), separator);
+}
+
+template<typename T, std::size_t N,
+         typename = std::enable_if_t<std::is_same_v<std::remove_cv_t<T>, char>>>
+constexpr auto join(T (&&c)[N], char separator = DEFAULT_SEPARATOR) {
+	static_assert(N > 0, "c-strings should be null terminated!");
+	return details::TempWriter([c, separator](std::ostream& os) {
+		details::print(os, std::begin(c), std::prev(std::end(c)), separator);
+	});
+}
+
+template<typename T,
+         typename = std::enable_if_t<!std::is_array<T>{}>,
+         typename = std::enable_if_t<!details::IsContainer<T>{}>,
+         typename = std::enable_if_t<!details::IsTupleLike<T>{}>>
+constexpr auto join(const T& t, char separator = DEFAULT_SEPARATOR) = delete;
+
+auto join(details::JoinListCaptcha c, char separator = DEFAULT_SEPARATOR) {
+	return details::TempWriter([c = std::move(c), separator](std::ostream& os) {
+		c.callable(os, separator);
+	});
+}
+
+template<typename L, typename R>
+std::ostream& operator<<(std::ostream& os, const std::pair<L, R>& t) {
+	return os << t.first << DEFAULT_SEPARATOR << t.second;
+}
+
+template<typename... Args>
+std::ostream& operator<<(std::ostream& os, const std::tuple<Args...>& t) {
+	return details::print(os, t, std::index_sequence_for<Args...>());
+}
+
+
+namespace details {
+	// Test two numbers for equality, accounting for +/-INF, NaN and precision.
+	// Real expected is considered the reference value for relative error.
+	bool floatEqual(Real given, Real expected, Real floatAbsTol, Real floatRelTol) {
+		judgeAssert<std::domain_error>(floatAbsTol >= 0.0_real, "floatAbsTol must be positive!");
+		judgeAssert<std::domain_error>(floatRelTol >= 0.0_real, "floatRelTol must be positive!");
+		// Finite values are compared with some tolerance
+		if (std::isfinite(given) and std::isfinite(expected)) {
+			Real absDiff = fabsl(given-expected);
+			Real relDiff = fabsl((given-expected)/expected);
+			return absDiff <= floatAbsTol or relDiff <= floatRelTol;
+		}
+		// NaN is equal to NaN (-NaN is also euqal NaN)
+		if (std::isnan(given) and std::isnan(expected)) {
+			return true;
+		}
+		// Infinite values are equal if their sign matches
+		if (std::isinf(given) and std::isinf(expected)) {
+			return std::signbit(given) == std::signbit(expected);
+		}
+		// Values in different classes are always different.
+		return false;
+	}
+
+	constexpr bool stringEqual(std::string_view a, std::string_view b, bool caseSensitive) {
+		if (a.size() != b.size()) {
+			return false;
+		} else if (caseSensitive) {
+			return a == b;
+		} else {
+			for (std::size_t i = 0; i < a.size(); i++) {
+				if (toDefaultCase(a[i]) != toDefaultCase(b[i])) {
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+
+	constexpr bool isToken(std::string_view a) {
+		for (char c : a) {
+			if (c == ' ') return false;
+			if (c == '\n') return false;
+			if (c == '\r') return false;
+			if (c == '\t') return false;
+			if (c == '\f') return false;
+			if (c == '\v') return false;
+		}
+		return true;
+	}
+
+	template<typename T>
+	bool parse(std::string_view s, T& res) {
+		auto begin = s.data();
+		auto end = s.data() + s.size();
+		auto [ptr, ec] = std::from_chars(begin, end, res);
+		return ptr == end and ec == std::errc();
+	}
+	#ifdef DOUBLE_FALLBACK
+	template<>
+	bool parse(std::string_view s, Real& res) {
+		try {
+			std::size_t pos = 0;
+			res = std::stold(std::string(s), &pos);
+			return pos == s.size();
+		} catch(...) {
+			return false;
+		}
+	}
+	#endif
+
+}
+
+
+//============================================================================//
+// Math                                                                       //
+//============================================================================//
+namespace details {
+	constexpr std::array<Integer, 32> TRIAL_PRIMES = {
+		 2,  3,  5,  7, 11, 13, 17, 19, 23,  29,  31,  37,  41,  43,  47,  53,
+		59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131,
+	};
+	constexpr std::array<UInteger, 7> MILLER_RABIN_WITNESS = {2, 325, 9375, 28178, 450775, 9780504, 1795265022};
+
+	// these operations are safe as long as the value would fit in Integer
+	constexpr UInteger mulMod(UInteger lhs, UInteger rhs, UInteger mod) {
+		UInteger res = 0;
+		while (rhs > 0) {
+			if (rhs & 1) res = (lhs + res) % mod;
+			lhs = (lhs + lhs) % mod;
+			rhs /= 2;
+		}
+		return res;
+	}
+
+	constexpr UInteger powMod(UInteger base, UInteger exp, UInteger mod) {
+		UInteger res = 1;
+		if (mod <= 0x1'0000'0000) {
+			while (exp > 0) {
+				if (exp & 1) res = (base * res) % mod;
+				base = (base * base) % mod;
+				exp /= 2;
+			}
+		} else {
+			while (exp > 0) {
+				if (exp & 1) res = mulMod(base, res, mod);
+				base = mulMod(base, base, mod);
+				exp /= 2;
+			}
+		}
+		return res;
+	}
+
+	constexpr Integer extendedEuclid(Integer a, Integer b, Integer& x, Integer& y) {
+		if (a == 0) {
+			x = 0;
+			y = 1;
+			return b;
+		} else {
+			Integer x1 = 0;
+			Integer y1 = 0;
+			Integer d = extendedEuclid(b % a, a, x1, y1);
+			x = y1 - (b / a) * x1;
+			y = x1;
+			return d;
+		}
+	}
+}
+
+constexpr Integer applyMod(Integer x, Integer mod) {
+	x %= mod;
+	if (x < 0) x += mod;
+	return x;
+}
+
+constexpr Integer mulMod(Integer lhs, Integer rhs, Integer mod) {
+	judgeAssert<std::domain_error>(mod > 0, "mod must be positive!");
+	UInteger ul = static_cast<UInteger>(applyMod(lhs, mod));
+	UInteger ur = static_cast<UInteger>(applyMod(rhs, mod));
+	UInteger um = static_cast<UInteger>(mod);
+	return static_cast<Integer>(details::mulMod(ul, ur, um));
+}
+
+constexpr Integer powMod(Integer base, Integer exp, Integer mod) {
+	judgeAssert<std::domain_error>(mod > 0, "mod must be positive!");
+	judgeAssert<std::domain_error>(exp >= 0, "exp must be non negative!");
+	UInteger ub = static_cast<UInteger>(applyMod(base, mod));
+	UInteger ue = static_cast<UInteger>(exp);
+	UInteger um = static_cast<UInteger>(mod);
+	return static_cast<Integer>(details::powMod(ub, ue, um));
+}
+
+constexpr Integer multInv(Integer n, Integer mod) {
+	judgeAssert<std::domain_error>(mod > 0, "mod must be positive!");
+	Integer x = 0;
+	Integer y = 0;
+	Integer g = details::extendedEuclid(n, mod, x, y);
+	if (g != 1) return -1;
+	else return applyMod(x, mod);
+}
+
+constexpr bool isPrime(Integer n) {
+	for (Integer p : details::TRIAL_PRIMES) {
+		if (n <= p or n % p == 0) {
+			return n == p;
+		}
+	}
+	if (details::powMod(details::TRIAL_PRIMES.back() + 1, n - 1, n) != 1) {
+		return false;
+	}
+	UInteger un = static_cast<UInteger>(n);
+	UInteger d = un - 1;
+	UInteger j = 0;
+	while (d % 2 == 0) {
+		d /= 2;
+		j++;
+	}
+	for (UInteger a : details::MILLER_RABIN_WITNESS) {
+		if (a % un == 0) continue;
+		UInteger v = details::powMod(a, d, un);
+		if (v == 1 or v == un - 1) continue;
+		for (UInteger i = 1; i < j; i++) {
+			v = details::mulMod(v, v, un);
+			if (v == un - 1 or v <= 1) break;
+		}
+		if (v != un - 1) return false;
+	}
+	return true;
+}
+
+std::vector<Integer> primes(Integer lower, Integer upper) {
+	judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
+	lower = std::max(2_int, lower);
+	upper = std::max(2_int, upper);
+	Integer count = upper - lower;
+	Integer cache = (count + 1) / 2;
+
+	std::vector<bool> notPrime(cache), notPrimeSegment(cache);
+	for (Integer i = 3; i < count; i += 2) {
+		if (!notPrime[i / 2]) {
+			for (Integer j = i * i; j < count; j += 2 * i) {
+				notPrime[j / 2] = true;
+			}
+			Integer lowest = lower - (lower % (2*i)) + i;
+			if (lowest < lower) lowest += 2*i;
+			for (Integer j = std::max(i * i, lowest); j < upper; j += 2 * i) {
+				notPrimeSegment[(j - lower) / 2] = true;
+			}
+		}
+	}
+	std::vector<Integer> res;
+	if (lower <= 2 and 2 < upper) res.push_back(2);
+	for (Integer i = lower | 1; i < upper; i += 2) {
+		if (!notPrimeSegment[(i - lower) / 2] and (i < count*count or isPrime(i))) {
+			res.push_back(i);
+		}
+	}
+	return res;
+}
+
+std::vector<Integer> primes(Integer upper) {
+	return primes(0, upper);
+}
+
+template<typename T>
+constexpr Integer sign(T x) {
+	return (T(0) < x) - (x < T(0));
+}
+
+
+//============================================================================//
+// Geometry (this is just for utility stuff...)                               //
+//============================================================================//
+namespace details {
+	template<typename Point>
+	constexpr Integer cross(Point a, Point b) {
+		return getX(a) * getY(b) - getY(a) * getX(b);
+	}
+	template<typename Point>
+	constexpr Integer cross(Point p, Point a, Point b) {
+		getX(a) -= getX(p);
+		getY(a) -= getY(p);
+		getX(b) -= getX(p);
+		getY(b) -= getY(p);
+		return cross(a, b);
+	}
+
+	template<typename Point>
+	constexpr bool left(Point p) {
+		return getX(p) == 0 ? getY(p) < 0 : getX(p) < 0;
+	}
+
+	template<typename Point>
+	void cyclicSort(std::vector<Point>& in) {
+		std::sort(in.begin(), in.end(), [](const Point& a, const Point& b){
+			return left(a) != left(b) ? left(a) > left(b) : cross(a, b) > 0;
+		});
+	}
+}
+
+
+template<typename RandomIt>
+constexpr bool areConvex(RandomIt first, RandomIt last) {
+	std::size_t n = 0;
+	for (auto it = first; it != last; it++) {
+		n++;
+		judgeAssert(std::abs(getX(*it)) <= 0x3FFF'FFFF, "coordinates too large!");
+		judgeAssert(std::abs(getY(*it)) <= 0x3FFF'FFFF, "coordinates too large!");
+	}
+	if (n < 3) return false;
+	bool hasArea = false;
+	for (std::size_t i = 0; i < n; i++) {
+		if (first[i] == first[(i+1) % n]) return false;
+		if (details::cross(first[0], first[i], first[(i+1) % n]) < 0) return false;
+		if (details::cross(first[i], first[(i+1) % n], first[(i+2) % n]) < 0) return false;
+		hasArea |= details::cross(first[i], first[(i+1) % n], first[(i+2) % n]) != 0;
+	}
+	return hasArea;
+}
+template<typename C>
+constexpr bool areConvex(const C& c) {
+	return areConvex(std::begin(c), std::end(c));
+}
+
+template<typename RandomIt>
+constexpr bool areStrictlyConvex(RandomIt first, RandomIt last) {
+	if (!areConvex(first, last)) return false;
+	std::size_t n = std::distance(first, last);
+	for (std::size_t i = 0; i < n; i++) {
+		if (details::cross(first[i], first[(i+1) % n], first[(i+2) % n]) == 0) return false;
+	}
+	return true;
+}
+template<typename C>
+constexpr bool areStrictlyConvex(const C& c) {
+	return areStrictlyConvex(std::begin(c), std::end(c));
+}
+
+//============================================================================//
+// Random                                                                     //
+//============================================================================//
+namespace Random {
+	// You should not rely on the implementation in details!
+	// Especially you should never use randomNumberGenerator on your own. there is no function in
+	// c++ which uses a random engine and is not implementation defined.
+	namespace details {
+		constexpr Real PI = 3.141592653589793238462643383279502884_real;
+		constexpr Integer PRIME_TRIALS = 4*1600;
+
+		RandomEngine randomNumberGenerator(DEFAULT_SEED);
+		static_assert(RandomEngine::max() == 0xFFFF'FFFF'FFFF'FFFF_uint, "Random Engine should produce 64bit of randomness");
+		static_assert(RandomEngine::min() == 0_uint, "Random Engine should produce 64bit of randomness");
+
+		constexpr UInteger bitMask(UInteger x) {
+			static_assert(sizeof(UInteger) == 8, "bitMask requires 8byte UInteger!");
+			x |= x >> 1;
+			x |= x >> 2;
+			x |= x >> 4;
+			x |= x >> 8;
+			x |= x >> 16;
+			x |= x >> 32;
+			return x;
+		}
+
+		Real logFac(Integer n) {
+			if (n < 16) {
+				Integer fac = 1;
+				for (Integer i = 2; i <= n; i++) fac *= i;
+				return std::log(fac);
+			} else {
+				// https://mathworld.wolfram.com/StirlingsSeries.html
+				return 0.5_real * std::log(2.0_real * PI)
+				     + (n + 0.5_real) * std::log(n + 1.0_real)
+				     - (n + 1)
+				     + 1.0_real / (12 * (n + 1.0_real))
+				     - 1.0_real / (360 * std::pow(n + 1.0_real, 3))
+				     + 1.0_real / (1260 * std::pow(n + 1.0_real, 5))
+				     - 1.0_real / (1680 * std::pow(n + 1.0_real, 7));
+				     //+ 1.0_real / (1188 * std::pow(n + 1.0_real, 9));
+			}
+		}
+	}
+
+	void seed(UInteger seed) {
+		details::randomNumberGenerator.seed(seed);
+	}
+
+	//========================================================================//
+	// Distributions and generators                                           //
+	//========================================================================//
+	bool bit() {// in {0, 1}
+		return std::bitset<64>(details::randomNumberGenerator()).count() & 1;
+	}
+
+	Integer integer() {// in [-2^63, 2^63)
+		return static_cast<Integer>(details::randomNumberGenerator());
+	}
+	Integer integer(Integer lower, Integer upper) {// in [lower, upper)
+		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
+		UInteger ul = static_cast<UInteger>(lower);
+		UInteger uu = static_cast<UInteger>(upper);
+		UInteger mask = details::bitMask(uu - ul - 1_uint);
+		UInteger res;
+		do {
+			res = details::randomNumberGenerator() & mask;
+		} while (res >= uu - ul);
+		return static_cast<Integer>(res + ul);
+	}
+	Integer integer(Integer upper) {// in [0, upper)
+		return integer(0, upper);
+	}
+
+	Real real() {// in [0, 1)
+		while (true) {
+			Real res = details::randomNumberGenerator() / 0x1.0p64_real;
+			res += details::randomNumberGenerator() / 0x1.0p128_real;
+			if (0.0_real <= res and res < 1.0_real) return res;
+		}
+	}
+	Real real(Real upper) {// in [0, upper)
+		judgeAssert<std::domain_error>(std::isfinite(upper), "Upper must be finite!");
+		judgeAssert<std::invalid_argument>(upper > 0.0_real, "Upper must be greater than zero!");
+		while (true) {
+			Real res = real() * upper;
+			if (0.0_real <= res and res < upper) return res;
+		}
+	}
+	Real real(Real lower, Real upper) {// in [lower, upper)
+		judgeAssert<std::domain_error>(std::isfinite(lower), "Lower must be finite!");
+		judgeAssert<std::domain_error>(std::isfinite(upper), "Upper must be finite!");
+		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
+		while (true) {
+			Real x = real();
+			Real res = lower * (1.0_real - x) + upper * x;
+			if (lower <= res and res < upper) return res;
+		}
+	}
+
+	Real normal(Real mean, Real stddev) {// theoretically in (-inf, inf)
+		judgeAssert<std::domain_error>(stddev > 0.0_real, "standard deviation must be positive!");
+		Real u1 = real();
+		Real u2 = real();
+		Real res = std::sqrt(-2.0_real * std::log(u1)) * std::cos(2.0_real * details::PI * u2);
+		return std::sqrt(stddev) * res + mean;
+	}
+	Real normal(Real lower, Real upper, Real mean, Real stddev) {// in [lower, upper)
+		judgeAssert<std::domain_error>(std::isfinite(lower), "Lower must be finite!");
+		judgeAssert<std::domain_error>(std::isfinite(upper), "Upper must be finite!");
+		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
+		judgeAssert<std::domain_error>(stddev > 0.0_real, "standard deviation must be positive!");
+		Real res;
+		while (true) {
+			Real u1 = real();
+			Real u2 = real();
+			// Box-Muller-Methode
+			// https://en.wikipedia.org/wiki/Box%E2%80%93Muller_transform
+			res = std::sqrt(-2.0_real * std::log(u1)) * std::cos(2.0_real * details::PI * u2);
+			res = std::sqrt(stddev) * res + mean;
+			if (lower <= res and res < upper) return res;
+			res = std::sqrt(-2.0_real * std::log(u1)) * std::sin(2.0_real * details::PI * u2);
+			res = std::sqrt(stddev) * res + mean;
+			if (lower <= res and res < upper) return res;
+		}
+	}
+
+	Real exponential(Real lambda) {// theoretically in [0, inf)
+		judgeAssert<std::domain_error>(lambda > 0.0_real, "lambda must be positive!");
+		return -std::log(real()) / lambda;
+	}
+	Real exponential(Real lower, Real upper, Real lambda) {// in [lower, upper)
+		judgeAssert<std::domain_error>(std::isfinite(lower), "Lower must be finite!");
+		judgeAssert<std::domain_error>(std::isfinite(upper), "Upper must be finite!");
+		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
+		judgeAssert<std::domain_error>(lambda > 0.0_real, "lambda must be positive!");
+		while (true) {
+			Real res = lower - std::log(real()) / lambda;
+			if (res < upper) return res;
+		}
+	}
+
+	Integer geometric(Real p) {// theoretically in [0, inf)
+		judgeAssert<std::domain_error>(0.0_real <= p and p < 1.0_real, "p must be in [0,1)!");
+		return static_cast<Integer>(std::floor(std::log(real()) / std::log1p(-p)));
+	}
+	Integer geometric(Integer lower, Integer upper, Real p) {// in [lower, upper)
+		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
+		judgeAssert<std::domain_error>(0.0_real <= p and p < 1.0_real, "p must be in [0,1)!");
+		while (true) {
+			// https://en.wikipedia.org/wiki/Geometric_distribution
+			// "The exponential distribution is the continuous analogue of the geometric distribution[...]"
+			Integer res = lower + static_cast<Integer>(std::floor(std::log(real()) / std::log1p(-p)));
+			if (res < upper) return res;
+		}
+	}
+
+	Integer binomial(Integer n, Real p) {// in [0, n]
+		judgeAssert<std::domain_error>(n >= 0, "n must be non negative!");
+		judgeAssert<std::domain_error>(0.0_real <= p and p < 1.0_real, "p must be in [0,1)!");
+		bool swap = p > 0.5_real;
+		p = std::min(p, 1.0_real - p);
+		if (p*n <= 16.0_real) {
+			// inverse sampling
+			Real q = 1.0_real - p;
+			Real s = p / q;
+			Real a = (n + 1) * s;
+			Real r = std::pow(q, n);
+			Real u = real();
+			Integer res = 0;
+			while (u > r) {
+				u -= r;
+				res++;
+				r *= (a / res) - s;
+			}
+			return swap ? n - res : res;
+		} else {
+			// BTRS algorithm
+			// https://epub.wu.ac.at/1242/1/document.pdf
+			Real q = 1.0_real - p;
+			Real spq = sqrt(n * p * q);
+			Real b = 1.15_real + 2.53_real * spq;
+			Real a = -0.0873_real + 0.0248_real * b + 0.01_real * p;
+			Real c = n * p + 0.5_real;
+			Real vr = 0.92_real - 4.2_real / b;
+			do {
+				Real v, us;
+				Integer res;
+				do {
+					v = real();
+					Real u = real() - 0.5_real;
+					us = 0.5_real - std::abs(u);
+					res = std::floor((2.0_real * a / us + b) * u + c);
+				} while (res < 0 or res > n);
+				if (us >= 0.07_real and v <= vr) {
+					return swap ? n - res : res;
+				}
+				Real alpha = (2.83_real + 5.1_real / b) * spq;
+				Real lpq = std::log(p / q);
+				Integer m = std::floor((n + 1) * p);
+				Real h = details::logFac(m) + details::logFac(n - m);
+				v += alpha / (a / (us * us) + b);
+				if (v <= h - details::logFac(res) - details::logFac(n - res) + (res - m) * lpq) {
+					return swap ? n - res : res;
+				}
+			} while (true);
+		}
+	}
+	Integer binomial(Integer lower, Integer upper, Integer n, Real p) { // in [lower, upper)
+		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
+		while (true) {
+			Integer res = binomial(n, p);
+			if (lower <= res and res < upper) return res;
+		}
+	}
+
+	Integer prime(Integer lower, Integer upper) {// in [lower, upper)
+		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
+		Integer sampleL = lower <= 2 ? 0 : (lower >> 1);
+		Integer sampleU = upper >> 1;
+		if (sampleL < sampleU) {
+			for (Integer i = 0; i < details::PRIME_TRIALS and i < 4 * (upper - lower); i++) {
+				Integer res = std::max(2_int, 2*integer(sampleL, sampleU) | 1);
+				if (isPrime(res)) return res;
+			}
+		}
+		judgeAssert<std::domain_error>(false, "range contains no primes?");
+		return -1;
+	}
+	Integer prime(Integer upper) {// in [0, upper)
+		return prime(0, upper);
+	}
+
+
+	//========================================================================//
+	// utility                                                                //
+	//========================================================================//
+	template<typename RandomIt>
+	typename std::iterator_traits<RandomIt>::reference
+	select(RandomIt first, RandomIt last) {
+		judgeAssert<std::invalid_argument>(first < last, "Lower must be less than upper!");
+		return first[integer(0, last - first)];
+	}
+
+	template<typename C>
+	typename C::value_type select(const C& c) {
+		return select(std::begin(c), std::end(c));
+	}
+
+	template<typename C>
+	typename C::reference select(C& c) {
+		return select(std::begin(c), std::end(c));
+	}
+
+	template<typename T, std::size_t N>
+	T select(const T(&c)[N]) {
+		return select(std::begin(c), std::end(c));
+	}
+
+	template<typename T, std::size_t N>
+	T& select(T(&c)[N]) {
+		return select(std::begin(c), std::end(c));
+	}
+
+	template<typename T>
+	T select(const std::pair<T, T>& t) {
+		return bit() ? getX(t) : getY(t);
+	}
+
+	template<typename T>
+	T select(const std::complex<T>& t) {
+		return bit() ? getX(t) : getY(t);
+	}
+
+	template<typename RandomIt>
+	void shuffle(RandomIt first, RandomIt last) {
+		using std::swap;
+		auto n = last - first;
+		for (auto i = n-1; i > 0; --i) {
+			swap(first[i], first[integer(0, i+1)]);
+		}
+	}
+
+	template<typename C>
+	void shuffle(C& c) {
+		return shuffle(std::begin(c), std::end(c));
+	}
+
+	template<typename T>
+	void shuffle(std::pair<T, T>& t) {
+		using std::swap;
+		if (bit()) swap(getX(t), getY(t));
+	}
+
+	template<typename T>
+	void shuffle(std::complex<T>& t) {
+		using std::swap;
+		if (bit()) swap(getX(t), getY(t));
+	}
+
+	//========================================================================//
+	// sequences                                                              //
+	//========================================================================//
+	std::vector<Integer> distinct(Integer count, Integer lower, Integer upper) {
+		judgeAssert<std::invalid_argument>(count >= 0, "count must be non negative!");
+		judgeAssert<std::invalid_argument>(lower + count <= upper, "Lower must be less than upper + count!");
+		std::map<Integer, Integer> used;
+		std::vector<Integer> res;
+		for (Integer i = 0; i < count; i++) {
+			Integer x = integer(lower, upper - i);
+			auto it = used.find(x);
+			if (it != used.end()) res.push_back(it->second);
+			else res.push_back(x);
+			it = used.find(upper - i - 1);
+			if (it != used.end()) used[x] = it->second;
+			else used[x] = upper - i - 1;
+		}
+		return res;
+	}
+	std::vector<Integer> distinct(Integer count, Integer upper) {
+		return distinct(count, 0, upper);
+	}
+
+	std::vector<Integer> perm(Integer count, Integer offset = 0) {
+		return distinct(count, offset, offset+count);
+	}
+
+	std::vector<Integer> multiple(Integer count, Integer lower, Integer upper) {
+		std::vector<Integer> res(count);
+		for (Integer& x : res) x = integer(lower, upper);
+		return res;
+	}
+	std::vector<Integer> multiple(Integer count, Integer upper) {
+		return multiple(count, 0, upper);
+	}
+
+	std::vector<Integer> increasing(Integer count, Integer lower, Integer upper) {
+		std::vector<Integer> res = distinct(count, lower, upper);
+		std::sort(res.begin(), res.end(), std::less<Integer>());
+		return res;
+	}
+	std::vector<Integer> increasing(Integer count, Integer upper) {
+		return increasing(count, 0, upper);
+	}
+
+	std::vector<Integer> decreasing(Integer count, Integer lower, Integer upper) {
+		std::vector<Integer> res = distinct(count, lower, upper);
+		std::sort(res.begin(), res.end(), std::greater<Integer>());
+		return res;
+	}
+	std::vector<Integer> decreasing(Integer count, Integer upper) {
+		return decreasing(count, 0, upper);
+	}
+
+	std::vector<Integer> nonDecreasing(Integer count, Integer lower, Integer upper) {
+		std::vector<Integer> res = multiple(count, lower, upper);
+		std::sort(res.begin(), res.end(), std::less<Integer>());
+		return res;
+	}
+	std::vector<Integer> nonDecreasing(Integer count, Integer upper) {
+		return nonDecreasing(count, 0, upper);
+	}
+
+	std::vector<Integer> nonIncreasing(Integer count, Integer lower, Integer upper) {
+		std::vector<Integer> res = multiple(count, lower, upper);
+		std::sort(res.begin(), res.end(), std::greater<Integer>());
+		return res;
+	}
+	std::vector<Integer> nonIncreasing(Integer count, Integer upper) {
+		return nonIncreasing(count, 0, upper);
+	}
+
+	std::vector<Integer> partition(Integer n, Integer k, Integer min = 1) {
+		judgeAssert<std::invalid_argument>(n > 0, "n must be positive!");
+		judgeAssert<std::invalid_argument>(k > 0, "k must be positive!");
+		judgeAssert<std::invalid_argument>(min <= 0 or k <= n / min, "k too large!");
+		n -= (min - 1) * k;
+		std::vector<Integer> res = increasing(k-1, 1, n);
+		res.push_back(n);
+		for (Integer i = 0, last = 0; i < k; i++) {
+			res[i] -= last;
+			last += res[i];
+			res[i] += min - 1;
+		}
+		return res;
+	}
+
+	std::string bracketSequence(Integer n) {//proper bracket sequence of length 2*n
+		judgeAssert<std::invalid_argument>(n <= 0x7FFF'FFFF, "n too large!");
+		std::string res(2 * n, '(');
+		for (Integer i = 0, diff = 0; i < 2 * n; i++) {
+			Integer opened = (i + diff) / 2;
+			if (integer((2 * n - i) * (diff + 1)) < (n - opened) * (diff + 2)) {
+				diff++;
+			} else {
+				res[i] = ')';
+				diff--;
+			}
+		}
+		return res;
+	}
+
+	//========================================================================//
+	// geometry                                                               //
+	//========================================================================//
+	template<typename Point = std::pair<Integer, Integer>>
+	std::vector<Point> convex(Integer n, Integer dim) {
+		judgeAssert<std::invalid_argument>(dim <= 0x3FFF'FFFF, "dim too large!");
+		judgeAssert<std::invalid_argument>(dim > 0, "dim must be positive!");
+		judgeAssert<std::invalid_argument>(n <= 8*dim - 8, "dim too small!");
+		judgeAssert<std::invalid_argument>(n >= 3, "n too small!");
+
+		while (true) {
+			Integer left = 1 + binomial(n - 2, 0.5);
+			Integer down = 1 + binomial(n - 2, 0.5);
+			auto x = partition(2 * dim - 2, left, 0);
+			auto y = partition(2 * dim - 2, down, 0);
+			for (auto& z : x) z = -z;
+			for (auto& z : y) z = -z;
+			append(x, partition(2 * dim - 2, n - left, 0));
+			append(y, partition(2 * dim - 2, n - down, 0));
+			auto itX = std::partition(x.begin(), x.end(), [](Integer z){return z == 0;});
+			auto itY = std::partition(y.begin(), y.end(), [](Integer z){return z != 0;});
+			if (std::distance(x.begin(), itX) + std::distance(itY, y.end()) > n) continue;
+			shuffle(itX, x.end());
+			if (itX != x.begin()) shuffle(y.begin(), itY);
+
+			std::vector<Point> dirs(n);
+			for (Integer i = 0; i < n; i++) {
+				dirs[i] = {x[i], y[i]};
+			}
+			::details::cyclicSort(dirs);
+
+			std::vector<Point> res = {{0, 0}};
+			Integer maxX = 0;
+			Integer maxY = 0;
+			for (auto dir : dirs) {
+				Point tmp = res.back();
+				getX(tmp) += getX(dir);
+				getY(tmp) += getY(dir);
+				maxX = std::max(maxX, getX(tmp));
+				maxY = std::max(maxY, getY(tmp));
+				res.push_back(tmp);
+			}
+			res.pop_back();
+			for (auto& point : res) {
+				getX(point) += dim - 1 - maxX;
+				getY(point) += dim - 1 - maxY;
+			}
+			return res;
+		}
+	}
+
+} // namespace Random
+
+
+//============================================================================//
+// args parser                                                                //
+//============================================================================//
+class ParamaterBase {
+	friend class Command;
+	friend struct Paramater;
+
+	std::optional<std::string_view> token;
+
+	template<typename T>
+	T parse(std::string_view s) const {
+		T res = {};
+		judgeAssert<std::invalid_argument>(details::parse<T>(s, res), "Could not parse args");
+		return res;
+	}
+
+	ParamaterBase() {}
+	explicit ParamaterBase(std::string_view token_) : token(token_) {}
+
+public:
+	std::string asString() const {
+		return std::string(token.value());
+	}
+
+	std::string asString(std::string_view defaultValue) const {
+		return std::string(token.value_or(defaultValue));
+	}
+
+	Integer asInteger() const {
+		return parse<Integer>(token.value());
+	}
+
+	Integer asInteger(Integer defaultValue) const {
+		if (token) return asInteger();
+		return defaultValue;
+	}
+
+	Real asReal() const {
+		return parse<Real>(token.value());
+	}
+
+	Real asReal(Real defaultValue) const {
+		if (token) return asReal();
+		return defaultValue;
+	}
+};
+
+struct Paramater final : private ParamaterBase {
+	using ParamaterBase::ParamaterBase;
+	using ParamaterBase::asString;
+	using ParamaterBase::asInteger;
+	using ParamaterBase::asReal;
+
+	bool exists() const {
+		return token.has_value();
+	}
+
+	explicit operator bool() const {
+		return exists();
+	}
+};
+
+class Command final : private ParamaterBase {
+	const std::vector<std::string>& raw;
+	const Integer first, count;
+	const bool found;
+public:
+	explicit Command(const std::vector<std::string>& raw_) : raw(raw_), first(0), count(0), found(false) {}
+	explicit Command(const std::vector<std::string>& raw_, Integer first_, Integer count_)
+	                 : ParamaterBase(count_ == 0 ? ParamaterBase() : ParamaterBase(raw_[first_])), 
+	                   raw(raw_), first(first_), count(count_), found(true) {
+		judgeAssert<std::invalid_argument>(count >= 0, "Invalid command in args!");
+	}
+
+	bool exists() const {
+		return found;
+	}
+
+	explicit operator bool() const {
+		return exists();
+	}
+
+	Integer parameterCount() const {
+		return count;
+	}
+
+	Paramater operator[](Integer i) const {
+		if (i >= 0 and i < count) return Paramater(raw[first + i]);
+		return Paramater();
+	}
+
+	using ParamaterBase::asString;
+	using ParamaterBase::asInteger;
+	using ParamaterBase::asReal;
+
+	std::vector<std::string> asStrings() const {
+		std::vector<std::string> res;
+		std::transform(raw.begin() + first,
+		               raw.begin() + first + count,
+		               std::back_inserter(res), [](const std::string& value) {
+			return std::string(value);
+		});
+		return res;
+	}
+
+	std::vector<Integer> asIntegers() const {
+		std::vector<Integer> res;
+		std::transform(raw.begin() + first,
+		               raw.begin() + first + count,
+		               std::back_inserter(res), [this](const std::string& value) {
+			return parse<Integer>(value);
+		});
+		return res;
+	}
+
+	std::vector<Real> asReals() const {
+		std::vector<Real> res;
+		std::transform(raw.begin() + first,
+		               raw.begin() + first + count,
+		               std::back_inserter(res), [this](const std::string& value) {
+			return parse<Real>(value);
+		});
+		return res;
+	}
+
+};
+
+class CommandParser final {
+	std::vector<std::string> raw;
+	std::map<std::string_view, std::pair<Integer, Integer>> commands;
+	std::map<std::string_view, Integer> tokens;
+
+	bool isCommand(std::string_view s) {
+		return s.size() > 2 and s.substr(0, 2) == COMMAND_PREFIX;
+	}
+	void addCommand(std::string_view command, Integer first, Integer count = 0) {
+		judgeAssert<std::invalid_argument>(commands.count(command) == 0, "Duplcated command in args!");
+		commands.insert({command, {first, count}});
+	}
+
+public:
+	CommandParser() {}
+	explicit CommandParser(int argc, char** argv) {
+		raw.assign(argc, {});
+		std::string_view command = EMPTY_COMMAND;
+		Integer first = 0;
+		Integer count = 0;
+		for (int i = 0; i < argc; i++) {
+			raw[i] = std::string(argv[i]);
+			tokens.emplace(raw[i], i+1);
+			if (isCommand(raw[i])) {
+				addCommand(command, first, count);
+				command = raw[i];
+				first = i+1;
+				count = 0;
+			} else {
+				count++;
+			}
+		}
+		addCommand(command, first, count);
+	}
+	CommandParser(CommandParser&&) = default;
+	CommandParser& operator=(CommandParser&&) = default;
+
+	CommandParser(const CommandParser&) = delete;
+	CommandParser& operator=(const CommandParser&) = delete;
+
+	std::string_view operator[](Integer t) const {
+		judgeAssert<std::out_of_range>(t >= 0 and t < static_cast<Integer>(raw.size()), "Index out of args!");
+		return raw[t];
+	}
+	Command operator[](std::string_view command) const & {
+		judgeAssert<std::invalid_argument>(details::isToken(command), "command must not contain a space!");
+		auto it = commands.find(command);
+		if (it == commands.end()) return Command(raw);
+		return Command(raw, it->second.first, it->second.second);
+	}
+	Command getRaw(std::string_view command) const & {
+		judgeAssert<std::invalid_argument>(details::isToken(command), "command must not contain a space!");
+		auto it = tokens.find(command);
+		if (it == tokens.end()) return Command(raw);
+		return Command(raw, it->second, raw.size() - it->second);
+	}
+	Command getRaw() const & {
+		return Command(raw, 0, raw.size());
+	}
+};
+
+
+//============================================================================//
+// Constraints                                                                //
+//============================================================================//
+template<typename T>
+class Bounds final {
+	T min, max;				// range of seen values
+	T lower, upper;			// bounds for value
+	bool hadMin, hadMax;	// was value==lower/upper at some point
+public:
+	constexpr explicit Bounds(T lower_, T upper_, T value_) :
+	                          min(value_), max(value_),
+	                          lower(lower_), upper(upper_),
+	                          hadMin(false), hadMax(false) {
+		update(lower_, upper_, value_);
+	}
+
+	void update(T lower_, T upper_, T value_) {
+		min = std::min(min, value_);
+		max = std::max(max, value_);
+		lower = std::min(lower, lower_);
+		upper = std::max(upper, upper_);
+		if constexpr (std::is_same_v<T, Real>) {
+			hadMin |= details::floatEqual(value_, lower_, DEFAULT_EPS, DEFAULT_EPS);
+			hadMax |= details::floatEqual(value_, upper_, DEFAULT_EPS, DEFAULT_EPS);
+		} else {
+			hadMin |= value_ == lower_;
+			hadMax |= value_ == upper_;
+		}
+	}
+
+	void write(std::ostream& os) const {
+		os << hadMin << " " << hadMax << " ";
+		os << lower << " " << upper << " ";
+		os << min << " " << max;
+	}
+};
+
+namespace details {
+	//using typeIndex = std::type_index;
+	using typeIndex = void*;
+
+	template<typename T>
+	typeIndex getTypeIndex() {
+		//return std::type_index(type id(T));
+		static T* uniqueTypeIndex = NULL;
+		return &uniqueTypeIndex;
+	}
+}
+
+class Constraint final {
+	friend class ConstraintsLogger;
+	std::variant<
+		std::monostate,		// uninitialized
+		Bounds<Integer>,	// Integer or container bound
+		Bounds<Real>		// Real bound
+	> bound;
+	std::optional<details::typeIndex> type;
+
+	template<typename T, typename X = T>
+	void update(T lower, T upper, T value) {
+		if constexpr(std::is_integral_v<T>) {
+			upper--; // for BAPCtools the range is closed but we use half open ranges!
+		}
+		if (!type) {
+			type = details::getTypeIndex<X>();
+			bound = Bounds<T>(lower, upper, value);
+		}
+		judgeAssert<std::logic_error>(type == details::getTypeIndex<X>(), "Constraint changed Type!");
+		std::get<Bounds<T>>(bound).update(lower, upper, value);
+	}
+public:
+	Constraint() = default;
+	Constraint(Constraint&&) = default;
+	Constraint& operator=(Constraint&&) = default;
+
+	Constraint(const Constraint&) = delete;
+	Constraint& operator=(const Constraint&) = delete;
+
+	template<typename V, typename std::enable_if_t<std::is_integral_v<V>, bool> = true>
+	void log(Integer lower, Integer upper, V value) {
+		update<Integer>(lower, upper, value);
+	}
+
+	template<typename V, typename std::enable_if_t<std::is_floating_point_v<V>, bool> = true>
+	void log(Real lower, Real upper, V value) {
+		update<Real>(lower, upper, value);
+	}
+
+	template<typename C, typename std::enable_if_t<!std::is_arithmetic_v<C>, bool> = true>
+	void log(Integer lower, Integer upper, const C& container) {
+		update<Integer, C>(lower, upper, static_cast<Integer>(std::size(container)));
+	}
+};
+
+class ConstraintsLogger final {
+	std::optional<std::string> fileName;
+	std::map<std::string, std::size_t> byName;
+	std::vector<std::unique_ptr<Constraint>> constraints;
+public:
+	ConstraintsLogger() {}
+	explicit ConstraintsLogger(std::string_view fileName_) : fileName(fileName_) {}
+
+	ConstraintsLogger(ConstraintsLogger&&) = default;
+	ConstraintsLogger& operator=(ConstraintsLogger&&) = default;
+
+	ConstraintsLogger(const ConstraintsLogger&) = delete;
+	ConstraintsLogger& operator=(const ConstraintsLogger&) = delete;
+
+	Constraint& operator[](const std::string& name) & {
+		judgeAssert<std::invalid_argument>(details::isToken(name), "name must not contain a space!");
+		auto res = byName.try_emplace(name, constraints.size());
+		if (res.second) constraints.emplace_back(std::make_unique<Constraint>());
+		return *(constraints[res.first->second]);
+	}
+
+	void write() const {
+		if (!fileName) return;
+		std::ofstream os(*fileName);
+		os << std::noboolalpha;
+		os << std::fixed;
+		os << std::setprecision(DEFAULT_PRECISION);
+		for (auto& [name, id] : byName) {
+			const Constraint& c = *(constraints[id]);
+			if (c.type) {
+				os << "LocationNotSupported:??? " << name << " ";
+				if (c.bound.index() == 1) std::get<1>(c.bound).write(os);
+				if (c.bound.index() == 2) std::get<2>(c.bound).write(os);
+				os << std::endl;
+			}
+		}
+	}
+
+	~ConstraintsLogger() noexcept {
+		write();
+	}
+};
+
+//============================================================================//
+// custom input stream                                                        //
+//============================================================================//
+class InputStream final {
+	std::unique_ptr<std::ifstream> managed;
+	std::istream* in;
+	bool spaceSensitive, caseSensitive;
+	Verdict onFail;
+	Real floatAbsTol = DEFAULT_EPS;
+	Real floatRelTol = DEFAULT_EPS;
+
+	void init() {
+		if (spaceSensitive) *in >> std::noskipws;
+		else *in >> std::skipws;
+	}
+
+	void checkIn() {
+		judgeAssert<std::runtime_error>(in != nullptr, "InputStream is not initialized!");
+	}
+
+public:
+	InputStream() {}
+	explicit InputStream(std::filesystem::path path,
+	                     bool spaceSensitive_,
+	                     bool caseSensitive_,
+	                     Verdict onFail_,
+	                     Real floatAbsTol_ = DEFAULT_EPS,
+	                     Real floatRelTol_ = DEFAULT_EPS) :
+	                     managed(std::make_unique<std::ifstream>(path)),
+	                     in(managed.get()),
+	                     spaceSensitive(spaceSensitive_),
+	                     caseSensitive(caseSensitive_),
+	                     onFail(onFail_),
+	                     floatAbsTol(floatAbsTol_),
+	                     floatRelTol(floatRelTol_) {
+		judgeAssert<std::runtime_error>(managed->good(), "Could not open File: " + path.string());
+		init();
+	}
+	explicit InputStream(std::istream& in_,
+	                     bool spaceSensitive_,
+	                     bool caseSensitive_,
+	                     Verdict onFail_,
+	                     Real floatAbsTol_ = DEFAULT_EPS,
+	                     Real floatRelTol_ = DEFAULT_EPS) :
+	                     managed(),
+	                     in(&in_),
+	                     spaceSensitive(spaceSensitive_),
+	                     caseSensitive(caseSensitive_),
+	                     onFail(onFail_),
+	                     floatAbsTol(floatAbsTol_),
+	                     floatRelTol(floatRelTol_) {
+		init();
+	}
+
+	InputStream(InputStream&& other) = default;
+	InputStream& operator=(InputStream&& other) = default;
+
+	InputStream(const InputStream&) = delete;
+	InputStream& operator=(const InputStream&) = delete;
+
+	void eof() {
+		checkIn();
+		if (!spaceSensitive) *in >> std::ws;
+		if (in->peek() != std::char_traits<char>::eof()) {
+			ValidateBase::juryOut << "Missing EOF!";
+			fail();
+		}
+	}
+
+	void space() {
+		checkIn();
+		if (spaceSensitive and in->get() != std::char_traits<char>::to_int_type(' ')) {
+			ValidateBase::juryOut << "Missing space!";
+			fail();
+		}
+	}
+
+	void newline() {
+		checkIn();
+		if (spaceSensitive and in->get() != std::char_traits<char>::to_int_type('\n')) {
+			ValidateBase::juryOut << "Missing newline!";
+			fail();
+		}
+	}
+
+private:
+	inline void check(const std::string& token, const std::regex& pattern) {
+		if (!std::regex_match(token, pattern)) {
+			ValidateBase::juryOut << "Token: '" << token << "' does not match pattern!";
+			fail();
+		}
+	}
+
+	inline std::function<void()> checkSeparator(char separator) {
+		if (separator == ' ') return [this]() {space();};
+		if (separator == '\n') return [this]() {newline();};
+		judgeAssert<std::invalid_argument>(false, "Separator must be ' '  or '\\n'!");
+		return []() {};
+	}
+
+	template<typename T>
+	T parse(const std::string& s) {
+		T res = {};
+		if (!details::parse<T>(s, res)) {
+			ValidateBase::juryOut << "Could not parse token: " << s;
+			fail();
+		}
+		return res;
+	}
+
+public:
+	std::string string() {
+		checkIn();
+		if (spaceSensitive) {
+			if (!std::isgraph(in->peek())) {
+				ValidateBase::juryOut << "Invalid whitespace!";
+				fail();
+			}
+		}
+		std::string res;
+		*in >> res;
+		if (res.empty()) {
+			ValidateBase::juryOut << "Could not read token!";
+			fail();
+		}
+		if (!caseSensitive) toDefaultCase(res);
+		return res;
+	}
+
+	std::string string(Integer lower, Integer upper) {
+		std::string t = string();
+		Integer length = static_cast<Integer>(t.size());
+		if (length < lower or length >= upper) {
+			ValidateBase::juryOut << "String length " << length << " out of range [" << lower << ", " << upper << ")";
+			fail();
+		}
+		return t;
+	}
+
+	std::string string(Integer lower, Integer upper, Constraint& constraint) {
+		std::string res = string(lower, upper);
+		constraint.log(lower, upper, res);
+		return res;
+	}
+
+	std::string string(const std::regex& pattern) {
+		std::string t = string();
+		check(t, pattern);
+		return t;
+	}
+
+	std::string string(const std::regex& pattern, Integer lower, Integer upper) {
+		std::string t = string(lower, upper);
+		check(t, pattern);
+		return t;
+	}
+
+	std::string string(const std::regex& pattern, Integer lower, Integer upper, Constraint& constraint) {
+		std::string res = string(pattern, lower, upper);
+		constraint.log(lower, upper, res);
+		return res;
+	}
+
+	template<typename... Args>
+	std::vector<std::string> strings(Args... args, Integer count, char separator) {
+		auto sepCall = checkSeparator(separator);
+		std::vector<std::string> res(count);
+		for (Integer i = 0; i < count; i++) {
+			res[i] = string(args...);
+			if (i + 1 < count) sepCall();
+		}
+		return res;
+	}
+
+	std::vector<std::string> strings(Integer count, char separator = DEFAULT_SEPARATOR) {
+		return strings<>(count, separator);
+	}
+
+	std::vector<std::string> strings(Integer lower, Integer upper, 
+	                                 Integer count, char separator = DEFAULT_SEPARATOR) {
+		return strings<Integer, Integer>(lower, upper, count, separator);
+	}
+
+	std::vector<std::string> strings(Integer lower, Integer upper, Constraint& constraint,
+	                                 Integer count, char separator = DEFAULT_SEPARATOR) {
+		return strings<Integer, Integer, Constraint&>(lower, upper, constraint, count, separator);
+	}
+
+	std::vector<std::string> strings(const std::regex& pattern,
+	                                 Integer count, char separator = DEFAULT_SEPARATOR) {
+		return strings<const std::regex&>(pattern, count, separator);
+	}
+
+	std::vector<std::string> strings(const std::regex& pattern, Integer lower, Integer upper,
+	                                 Integer count, char separator = DEFAULT_SEPARATOR) {
+		return strings<const std::regex&, Integer, Integer>(pattern, lower, upper, count, separator);
+	}
+
+	std::vector<std::string> strings(const std::regex& pattern, Integer lower, Integer upper, Constraint& constraint,
+	                                 Integer count, char separator = DEFAULT_SEPARATOR) {
+		return strings<const std::regex&, Integer, Integer, Constraint&>(pattern, lower, upper, constraint, count, separator);
+	}
+
+	Integer integer() {
+		return parse<Integer>(string(INTEGER_REGEX));
+	}
+
+	Integer integer(Integer lower, Integer upper) {
+		Integer res = integer();
+		if (res < lower or res >= upper) {
+			ValidateBase::juryOut << "Integer " << res << " out of range [" << lower << ", " << upper << ")";
+			fail();
+		}
+		return res;
+	}
+
+	Integer integer(Integer lower, Integer upper, Constraint& constraint) {
+		Integer res = integer(lower, upper);
+		constraint.log(lower, upper, res);
+		return res;
+	}
+
+	template<typename... Args>
+	std::vector<Integer> integers(Args... args, Integer count, char separator) {
+		auto sepCall = checkSeparator(separator);
+		std::vector<Integer> res(count);
+		for (Integer i = 0; i < count; i++) {
+			res[i] = integer(args...);
+			if (i + 1 < count) sepCall();
+		}
+		return res;
+	}
+
+	std::vector<Integer> integers(Integer count, char separator = DEFAULT_SEPARATOR) {
+		return integers<>(count, separator);
+	}
+
+	std::vector<Integer> integers(Integer lower, Integer upper,
+	                              Integer count, char separator = DEFAULT_SEPARATOR) {
+		return integers<Integer, Integer>(lower, upper, count, separator);
+	}
+
+	std::vector<Integer> integers(Integer lower, Integer upper, Constraint& constraint,
+	                              Integer count, char separator = DEFAULT_SEPARATOR) {
+		return integers<Integer, Integer, Constraint&>(lower, upper, constraint, count, separator);
+	}
+
+	// this does not allow NaN or Inf!
+	// However, those should never be desired.
+	Real real() {
+		return parse<Real>(string(REAL_REGEX));
+	}
+
+	// we dont use EPS for bound checking! (this is supposed for input validation anyway)
+	Real real(Real lower, Real upper) {
+		Real res = real();
+		if (std::isnan(res) or !(res >= lower) or !(res < upper)) {
+			ValidateBase::juryOut << "Real " << res << " out of range [" << lower << ", " << upper << ")";
+			fail();
+		}
+		return res;
+	}
+
+	Real real(Real lower, Real upper, Constraint& constraint) {
+		Real res = real(lower, upper);
+		constraint.log(lower, upper, res);
+		return res;
+	}
+
+	Real real(Real lower, Real upper, Integer minDecimals, Integer maxDecimals) {
+		std::string t = string(STRICT_REAL_REGEX);
+		auto dot = t.find('.');
+		Integer decimals = dot == std::string::npos ? 0 : t.size() - dot - 1;
+		if (decimals < minDecimals or decimals >= maxDecimals) {
+			ValidateBase::juryOut << "Real " << t << " has wrong amount of decimals!";
+			fail();
+			return 0;
+		}
+		try {
+			Real res = parse<Real>(t);
+			if (std::isnan(res) or !(res >= lower) or !(res < upper)) {
+				ValidateBase::juryOut << "Real " << res << " out of range [" << lower << ", " << upper << ")";
+				fail();
+			}
+			return res;
+		} catch(...) {
+			ValidateBase::juryOut << "Could not parse token as real: " << t;
+			fail();
+			return 0;
+		}
+	}
+
+	Real real(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, Constraint& constraint) {
+		Real res = real(lower, upper, minDecimals, maxDecimals);
+		constraint.log(lower, upper, res);
+		return res;
+	}
+
+	template<typename... Args>
+	std::vector<Real> reals(Args... args, Integer count, char separator) {
+		auto sepCall = checkSeparator(separator);
+		std::vector<Real> res(count);
+		for (Integer i = 0; i < count; i++) {
+			res[i] = real(args...);
+			if (i + 1 < count) sepCall();
+		}
+		return res;
+	}
+
+	std::vector<Real> reals(Integer count, char separator = DEFAULT_SEPARATOR) {
+		return reals<>(count, separator);
+	}
+
+	std::vector<Real> reals(Real lower, Real upper,
+	                        Integer count, char separator = DEFAULT_SEPARATOR) {
+		return reals<Real, Real>(lower, upper, count, separator);
+	}
+
+	std::vector<Real> reals(Real lower, Real upper, Constraint& constraint,
+	                        Integer count, char separator = DEFAULT_SEPARATOR) {
+		return reals<Real, Real, Constraint&>(lower, upper, constraint, count, separator);
+	}
+
+	std::vector<Real> reals(Real lower, Real upper, Integer minDecimals, Integer maxDecimals,
+	                        Integer count, char separator = DEFAULT_SEPARATOR) {
+		return reals<Real, Real, Integer, Integer>(lower, upper, minDecimals, maxDecimals, count, separator);
+	}
+
+	std::vector<Real> reals(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, Constraint& constraint,
+	                        Integer count, char separator = DEFAULT_SEPARATOR) {
+		return reals<Real, Real, Integer, Integer, Constraint&>(lower, upper, minDecimals, maxDecimals, constraint, count, separator);
+	}
+
+	void expectString(std::string_view expected) {
+		judgeAssert<std::invalid_argument>(details::isToken(expected), "expected must not contain a space!");
+		std::string seen = string();
+		if (!details::stringEqual(seen, expected, caseSensitive)) {
+			ValidateBase::juryOut << "Expected \"" << expected << "\" but got \"" << seen << "\"";
+			fail();
+		}
+	}
+
+	void expectInt(Integer expected) {
+		Integer seen = integer();
+		if (seen != expected) {
+			ValidateBase::juryOut << "Expected \"" << expected << "\" but got \"" << seen << "\"";
+			fail();
+		}
+	}
+
+	void expectReal(Real expected) {
+		Real seen = real();
+		if (details::floatEqual(seen, expected, floatAbsTol, floatRelTol)) {
+			ValidateBase::juryOut << "Expected \"" << expected << "\" but got \"" << seen << "\"";
+			fail();
+		}
+	}
+private:
+	void fail() {
+		//try to find input position...
+		int line = 1, col = 0;
+		in->clear();
+		auto originalPos = in->tellg();
+		in->seekg(0);
+		if (originalPos >= 0 and in) {
+			char c;
+			while ((in->tellg() < originalPos) and in->get(c)) {
+				if (c == '\n') {
+					line++;
+					col = 0;
+				} else {
+					col++;
+				}
+			}
+			ValidateBase::juryOut << " Input position: [" << line << "," << col << "]";
+		}
+		ValidateBase::juryOut << onFail;
+	}
+};
+
+
+//============================================================================//
+// state guard                                                                //
+//============================================================================//
+namespace details {
+	bool initialized(bool set = false) {
+		static bool value = false;
+		return std::exchange(value, value |= set);
+	}
+
+	struct InitGuard {
+		~InitGuard() {
+			if (std::uncaught_exceptions() == 0) {
+				judgeAssert<std::logic_error>(initialized(), "init(argc, argv) was never called!");
+			}
+		}
+	} initGuard;
+}
+
+
+//============================================================================//
+// Settings                                                                   //
+//============================================================================//
+template<typename T>
+class Setting {
+	T value;
+
+public:
+	Setting(T value_) : value(value_) {}
+	Setting(Setting<T>&& other) = delete;
+	Setting(const Setting<T>&) = delete;
+	Setting<T>& operator=(Setting<T>&& other) = delete;
+	Setting<T>& operator=(const Setting<T>&) = delete;
+
+	operator T() const {
+		return value;
+	}
+
+	Setting<T>& operator=(T value_) {
+		judgeAssert<std::logic_error>(!details::initialized(), "Cannot change setting after init(argc, argv) was called!");
+		value = value_;
+		return *this;
+	}
+};
+
+
+//============================================================================//
+// Validators and stuff                                                       //
+//============================================================================//
+namespace ValidateBase {
+	//OutputStream juryOut(std::cout); //already defined earlier
+	//OutputStream juryErr(std::cerr);
+	CommandParser arguments;
+	//you may change these values before calling::init() but not afterwards!
+	Setting<Real> floatAbsTol(DEFAULT_EPS);
+	Setting<Real> floatRelTol(DEFAULT_EPS);
+	Setting<bool> spaceSensitive(false);
+	Setting<bool> caseSensitive(false);
+
+	// Real r2 is considered the reference value for relative error.
+	bool floatEqual(Real given,
+	                Real expected,
+	                Real floatAbsTol_ = floatAbsTol,
+	                Real floatRelTol_ = floatRelTol) {
+		return details::floatEqual(given, expected, floatAbsTol_, floatRelTol_);
+	}
+
+	constexpr bool stringEqual(std::string_view a, std::string_view b, bool caseSensitive_ = caseSensitive) {
+		return details::stringEqual(a, b, caseSensitive_);
+	}
+
+	namespace details {
+		void init(int argc, char** argv) {
+			judgeAssert<std::logic_error>(!::details::initialized(), "init(argc, argv) was called twice!");
+
+			arguments = CommandParser(argc, argv);
+			if (auto seed = arguments[SEED_COMMAND]) Random::seed(seed.asInteger());
+			// parse default flags manually, since they dont use '--' prefix
+			auto eps = arguments.getRaw(FLOAT_TOLERANCE);
+			floatAbsTol = eps.asReal(floatAbsTol);
+			floatRelTol = eps.asReal(floatRelTol);
+			floatAbsTol = arguments.getRaw(FLOAT_ABSOLUTE_TOLERANCE).asReal(floatAbsTol);
+			floatRelTol = arguments.getRaw(FLOAT_RELATIVE_TOLERANCE).asReal(floatRelTol);
+
+			if (arguments.getRaw(SPACE_SENSITIVE)) spaceSensitive = true;
+			if (arguments.getRaw(CASE_SENSITIVE)) caseSensitive = true;
+
+			::details::initialized(true);
+		}
+	}
+
+} // namespace ValidateBase
+
+//called as ./validator [arguments] < inputfile
+namespace InputValidator {
+	using namespace ValidateBase;
+
+	InputStream testIn;
+	ConstraintsLogger constraint;
+
+	void init(int argc, char** argv) {
+		spaceSensitive = true;
+		caseSensitive = true;
+		
+		ValidateBase::details::init(argc, argv);
+		juryOut = OutputStream(std::cout);
+
+		testIn = InputStream(std::cin, spaceSensitive, caseSensitive, WA, floatAbsTol, floatRelTol);
+		if (auto file = arguments[CONSTRAINT_COMMAND]) {
+			constraint = ConstraintsLogger(file.asString());
+		}
+	}
+
+} // namespace InputValidator
+
+//called as ./validator input judgeanswer feedbackdir < teamoutput
+namespace OutputValidator {
+	using namespace ValidateBase;
+
+	InputStream testIn;
+	InputStream juryAns;
+	InputStream teamAns;
+
+	void init(int argc, char** argv) {
+		ValidateBase::details::init(argc, argv);
+		juryOut = OutputStream(std::filesystem::path(arguments[3]) / JUDGE_MESSAGE);
+		
+		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, FAIL);
+		juryAns = InputStream(std::filesystem::path(arguments[2]), false, caseSensitive, FAIL);
+		teamAns = InputStream(std::cin, spaceSensitive, caseSensitive, WA);
+	}
+
+} // namespace OutputValidator
+
+//called as ./interactor input judgeanswer feedbackdir <> teamoutput
+namespace Interactor {
+	using namespace ValidateBase;
+
+	OutputStream toTeam;
+	InputStream testIn;
+	InputStream fromTeam;
+
+	void init(int argc, char** argv) {
+		ValidateBase::details::init(argc, argv);
+		juryOut = OutputStream(std::filesystem::path(arguments[3]) / JUDGE_MESSAGE);
+		toTeam = OutputStream(std::cout);
+
+		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, FAIL);
+		fromTeam = InputStream(std::cin, spaceSensitive, caseSensitive, WA);
+	}
+
+} // namespace Interactor
+
+//called as ./generator [arguments]
+namespace Generator {
+	using namespace ValidateBase;
+
+	OutputStream testOut;
+
+	void init(int argc, char** argv) {
+		ValidateBase::details::init(argc, argv);
+		juryOut = OutputStream(std::cerr);
+		testOut = OutputStream(std::cout);
+	}
+
+} // namespace Generator
+
+//============================================================================//
+// ctd like syntax...                                                         //
+//============================================================================//
+namespace ctd {
+	namespace details {
+		template<typename C, typename... Args>
+		class TempReader final {
+			C callable;
+			std::tuple<Args...> args;
+		public:
+			constexpr TempReader(C callable_, Args... args_) : callable(callable_), args(args_...) {}
+
+			TempReader(const TempReader&) = delete;
+			TempReader(TempReader&&) = delete;
+			TempReader& operator=(const TempReader&) = delete;
+			TempReader& operator=(TempReader&&) = delete;
+
+			friend InputStream& operator>>(InputStream& is, const TempReader& reader) {
+				std::apply(reader.callable, std::tuple_cat(std::tie(is), reader.args));
+				return is;
+			}
+		};
+
+		template<typename... Args>
+		constexpr auto integer(Args... args) {
+			auto f = [](InputStream& is, auto... curArgs) {
+				is.integer(curArgs...);
+			};
+			return details::TempReader(f, args...);
+		}
+
+		template<typename... Args>
+		auto integerStore(Integer& res, Args... args) {
+			auto f = [&res](InputStream& is, auto... curArgs) {
+				res = is.integer(curArgs...);
+			};
+			return details::TempReader(f, args...);
+		}
+
+		template<typename... Args>
+		constexpr auto real(Args... args) {
+			auto f = [](InputStream& is, auto... curArgs) {
+				is.real(curArgs...);
+			};
+			return details::TempReader(f, args...);
+		}
+
+		template<typename... Args>
+		auto realStore(Real& res, Args... args) {
+			auto f = [&res](InputStream& is, auto... curArgs) {
+				res = is.real(curArgs...);
+			};
+			return details::TempReader(f, args...);
+		}
+
+		template<typename... Args>
+		constexpr auto string(Args... args) {
+			auto f = [](InputStream& is, auto... curArgs) {
+				is.string(curArgs...);
+			};
+			return details::TempReader(f, args...);
+		}
+
+		template<typename... Args>
+		auto stringStore(std::string& res, Args... args) {
+			auto f = [&res](InputStream& is, auto... curArgs) {
+				res = is.string(curArgs...);
+			};
+			return details::TempReader(f, args...);
+		}
+
+		template<typename... Args>
+		constexpr auto integers(Args... args) {
+			auto f = [](InputStream& is, auto... curArgs) {
+				is.integers(curArgs...);
+			};
+			return details::TempReader(f, args...);
+		}
+
+		template<typename... Args>
+		auto integersStore(std::vector<Integer>& res, Args... args) {
+			auto f = [&res](InputStream& is, auto... curArgs) {
+				res = is.integers(curArgs...);
+			};
+			return details::TempReader(f, args...);
+		}
+
+		template<typename... Args>
+		constexpr auto reals(Args... args) {
+			auto f = [](InputStream& is, auto... curArgs) {
+				is.reals(curArgs...);
+			};
+			return details::TempReader(f, args...);
+		}
+
+		template<typename... Args>
+		auto realsStore(std::vector<Real>& res, Args... args) {
+			auto f = [&res](InputStream& is, auto... curArgs) {
+				res = is.reals(curArgs...);
+			};
+			return details::TempReader(f, args...);
+		}
+
+		template<typename... Args>
+		constexpr auto strings(Args... args) {
+			auto f = [](InputStream& is, auto... curArgs) {
+				is.strings(curArgs...);
+			};
+			return details::TempReader(f, args...);
+		}
+
+		template<typename... Args>
+		auto stringsStore(std::vector<std::string>& res, Args... args) {
+			auto f = [&res](InputStream& is, auto... curArgs) {
+				res = is.strings(curArgs...);
+			};
+			return details::TempReader(f, args...);
+		}
+	}
+
+	constexpr auto SPACE = details::TempReader([](InputStream& is) {is.space();});
+	constexpr auto NEWLINE = details::TempReader([](InputStream& is) {is.newline();});
+	constexpr auto ENDFILE = details::TempReader([](InputStream& is) {is.eof();});
+
+	constexpr auto INT() {
+		return details::integer();
+	}
+	constexpr auto INT(Integer lower, Integer upper) {
+		return details::integer(lower, upper);
+	}
+	auto INT(Integer lower, Integer upper, Constraint& constraint) {
+		return details::integer(lower, upper, std::ref(constraint));
+	}
+	auto INT(Integer& res) {
+		return details::integerStore(res);
+	}
+	auto INT(Integer lower, Integer upper, Integer& res) {
+		return details::integerStore(res, lower, upper);
+	}
+	auto INT(Integer lower, Integer upper, Integer& res, Constraint& constraint) {
+		return details::integerStore(res, lower, upper, std::ref(constraint));
+	}
+
+	constexpr auto REAL() {
+		return details::real();
+	}
+	constexpr auto REAL(Real lower, Real upper) {
+		return details::real(lower, upper);
+	}
+	constexpr auto REAL(Real lower, Real upper, Integer minDecimals, Integer maxDecimals) {
+		return details::real(lower, upper, minDecimals, maxDecimals);
+	}
+	auto REAL(Real lower, Real upper, Constraint& constraint) {
+		return details::real(lower, upper, std::ref(constraint));
+	}
+	auto REAL(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, Constraint& constraint) {
+		return details::real(lower, upper, minDecimals, maxDecimals, std::ref(constraint));
+	}
+	auto REAL(Real& res) {
+		return details::realStore(res);
+	}
+	auto REAL(Real lower, Real upper, Real& res) {
+		return details::realStore(res, lower, upper);
+	}
+	auto REAL(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, Real& res) {
+		return details::realStore(res, lower, upper, minDecimals, maxDecimals);
+	}
+	auto REAL(Real lower, Real upper, Real& res, Constraint& constraint) {
+		return details::realStore(res, lower, upper, std::ref(constraint));
+	}
+	auto REAL(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, Real& res, Constraint& constraint) {
+		return details::realStore(res, lower, upper, minDecimals, maxDecimals, std::ref(constraint));
+	}
+
+	constexpr auto STRING() {
+		return details::string();
+	}
+	constexpr auto STRING(Integer lower, Integer upper) {
+		return details::string(lower, upper);
+	}
+	auto STRING(Integer lower, Integer upper, Constraint& constraint) {
+		return details::string(lower, upper, std::ref(constraint));
+	}
+	auto STRING(const std::regex& pattern) {
+		return details::string(std::cref(pattern));
+	}
+	auto STRING(const std::regex& pattern, Integer lower, Integer upper) {
+		return details::string(std::cref(pattern), lower, upper);
+	}
+	auto STRING(const std::regex& pattern, Integer lower, Integer upper, Constraint& constraint) {
+		return details::string(std::cref(pattern), lower, upper, std::ref(constraint));
+	}
+	auto STRING(std::string& res) {
+		return details::stringStore(res);
+	}
+	auto STRING(Integer lower, Integer upper, std::string& res) {
+		return details::stringStore(res, lower, upper);
+	}
+	auto STRING(Integer lower, Integer upper, std::string& res, Constraint& constraint) {
+		return details::stringStore(res, lower, upper, std::ref(constraint));
+	}
+	auto STRING(const std::regex& pattern, std::string& res) {
+		return details::stringStore(res, std::cref(pattern));
+	}
+	auto STRING(const std::regex& pattern, Integer lower, Integer upper, std::string& res) {
+		return details::stringStore(res, std::cref(pattern), lower, upper);
+	}
+	auto STRING(const std::regex& pattern, Integer lower, Integer upper, std::string& res, Constraint& constraint) {
+		return details::stringStore(res, std::cref(pattern), lower, upper, std::ref(constraint));
+	}
+
+	constexpr auto INTS(Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::integers(count, separator);
+	}
+	constexpr auto INTS(Integer lower, Integer upper, Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::integers(lower, upper, count, separator);
+	}
+	auto INTS(Integer lower, Integer upper, Constraint& constraint, Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::integers(lower, upper, std::ref(constraint), count, separator);
+	}
+	auto INTS(std::vector<Integer>& res, Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::integersStore(res, count, separator);
+	}
+	auto INTS(Integer lower, Integer upper, std::vector<Integer>& res, Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::integersStore(res, lower, upper, count, separator);
+	}
+	auto INTS(Integer lower, Integer upper, std::vector<Integer>& res, Constraint& constraint,
+	          Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::integersStore(res, lower, upper, std::ref(constraint), count, separator);
+	}
+
+	constexpr auto REALS(Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::reals(count, separator);
+	}
+	constexpr auto REALS(Real lower, Real upper, Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::reals(lower, upper, count, separator);
+	}
+	constexpr auto REALS(Real lower, Real upper, Integer minDecimals, Integer maxDecimals,
+	                     Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::reals(lower, upper, minDecimals, maxDecimals, count, separator);
+	}
+	auto REALS(Real lower, Real upper, Constraint& constraint, Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::reals(lower, upper, std::ref(constraint), count, separator);
+	}
+	auto REALS(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, Constraint& constraint, Integer count,
+	           char separator = DEFAULT_SEPARATOR) {
+		return details::reals(lower, upper, minDecimals, maxDecimals, std::ref(constraint), count, separator);
+	}
+	auto REALS(std::vector<Real>& res, Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::realsStore(res, count, separator);
+	}
+	auto REALS(Real lower, Real upper, std::vector<Real>& res, Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::realsStore(res, lower, upper, count, separator);
+	}
+	auto REALS(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, std::vector<Real>& res,
+	           Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::realsStore(res, lower, upper, minDecimals, maxDecimals, count, separator);
+	}
+	auto REALS(Real lower, Real upper, std::vector<Real>& res, Constraint& constraint,
+	           Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::realsStore(res, lower, upper, std::ref(constraint), count, separator);
+	}
+	auto REALS(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, std::vector<Real>& res, Constraint& constraint,
+	           Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::realsStore(res, lower, upper, minDecimals, maxDecimals, std::ref(constraint), count, separator);
+	}
+
+	constexpr auto STRINGS(Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::strings(count, separator);
+	}
+	constexpr auto STRINGS(Integer lower, Integer upper, Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::strings(lower, upper, count, separator);
+	}
+	auto STRINGS(Integer lower, Integer upper, Constraint& constraint,
+	             Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::strings(lower, upper, std::ref(constraint), count, separator);
+	}
+	auto STRINGS(const std::regex& pattern, Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::strings(std::cref(pattern), count, separator);
+	}
+	auto STRINGS(const std::regex& pattern, Integer lower, Integer upper,
+	             Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::strings(std::cref(pattern), lower, upper, count, separator);
+	}
+	auto STRINGS(const std::regex& pattern, Integer lower, Integer upper, Constraint& constraint,
+	             Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::strings(std::cref(pattern), lower, upper, std::ref(constraint), count, separator);
+	}
+	auto STRINGS(std::vector<std::string>& res, Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::stringsStore(res, count, separator);
+	}
+	auto STRINGS(Integer lower, Integer upper, std::vector<std::string>& res,
+	             Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::stringsStore(res, lower, upper, count, separator);
+	}
+	auto STRINGS(Integer lower, Integer upper, std::vector<std::string>& res, Constraint& constraint,
+	             Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::stringsStore(res, lower, upper, std::ref(constraint), count, separator);
+	}
+	auto STRINGS(const std::regex& pattern, std::vector<std::string>& res,
+	             Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::stringsStore(res, std::cref(pattern), count, separator);
+	}
+	auto STRINGS(const std::regex& pattern, Integer lower, Integer upper, std::vector<std::string>& res,
+	             Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::stringsStore(res, std::cref(pattern), lower, upper, count, separator);
+	}
+	auto STRINGS(const std::regex& pattern, Integer lower, Integer upper, std::vector<std::string>& res, Constraint& constraint,
+	             Integer count, char separator = DEFAULT_SEPARATOR) {
+		return details::stringsStore(res, std::cref(pattern), lower, upper, std::ref(constraint), count, separator);
+	}
+
+} // namespace ctd
+
+#endif
