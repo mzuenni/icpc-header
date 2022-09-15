@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-//version 1.2.1                                                               //
+//version 1.2.2                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -783,11 +783,11 @@ namespace details {
 		judgeAssert<std::domain_error>(floatRelTol >= 0.0_real, "floatRelTol must be positive!");
 		// Finite values are compared with some tolerance
 		if (std::isfinite(given) and std::isfinite(expected)) {
-			Real absDiff = fabsl(given-expected);
-			Real relDiff = fabsl((given-expected)/expected);
+			Real absDiff = std::abs(given-expected);
+			Real relDiff = std::abs((given-expected)/expected);
 			return absDiff <= floatAbsTol or relDiff <= floatRelTol;
 		}
-		// NaN is equal to NaN (-NaN is also euqal NaN)
+		// NaN is equal to NaN (-NaN is also equal NaN)
 		if (std::isnan(given) and std::isnan(expected)) {
 			return true;
 		}
