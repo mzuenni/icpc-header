@@ -1969,7 +1969,10 @@ public:
 	std::string string() {
 		checkIn();
 		if (spaceSensitive) {
-			if (!std::isgraph(in->peek())) {
+			if (in->peek() == std::char_traits<char>::eof()) {
+				ValidateBase::juryOut << "Unexpected EOF!";
+				fail();
+			} else if (!std::isgraph(in->peek())) {
 				ValidateBase::juryOut << "Invalid whitespace!";
 				fail();
 			}
@@ -1977,7 +1980,7 @@ public:
 		std::string res;
 		*in >> res;
 		if (res.empty()) {
-			ValidateBase::juryOut << "Could not read token!";
+			ValidateBase::juryOut << "Unexpected EOF!";
 			fail();
 		}
 		if (!caseSensitive) toDefaultCase(res);
@@ -2215,11 +2218,11 @@ public:
 private:
 	void fail() {
 		//try to find input position...
-		int line = 1, col = 0;
 		in->clear();
 		auto originalPos = in->tellg();
 		in->seekg(0);
-		if (originalPos >= 0 and in) {
+		if (originalPos != std::streamoff(-1) and in) {
+			Integer line = 1, col = 0;
 			char c;
 			while ((in->tellg() < originalPos) and in->get(c)) {
 				if (c == '\n') {
@@ -2229,7 +2232,7 @@ private:
 					col++;
 				}
 			}
-			ValidateBase::juryOut << " Input position: [" << line << "," << col << "]";
+			if (in) ValidateBase::juryOut << " Line: " << line << ", Char: " << col;
 		}
 		ValidateBase::juryOut << onFail;
 	}
