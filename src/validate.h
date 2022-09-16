@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-//version 1.2.1                                                               //
+//version 1.2.3                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -306,16 +306,16 @@ template<typename C1, typename C2>
 void append(C1& c1, const C2& c2) {
 	static_assert(std::is_same_v<typename C1::value_type, typename C2::value_type>, "cannot append container of different value type!");
 	if (static_cast<const void*>(&c1) != static_cast<const void*>(&c2)) {
-		for (auto e : c2) c1.insert(c1.end(), e);
+		for (auto&& e : c2) c1.emplace(c1.end(), e);
 	} else {
 		C2 tmp = c2;
-		for (auto e : tmp) c1.insert(c1.end(), e);
+		for (auto&& e : tmp) c1.emplace(c1.end(), e);
 	}
 }
 
 template<typename C1, std::size_t N>
 void append(C1& c1, const typename C1::value_type(&c2)[N]) {
-	for (auto e : c2) c1.insert(c1.end(), e);
+	for (auto&& e : c2) c1.emplace(c1.end(), e);
 }
 
 struct shorter {
@@ -343,7 +343,7 @@ namespace details {
 	void flatAppend(CR&& c, std::vector<V>& res) {
 		using C = std::remove_reference_t<CR>;
 		if constexpr(std::is_same_v<C, V>) {
-			res.push_back(std::forward<CR>(c));
+			res.emplace_back(std::forward<CR>(c));
 		} else if constexpr (!IsContainer<C>{}) {
 			static_assert(IsContainer<C>{}, "invalid base type for flatten()!");
 		} else {
@@ -986,10 +986,10 @@ std::vector<Integer> primes(Integer lower, Integer upper) {
 		}
 	}
 	std::vector<Integer> res;
-	if (lower <= 2 and 2 < upper) res.push_back(2);
+	if (lower <= 2 and 2 < upper) res.emplace_back(2);
 	for (Integer i = lower | 1; i < upper; i += 2) {
 		if (!notPrimeSegment[(i - lower) / 2] and (i < count*count or isPrime(i))) {
-			res.push_back(i);
+			res.emplace_back(i);
 		}
 	}
 	return res;
@@ -1384,8 +1384,8 @@ namespace Random {
 		for (Integer i = 0; i < count; i++) {
 			Integer x = integer(lower, upper - i);
 			auto it = used.find(x);
-			if (it != used.end()) res.push_back(it->second);
-			else res.push_back(x);
+			if (it != used.end()) res.emplace_back(it->second);
+			else res.emplace_back(x);
 			it = used.find(upper - i - 1);
 			if (it != used.end()) used[x] = it->second;
 			else used[x] = upper - i - 1;
@@ -1451,7 +1451,7 @@ namespace Random {
 		judgeAssert<std::invalid_argument>(min <= 0 or k <= n / min, "k too large!");
 		n -= (min - 1) * k;
 		std::vector<Integer> res = increasing(k-1, 1, n);
-		res.push_back(n);
+		res.emplace_back(n);
 		for (Integer i = 0, last = 0; i < k; i++) {
 			res[i] -= last;
 			last += res[i];
@@ -1515,7 +1515,7 @@ namespace Random {
 				getY(tmp) += getY(dir);
 				maxX = std::max(maxX, getX(tmp));
 				maxY = std::max(maxY, getY(tmp));
-				res.push_back(tmp);
+				res.emplace_back(tmp);
 			}
 			res.pop_back();
 			for (auto& point : res) {
@@ -1666,7 +1666,7 @@ class CommandParser final {
 	}
 	void addCommand(std::string_view command, Integer first, Integer count = 0) {
 		judgeAssert<std::invalid_argument>(commands.count(command) == 0, "Duplcated command in args!");
-		commands.insert({command, {first, count}});
+		commands.emplace(command, std::pair<Integer, Integer>{first, count});
 	}
 
 public:
@@ -2309,6 +2309,9 @@ namespace ValidateBase {
 	namespace details {
 		void init(int argc, char** argv) {
 			judgeAssert<std::logic_error>(!::details::initialized(), "init(argc, argv) was called twice!");
+
+			//std::ios_base::sync_with_stdio(false);
+			//cin.tie(nullptr);
 
 			arguments = CommandParser(argc, argv);
 			if (auto seed = arguments[SEED_COMMAND]) Random::seed(seed.asInteger());
