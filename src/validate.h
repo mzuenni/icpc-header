@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-//version 1.2.3                                                               //
+//version 1.2.4                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -1919,13 +1919,22 @@ public:
 		checkIn();
 		if (!spaceSensitive) *in >> std::ws;
 		if (in->peek() != std::char_traits<char>::eof()) {
+			in->get();
 			ValidateBase::juryOut << "Missing EOF!";
 			fail();
 		}
 	}
 
-	void space() {
+	void noteof() {
 		checkIn();
+		if (!spaceSensitive) *in >> std::ws;
+		if (in->peek() == std::char_traits<char>::eof()) {
+			ValidateBase::juryOut << "Unexpected EOF!" << onFail;
+		}
+	}
+
+	void space() {
+		noteof();
 		if (spaceSensitive and in->get() != std::char_traits<char>::to_int_type(' ')) {
 			ValidateBase::juryOut << "Missing space!";
 			fail();
@@ -1933,7 +1942,7 @@ public:
 	}
 
 	void newline() {
-		checkIn();
+		noteof();
 		if (spaceSensitive and in->get() != std::char_traits<char>::to_int_type('\n')) {
 			ValidateBase::juryOut << "Missing newline!";
 			fail();
@@ -1967,21 +1976,16 @@ private:
 
 public:
 	std::string string() {
-		checkIn();
-		if (spaceSensitive) {
-			if (in->peek() == std::char_traits<char>::eof()) {
-				ValidateBase::juryOut << "Unexpected EOF!";
-				fail();
-			} else if (!std::isgraph(in->peek())) {
-				ValidateBase::juryOut << "Invalid whitespace!";
-				fail();
-			}
+		noteof();
+		if (spaceSensitive and !std::isgraph(in->peek())) {
+			in->get();
+			ValidateBase::juryOut << "Invalid whitespace!";
+			fail();
 		}
 		std::string res;
 		*in >> res;
 		if (res.empty()) {
-			ValidateBase::juryOut << "Unexpected EOF!";
-			fail();
+			ValidateBase::juryOut << "Unexpected EOF!" << onFail;
 		}
 		if (!caseSensitive) toDefaultCase(res);
 		return res;
@@ -2222,17 +2226,40 @@ private:
 		auto originalPos = in->tellg();
 		in->seekg(0);
 		if (originalPos != std::streamoff(-1) and in) {
-			Integer line = 1, col = 0;
-			char c;
-			while ((in->tellg() < originalPos) and in->get(c)) {
-				if (c == '\n') {
-					line++;
-					col = 0;
+			Integer line = 1, col = 0, whitespace = 0;
+			char current;
+			std::string buffer;
+			while (in->tellg() < originalPos && in->get(current)) {
+				if (current == '\n') {
+					if (in->tellg() < originalPos) {
+						line++;
+						col = whitespace = 0;
+						buffer.clear();
+					} else {
+						col++;
+					}
 				} else {
 					col++;
+					buffer.push_back(current);
+				}
+				if (!std::isgraph(static_cast<unsigned char>(current))) whitespace = col;
+			}
+			if (in) {
+				ValidateBase::juryOut << " Line: " << line << ", Char: " << col << std::endl;
+				if (col != 0) {
+					if (buffer.size() > 80) {
+						Integer overflow = buffer.size() - (80 - 5);
+						buffer = "[...]" + buffer.substr(overflow);
+						col += 5 - overflow;
+						whitespace += 5 - overflow;
+					}
+					ValidateBase::juryOut << buffer << std::endl;
+					for (Integer i = 0; i + 1 < col; i++) {
+						ValidateBase::juryOut << (i < whitespace ? ' ' : '~');
+					}
+					ValidateBase::juryOut << '^';
 				}
 			}
-			if (in) ValidateBase::juryOut << " Line: " << line << ", Char: " << col;
 		}
 		ValidateBase::juryOut << onFail;
 	}
