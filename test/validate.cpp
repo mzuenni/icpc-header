@@ -191,6 +191,34 @@ void checkUtility() {
 	assert(areDistinct(DIGITS));
 }
 
+void checkFloat() {
+	Real inf = std::numeric_limits<Real>::infinity();
+	assert(details::floatEqual(std::nan("1"), std::nan("2"), 0, 0));
+	assert(!details::floatEqual(1, std::nan("2"), 1, 1));
+	assert(!details::floatEqual(std::nan("1"), 2, 1, 1));
+	assert(!details::floatEqual(-1, std::nan("2"), 1, 1));
+	assert(!details::floatEqual(std::nan("1"), -2, 1, 1));
+	assert(!details::floatEqual(inf, std::nan("2"), 1, 1));
+	assert(!details::floatEqual(std::nan("1"), inf, 1, 1));
+	assert(!details::floatEqual(-inf, std::nan("2"), 1, 1));
+	assert(!details::floatEqual(std::nan("1"), -inf, 1, 1));
+
+	assert(details::floatEqual(inf, inf, 0, 0));
+	assert(!details::floatEqual(inf, -inf, 1, 1));
+	assert(!details::floatEqual(1, inf, 1, 1));
+	assert(!details::floatEqual(inf, 1, 1, 1));
+	assert(!details::floatEqual(-1, inf, 1, 1));
+	assert(!details::floatEqual(inf, -1, 1, 1));
+
+	assert(details::floatEqual(0.1, 0.1, 0, 0));
+	assert(!details::floatEqual(0.1, -0.1, 0, 1));
+	assert(!details::floatEqual(0.1, -0.1, 0.1, 0));
+	assert(!details::floatEqual(0.1, 0.2, 0, 0));
+	assert(details::floatEqual(0.1, 0.2, 0.1, 0));
+	assert(details::floatEqual(0.2, 0.1, 0, 1));
+	assert(!details::floatEqual(0.2, 0.1, 0, 0.9999));
+}
+
 void checkMath() {
 	assert(applyMod(1, 3) == 1);
 	assert(applyMod(-1, 3) == 2);
@@ -607,6 +635,7 @@ int main() {
 	checkStrings();
 	checkVerdict();
 	checkUtility();
+	checkFloat();
 	checkMath();
 	checkRandom();
 	checkCommandParser();
