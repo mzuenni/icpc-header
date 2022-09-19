@@ -82,10 +82,10 @@ namespace Settings {
 		constexpr int DEFAULT_PRECISION					= 6;
 		constexpr Real DEFAULT_EPS						= 1e-6_real;
 
-		[[noreturn]] void exitVerdict(int exit_code) {
-			//throw exit_code;
-			//quick_exit(exit_code);
-			std::exit(exit_code);
+		[[noreturn]] void exitVerdict(int exitCode) {
+			//throw exitCode;
+			//quick_exit(exitCode);
+			std::exit(exitCode);
 		}
 	}
 	using namespace details;
@@ -182,10 +182,10 @@ constexpr Verdict FAIL(1);
 class NullStream : public std::ostream {
 	class NullBuffer : public std::streambuf {
 	protected:
-		virtual std::streamsize xsputn(const char* /**/, std::streamsize n) override {
+		std::streamsize xsputn(const char* /**/, std::streamsize n) override {
 			return n;
 		}
-		virtual int overflow(int c = std::char_traits<char>::eof()) override {
+		int overflow(int c = std::char_traits<char>::eof()) override {
 			return std::char_traits<char>::not_eof(c);
 		}
 	} nullBuffer;
@@ -206,7 +206,7 @@ class OutputStream final {
 public:
 	OutputStream() : os(&nullStream) {}
 	OutputStream(std::ostream& os_) : os(&os_) {init();}
-	explicit OutputStream(std::filesystem::path path) : managed(std::make_unique<std::ofstream>(path)), os(managed.get()) {
+	explicit OutputStream(const std::filesystem::path& path) : managed(std::make_unique<std::ofstream>(path)), os(managed.get()) {
 		judgeAssert<std::runtime_error>(managed->good(), "Could not open File: " + path.string());
 		init();
 	}
@@ -238,7 +238,7 @@ public:
 
 	template<char SEP = DEFAULT_SEPARATOR, typename Arg, typename... Args>
 	OutputStream& print(Arg&& arg, Args&&... args) {
-		*this << std::forward<Arg>(arg);		
+		*this << std::forward<Arg>(arg);
 		return ((*this << SEP << std::forward<Args>(args)), ...);
 	}
 
@@ -377,7 +377,7 @@ auto flatten(CR&& c) {
 // Utility                                                                    //
 //============================================================================//
 // for sequences
-template<typename RandomIt, 
+template<typename RandomIt,
          typename = std::enable_if_t<std::is_integral_v<typename std::iterator_traits<RandomIt>::value_type>>>
 bool isPerm(RandomIt first, RandomIt last, typename std::iterator_traits<RandomIt>::value_type offset = 0) {
 	auto count = std::distance(first, last);
@@ -647,7 +647,7 @@ namespace details {
 	class TempWriter final {
 		C callable;
 	public:
-		constexpr TempWriter(C callable_) : callable(callable_) {}
+		constexpr explicit TempWriter(const C& callable_) : callable(callable_) {}
 
 		TempWriter(const TempWriter&) = delete;
 		TempWriter(TempWriter&&) = delete;
@@ -828,8 +828,8 @@ namespace details {
 
 	template<typename T>
 	bool parse(std::string_view s, T& res) {
-		auto begin = s.data();
-		auto end = s.data() + s.size();
+		const auto* begin = s.data();
+		const auto* end = s.data() + s.size();
 		auto [ptr, ec] = std::from_chars(begin, end, res);
 		return ptr == end and ec == std::errc();
 	}
@@ -1291,8 +1291,8 @@ namespace Random {
 
 	Integer prime(Integer lower, Integer upper) {// in [lower, upper)
 		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
-		Integer sampleL = lower <= 2 ? 0 : (lower >> 1);
-		Integer sampleU = upper >> 1;
+		Integer sampleL = lower <= 2 ? 0 : (lower / 2);
+		Integer sampleU = upper / 2;
 		if (sampleL < sampleU) {
 			for (Integer i = 0; i < details::PRIME_TRIALS and i < 4 * (upper - lower); i++) {
 				Integer res = std::max(2_int, 2*integer(sampleL, sampleU) | 1);
@@ -1545,7 +1545,7 @@ class ParamaterBase {
 		return res;
 	}
 
-	ParamaterBase() {}
+	ParamaterBase() = default;
 	explicit ParamaterBase(std::string_view token_) : token(token_) {}
 
 public:
@@ -1598,7 +1598,7 @@ class Command final : private ParamaterBase {
 public:
 	explicit Command(const std::vector<std::string>& raw_) : raw(raw_), first(0), count(0), found(false) {}
 	explicit Command(const std::vector<std::string>& raw_, Integer first_, Integer count_)
-	                 : ParamaterBase(count_ == 0 ? ParamaterBase() : ParamaterBase(raw_[first_])), 
+	                 : ParamaterBase(count_ == 0 ? ParamaterBase() : ParamaterBase(raw_[first_])),
 	                   raw(raw_), first(first_), count(count_), found(true) {
 		judgeAssert<std::invalid_argument>(count >= 0, "Invalid command in args!");
 	}
@@ -1661,7 +1661,7 @@ class CommandParser final {
 	std::map<std::string_view, std::pair<Integer, Integer>> commands;
 	std::map<std::string_view, Integer> tokens;
 
-	bool isCommand(std::string_view s) {
+	static bool isCommand(std::string_view s) {
 		return s.size() > 2 and s.substr(0, 2) == COMMAND_PREFIX;
 	}
 	void addCommand(std::string_view command, Integer first, Integer count = 0) {
@@ -1670,7 +1670,7 @@ class CommandParser final {
 	}
 
 public:
-	CommandParser() {}
+	CommandParser() = default;
 	explicit CommandParser(int argc, char** argv) {
 		raw.assign(argc, {});
 		std::string_view command = EMPTY_COMMAND;
@@ -1817,7 +1817,7 @@ class ConstraintsLogger final {
 	std::map<std::string, std::size_t> byName;
 	std::vector<std::unique_ptr<Constraint>> constraints;
 public:
-	ConstraintsLogger() {}
+	ConstraintsLogger() = default;
 	explicit ConstraintsLogger(std::string_view fileName_) : fileName(fileName_) {}
 
 	ConstraintsLogger(ConstraintsLogger&&) = default;
@@ -1839,7 +1839,7 @@ public:
 		os << std::noboolalpha;
 		os << std::fixed;
 		os << std::setprecision(DEFAULT_PRECISION);
-		for (auto& [name, id] : byName) {
+		for (const auto& [name, id] : byName) {
 			const Constraint& c = *(constraints[id]);
 			if (c.type) {
 				os << "LocationNotSupported:??? " << name << " ";
@@ -1876,8 +1876,8 @@ class InputStream final {
 	}
 
 public:
-	InputStream() {}
-	explicit InputStream(std::filesystem::path path,
+	InputStream() = default;
+	explicit InputStream(const std::filesystem::path& path,
 	                     bool spaceSensitive_,
 	                     bool caseSensitive_,
 	                     Verdict onFail_,
@@ -1958,10 +1958,10 @@ private:
 	}
 
 	inline std::function<void()> checkSeparator(char separator) {
-		if (separator == ' ') return [this]() {space();};
-		if (separator == '\n') return [this]() {newline();};
+		if (separator == ' ') return [this](){space();};
+		if (separator == '\n') return [this](){newline();};
 		judgeAssert<std::invalid_argument>(false, "Separator must be ' '  or '\\n'!");
-		return []() {};
+		return [](){};
 	}
 
 	template<typename T>
@@ -2040,7 +2040,7 @@ public:
 		return strings<>(count, separator);
 	}
 
-	std::vector<std::string> strings(Integer lower, Integer upper, 
+	std::vector<std::string> strings(Integer lower, Integer upper,
 	                                 Integer count, char separator = DEFAULT_SEPARATOR) {
 		return strings<Integer, Integer>(lower, upper, count, separator);
 	}
@@ -2225,12 +2225,13 @@ private:
 		in->clear();
 		auto originalPos = in->tellg();
 		in->seekg(0);
-		if (originalPos != std::streamoff(-1) and in) {
-			Integer line = 1, col = 0, l = -1, r = -1;
+		if (originalPos != std::streamoff(-1) and *in) {
+			Integer line = 1;
+			std::size_t l = 0, r = 0;
 			std::string buffer;
 			bool extend = true;
-			while (in->tellg() < originalPos) {
-				l = buffer.size();
+			while (*in and in->tellg() < originalPos) {
+				l = r = buffer.size();
 				if (std::isgraph(in->peek())) {
 					std::string tmp;
 					*in >> tmp;
@@ -2247,18 +2248,18 @@ private:
 				} else {
 					buffer += std::char_traits<char>::to_char_type(in->get());
 				}
-				if (in->tellg() >= originalPos && r < 0) {
+				if (*in and in->tellg() >= originalPos) {
 					r = buffer.size();
 				}
 			}
-			if (extend) {
-				char tmp;
-				while ((buffer.size() < 80 or buffer.size() < r + 80) and in->get(tmp) and tmp != '\n') {
-					buffer += tmp;
-				}
-			}
-			if (l < r) {
+			if (l != r) {
 				ValidateBase::juryOut << " Line: " << line << ", Char: " << l << '\n';
+				if (extend) {
+					char tmp;
+					while ((buffer.size() < 80 or buffer.size() < r + 80) and in->get(tmp) and tmp != '\n') {
+						buffer += tmp;
+					}
+				}
 				if (r > 60 and l > 20) {
 					Integer offset = std::min(l - 20, r - 60);
 					l -= offset;
@@ -2268,7 +2269,7 @@ private:
 				if (buffer.size() > 80) {
 					buffer = buffer.substr(0, 75);
 					buffer += "[...]";
-					r = std::min(r, 80_int);
+					r = std::min(r, buffer.size());
 				}
 				ValidateBase::juryOut << buffer << '\n';
 				ValidateBase::juryOut << std::string(l, ' ') << '^' << std::string(r - l - 1, '~');
@@ -2384,7 +2385,7 @@ namespace InputValidator {
 	void init(int argc, char** argv) {
 		spaceSensitive = true;
 		caseSensitive = true;
-		
+
 		ValidateBase::details::init(argc, argv);
 		juryOut = OutputStream(std::cout);
 
@@ -2407,7 +2408,7 @@ namespace OutputValidator {
 	void init(int argc, char** argv) {
 		ValidateBase::details::init(argc, argv);
 		juryOut = OutputStream(std::filesystem::path(arguments[3]) / JUDGE_MESSAGE);
-		
+
 		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, FAIL);
 		juryAns = InputStream(std::filesystem::path(arguments[2]), false, caseSensitive, FAIL);
 		teamAns = InputStream(std::cin, spaceSensitive, caseSensitive, WA);
@@ -2458,7 +2459,7 @@ namespace ctd {
 			C callable;
 			std::tuple<Args...> args;
 		public:
-			constexpr TempReader(C callable_, Args... args_) : callable(callable_), args(args_...) {}
+			constexpr explicit TempReader(C callable_, Args... args_) : callable(callable_), args(args_...) {}
 
 			TempReader(const TempReader&) = delete;
 			TempReader(TempReader&&) = delete;
