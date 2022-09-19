@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-//version 1.2.4                                                               //
+//version 1.2.5                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -1762,7 +1762,7 @@ namespace details {
 	template<typename T>
 	typeIndex getTypeIndex() {
 		//return std::type_index(type id(T));
-		static T* uniqueTypeIndex = NULL;
+		static T* uniqueTypeIndex = nullptr;
 		return &uniqueTypeIndex;
 	}
 }
@@ -1952,7 +1952,7 @@ public:
 private:
 	inline void check(const std::string& token, const std::regex& pattern) {
 		if (!std::regex_match(token, pattern)) {
-			ValidateBase::juryOut << "Token: '" << token << "' does not match pattern!";
+			ValidateBase::juryOut << "Token \"" << token << "\" does not match pattern!";
 			fail();
 		}
 	}
@@ -1968,7 +1968,7 @@ private:
 	T parse(const std::string& s) {
 		T res = {};
 		if (!details::parse<T>(s, res)) {
-			ValidateBase::juryOut << "Could not parse token: " << s;
+			ValidateBase::juryOut << "Could not parse token \"" << s << "\"!";
 			fail();
 		}
 		return res;
@@ -1995,7 +1995,7 @@ public:
 		std::string t = string();
 		Integer length = static_cast<Integer>(t.size());
 		if (length < lower or length >= upper) {
-			ValidateBase::juryOut << "String length " << length << " out of range [" << lower << ", " << upper << ")";
+			ValidateBase::juryOut << "String length " << length << " out of range [" << lower << ", " << upper << ")!";
 			fail();
 		}
 		return t;
@@ -2072,7 +2072,7 @@ public:
 	Integer integer(Integer lower, Integer upper) {
 		Integer res = integer();
 		if (res < lower or res >= upper) {
-			ValidateBase::juryOut << "Integer " << res << " out of range [" << lower << ", " << upper << ")";
+			ValidateBase::juryOut << "Integer " << res << " out of range [" << lower << ", " << upper << ")!";
 			fail();
 		}
 		return res;
@@ -2119,7 +2119,7 @@ public:
 	Real real(Real lower, Real upper) {
 		Real res = real();
 		if (std::isnan(res) or !(res >= lower) or !(res < upper)) {
-			ValidateBase::juryOut << "Real " << res << " out of range [" << lower << ", " << upper << ")";
+			ValidateBase::juryOut << "Real " << res << " out of range [" << lower << ", " << upper << ")!";
 			fail();
 		}
 		return res;
@@ -2143,12 +2143,12 @@ public:
 		try {
 			Real res = parse<Real>(t);
 			if (std::isnan(res) or !(res >= lower) or !(res < upper)) {
-				ValidateBase::juryOut << "Real " << res << " out of range [" << lower << ", " << upper << ")";
+				ValidateBase::juryOut << "Real " << res << " out of range [" << lower << ", " << upper << ")!";
 				fail();
 			}
 			return res;
 		} catch(...) {
-			ValidateBase::juryOut << "Could not parse token as real: " << t;
+			ValidateBase::juryOut << "Could not parse token \"" << t << "\" as real!";
 			fail();
 			return 0;
 		}
@@ -2199,7 +2199,7 @@ public:
 		judgeAssert<std::invalid_argument>(details::isToken(expected), "expected must not contain a space!");
 		std::string seen = string();
 		if (!details::stringEqual(seen, expected, caseSensitive)) {
-			ValidateBase::juryOut << "Expected \"" << expected << "\" but got \"" << seen << "\"";
+			ValidateBase::juryOut << "Expected \"" << expected << "\" but got \"" << seen << "\"!";
 			fail();
 		}
 	}
@@ -2207,7 +2207,7 @@ public:
 	void expectInt(Integer expected) {
 		Integer seen = integer();
 		if (seen != expected) {
-			ValidateBase::juryOut << "Expected \"" << expected << "\" but got \"" << seen << "\"";
+			ValidateBase::juryOut << "Expected " << expected << " but got " << seen << "!";
 			fail();
 		}
 	}
@@ -2215,7 +2215,7 @@ public:
 	void expectReal(Real expected) {
 		Real seen = real();
 		if (details::floatEqual(seen, expected, floatAbsTol, floatRelTol)) {
-			ValidateBase::juryOut << "Expected \"" << expected << "\" but got \"" << seen << "\"";
+			ValidateBase::juryOut << "Expected " << expected << " but got " << seen << "!";
 			fail();
 		}
 	}
@@ -2226,39 +2226,52 @@ private:
 		auto originalPos = in->tellg();
 		in->seekg(0);
 		if (originalPos != std::streamoff(-1) and in) {
-			Integer line = 1, col = 0, whitespace = 0;
-			char current;
+			Integer line = 1, col = 0, l = -1, r = -1;
 			std::string buffer;
-			while (in->tellg() < originalPos && in->get(current)) {
-				if (current == '\n') {
+			bool extend = true;
+			while (in->tellg() < originalPos) {
+				l = buffer.size();
+				if (std::isgraph(in->peek())) {
+					std::string tmp;
+					*in >> tmp;
+					buffer += tmp;
+				} else if (in->peek() == std::char_traits<char>::to_int_type('\n')) {
+					line++;
+					in->get();
 					if (in->tellg() < originalPos) {
-						line++;
-						col = whitespace = 0;
 						buffer.clear();
 					} else {
-						col++;
+						buffer += ' ';
+						extend = false;
 					}
 				} else {
-					col++;
-					buffer.push_back(current);
+					buffer += std::char_traits<char>::to_char_type(in->get());
 				}
-				if (!std::isgraph(static_cast<unsigned char>(current))) whitespace = col;
+				if (in->tellg() >= originalPos && r < 0) {
+					r = buffer.size();
+				}
 			}
-			if (in) {
-				ValidateBase::juryOut << " Line: " << line << ", Char: " << col << std::endl;
-				if (col != 0) {
-					if (buffer.size() > 80) {
-						Integer overflow = buffer.size() - (80 - 5);
-						buffer = "[...]" + buffer.substr(overflow);
-						col += 5 - overflow;
-						whitespace += 5 - overflow;
-					}
-					ValidateBase::juryOut << buffer << std::endl;
-					for (Integer i = 0; i + 1 < col; i++) {
-						ValidateBase::juryOut << (i < whitespace ? ' ' : '~');
-					}
-					ValidateBase::juryOut << '^';
+			if (extend) {
+				char tmp;
+				while ((buffer.size() < 80 or buffer.size() < r + 80) and in->get(tmp) and tmp != '\n') {
+					buffer += tmp;
 				}
+			}
+			if (l < r) {
+				ValidateBase::juryOut << " Line: " << line << ", Char: " << l << '\n';
+				if (r > 60 and l > 20) {
+					Integer offset = std::min(l - 20, r - 60);
+					l -= offset;
+					r -= offset;
+					buffer = "[...]" + buffer.substr(offset + 5);
+				}
+				if (buffer.size() > 80) {
+					buffer = buffer.substr(0, 75);
+					buffer += "[...]";
+					r = std::min(r, 80_int);
+				}
+				ValidateBase::juryOut << buffer << '\n';
+				ValidateBase::juryOut << std::string(l, ' ') << '^' << std::string(r - l - 1, '~');
 			}
 		}
 		ValidateBase::juryOut << onFail;
