@@ -96,7 +96,7 @@ namespace GraphDetail {
 		std::deque<std::set<InternalEdge*, EdgePointerCompair<E>>> adj;
 		std::deque<InternalEdge> edges;
 		Integer minId;
-		
+
 		inline void assertNode(Integer id) const {
 			if (id < minId or id >= minId + nodeCount()) {
 				throw std::out_of_range("Index \"" + std::to_string(id) + "\" out of range [" + std::to_string(minId) + ", " + std::to_string(minId + nodeCount()) + ") !");
@@ -115,7 +115,7 @@ namespace GraphDetail {
 		}
 	public:
 		// construct empty graph with vertices in [from, to)
-		explicit GraphType(Integer from, Integer to) : 
+		explicit GraphType(Integer from, Integer to) :
 			adj(to - from),
 			minId(from) {
 			assert(from <= to);
@@ -439,7 +439,7 @@ namespace GraphDetail {
 				}
 			}
 			return res;
-		}		
+		}
 
 		// advanced graph operations
 		Graph power(Integer k) const {
@@ -614,7 +614,7 @@ Graph<E> wheel(Integer outer) {
 	return star<E>(outer).combine(path<E>(outer).setMinId(1));
 }
 
-// lolly graph with a path with p edges [0, p] and a clique [p, p+c) and 
+// lolly graph with a path with p edges [0, p] and a clique [p, p+c) and
 // p is the vertex where clique and path are connected
 template<typename E = NoData>
 Graph<E> lolly(Integer p, Integer c) {

@@ -27,6 +27,6 @@ int main(int argc, char **argv) {
 	res.permutate();
 	// print:
 	// nodeCount EdgeCount
-	// edges... 
+	// edges...
 	testOut << res << std::endl;
 }

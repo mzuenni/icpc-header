@@ -344,7 +344,7 @@ void checkCommandParser() {
 	assert(arguments["--test1"][1].asReal() == 1.5);
 	assert(arguments["--test1"][2].asString() == "test");
 	assert(arguments["--test1"][3].asInteger(5) == 5);
-	assert(arguments["--test2"].asInteger(5) == 5);	
+	assert(arguments["--test2"].asInteger(5) == 5);
 	assert(arguments["--test4"].asInteger(5) == 5);
 }
 

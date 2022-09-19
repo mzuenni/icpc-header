@@ -71,7 +71,7 @@ public:
 					newState[2] ^= state[2];
 					newState[3] ^= state[3];
 				}
-				this->operator()();	
+				this->operator()();
 			}
 		}
 		state = std::move(newState);
