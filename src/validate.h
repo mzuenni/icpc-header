@@ -1934,18 +1934,22 @@ public:
 	}
 
 	void space() {
-		noteof();
-		if (spaceSensitive and in->get() != std::char_traits<char>::to_int_type(' ')) {
-			ValidateBase::juryOut << "Missing space!";
-			fail();
+		if (spaceSensitive) {
+			noteof();
+			if (in->get() != std::char_traits<char>::to_int_type(' ')) {
+				ValidateBase::juryOut << "Missing space!";
+				fail();
+			}
 		}
 	}
 
 	void newline() {
-		noteof();
-		if (spaceSensitive and in->get() != std::char_traits<char>::to_int_type('\n')) {
-			ValidateBase::juryOut << "Missing newline!";
-			fail();
+		if (spaceSensitive) {
+			noteof();
+			if (in->get() != std::char_traits<char>::to_int_type('\n')) {
+				ValidateBase::juryOut << "Missing newline!";
+				fail();
+			}
 		}
 	}
 
