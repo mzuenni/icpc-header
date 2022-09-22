@@ -99,7 +99,7 @@ class Graph final : public BaseGraph {
 	bool forest = true;
 	bool bipartite = true;
 public:
-	explicit Graph(Integer l, Integer r) : BaseGraph(r-l), uf(r-l), buf(2*(r-l)), components(r-l) {}
+	explicit Graph(Integer l, Integer r) : BaseGraph(l, r), uf(r-l), buf(2*(r-l)), components(r-l) {}
 	explicit Graph(Integer n) : Graph(0, n) {}
 
 	void addEdge(Integer a, Integer b) {
