@@ -366,6 +366,22 @@ void checkInputStream() {
 		in.eof();
 	});
 	assertNoException([](){
+		std::istringstream rawIn("Das   ist 1 test\n");
+		InputStream in(rawIn, false, true, FAIL);
+
+		in.expectString("Das");
+		in.space();
+		in.space();
+		in.space();
+		assert(in.string(3, 4) == "ist");
+		in.space();
+		assert(in.integer(1, 2) == 1);
+		in.space();
+		assert(in.string(std::regex("[a-z]*"), 4, 5) == "test");
+		in.newline();
+		in.eof();
+	});
+	assertNoException([](){
 		std::istringstream rawIn("123");
 		InputStream in(rawIn, true, true, Verdict(23));
 		in.expectInt(123);
