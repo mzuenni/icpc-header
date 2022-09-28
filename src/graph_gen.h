@@ -118,7 +118,7 @@ namespace GraphDetail {
 		explicit GraphType(Integer from, Integer to) :
 			adj(to - from),
 			minId(from) {
-			assert(from <= to);
+			judgeAssert<std::invalid_argument>(from <= to, "from must not be greater than to!");
 		}
 		// construct empty graph with vertices in [0, n)
 		explicit GraphType(Integer n = 0) :
@@ -190,7 +190,7 @@ namespace GraphDetail {
 		}
 
 		Graph range(Integer from, Integer to) const {
-			assert(from <= to);
+			judgeAssert<std::invalid_argument>(from <= to, "from must not be greater than to!");
 			Graph res(from, to);
 			from = std::max(static_cast<Integer>(0), from - minId);
 			to = std::min(nodeCount(), to - minId);
@@ -737,33 +737,31 @@ Graph<E> randomTree(Integer n) {
 // generate a random graph (Erdös-Renyi)
 // each edge exists with probability p
 template<typename E = NoData, bool DIR = false>
-GraphDetail::GraphType<E, DIR> randomGraph(Integer n, double p) {
-	assert(0 <= p and p <= 1);
+GraphDetail::GraphType<E, DIR> randomGraph(Integer n, Real p) {
+	judgeAssert<std::domain_error>(0.0_real <= p and p <= 1.0_real, "p must be in [0,1]!");
 	GraphDetail::GraphType<E, DIR> res(n);
 	for (Integer i = 0; i < n; i++) {
-		for (Integer j = 0; j < i; j++) {
-			if (Random::real() <= p) res.addEdge(i, j);
-			if constexpr(DIR) {
-				if (Random::real() <= p) res.addEdge(j, i);
-			}
+		Integer deg = Random::binomial(i, p);
+		auto neighbours = Random::distinct(deg, 0, i);
+		for (Integer j : neighbours) res.addEdge(i, j);
+		if constexpr(DIR) {
+			deg = Random::binomial(n - i - 1, p);
+			neighbours = Random::distinct(deg, i + 1, n);
+			for (Integer j : neighbours) res.addEdge(i, j);
 		}
 	}
 	return res;
 }
 
-// generate a random growing graph
-// when adding vertex i the edge i-j has probability scale*deg(j)/m
+// generate a random graph with linear growing degrees
 template<typename E = NoData>
-Graph<E> randomGrowingGraph(Integer n, double scale) {
+Graph<E> randomGrowingGraph(Integer n, Real p) {
+	judgeAssert<std::domain_error>(0.0_real <= p and p <= 1.0_real, "p must be in [0,1]!");
 	Graph<E> res(n);
-	Integer m = 0;
 	for (Integer i = 0; i < n; i++) {
-		for (Integer j = 0; j < i; j++) {
-			if (Random::real(m) <= res.degree(j) * scale) {
-				res.addEdge(i, j);
-				m++;
-			}
-		}
+		Integer deg = p * Random::real(0, i+1);
+		auto neighbours = Random::distinct(deg, 0, i);
+		for (Integer j : neighbours) res.addEdge(i, j);
 	}
 	return res;
 }

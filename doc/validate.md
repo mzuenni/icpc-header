@@ -53,7 +53,13 @@ Both `spaceSensitive` and `caseSensitive` will be set to true and the `testIn` i
 **`bool floatEqual(Real given, Real expected)`**  
 **`bool floatEqual(Real given, Real expected, Real floatAbsTol)`**  
 **`bool floatEqual(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
-Checks if two floating point numbers are equal with absolute and relative error less than some tolerance.
+**`bool floatLess(Real given, Real expected)`**  
+**`bool floatLess(Real given, Real expected, Real floatAbsTol)`**  
+**`bool floatLess(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
+**`bool floatGreaterEqual(Real given, Real expected)`**  
+**`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol)`**  
+**`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
+Checks if two floating point numbers `given` and `expected` obey the relation `given`==`expected`, `given`<=`expected` or`given`>=`expected` allowing an absolute and relative error of the given tolerance.
 For relative errors the `expected` value is used as refference value.
 If no tolerance is given the global setting `floatAbsTol` respectively `floatRelTol` get used as fallback.
 
@@ -89,7 +95,13 @@ After this call all streams will be initialized with `caseSensitive` and the `te
 **`bool floatEqual(Real given, Real expected)`**  
 **`bool floatEqual(Real given, Real expected, Real floatAbsTol)`**  
 **`bool floatEqual(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
-Checks if two floating point numbers are equal with absolute and relative error less than some tolerance.
+**`bool floatLess(Real given, Real expected)`**  
+**`bool floatLess(Real given, Real expected, Real floatAbsTol)`**  
+**`bool floatLess(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
+**`bool floatGreaterEqual(Real given, Real expected)`**  
+**`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol)`**  
+**`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
+Checks if two floating point numbers `given` and `expected` obey the relation `given`==`expected`, `given`<=`expected` or`given`>=`expected` allowing an absolute and relative error of the given tolerance.
 For relative errors the `expected` value is used as refference value.
 If no tolerance is given the global setting `floatAbsTol` respectively `floatRelTol` get used as fallback.
 
@@ -122,11 +134,16 @@ Further, initializes all streams and settings.
 You can set `spaceSensitive` and `caseSensitive` before this call, by default both are `false`.
 After this call all streams will be initialized with `caseSensitive` and the `fromTeam` will also be `spaceSensitive`.
 
-
 **`bool floatEqual(Real given, Real expected)`**  
 **`bool floatEqual(Real given, Real expected, Real floatAbsTol)`**  
 **`bool floatEqual(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
-Checks if two floating point numbers are equal with absolute and relative error less than some tolerance.
+**`bool floatLess(Real given, Real expected)`**  
+**`bool floatLess(Real given, Real expected, Real floatAbsTol)`**  
+**`bool floatLess(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
+**`bool floatGreaterEqual(Real given, Real expected)`**  
+**`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol)`**  
+**`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
+Checks if two floating point numbers `given` and `expected` obey the relation `given`==`expected`, `given`<=`expected` or`given`>=`expected` allowing an absolute and relative error of the given tolerance.
 For relative errors the `expected` value is used as refference value.
 If no tolerance is given the global setting `floatAbsTol` respectively `floatRelTol` get used as fallback.
 
@@ -240,7 +257,7 @@ This only hase an effect for space sensitive streams i.e. input validation.
 **`void expectInt(Integer expected)`**  
 **`void expectReal(Real expected)`**  
 Checks if the next token matches `expected`.
-If a `Real` is expected equallity is checked wit absolute and relative error.
+If a `Real` is expected equallity is checked with absolute and relative error.
 This is mainly supposed to verify team output.
 
 **`std::string string()`**  
@@ -261,7 +278,6 @@ Will extract the next token as an `Integer`.
 If `lower` or `upper` is provided it will be checked that the integer is in [lower, upper).
 If an constraint is provided it will be updated with the value of the parsed integer.
 
-// this does not allow NaN or Inf!
 **`Real real()`**  
 Will extract the next token as a `Real`.
 Use this method to parse team input as `Real`!.
@@ -269,13 +285,16 @@ Use this method to parse team input as `Real`!.
 
 **`Real real(Real lower, Real upper)`**  
 **`Real real(Real lower, Real upper, Constraint& constraint)`**  
-**`Real real(Real lower, Real upper, Integer minDecimals, Integer maxDecimals)`**  
-**`Real real(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, Constraint& constraint)`**  
 Will extract the next token as a `Real`.
-This is supposed to be yoused for validators only, and the last two methods are preferred.
-If `lower` or `upper` is provided it will be checked that the real is in [lower, upper), the check does **not** use any `eps` as tolerance.
-If `minDecimals` or `maxDecimals` is provided it will be checked that the token was given with the number of decimal places in [minDecimals, maxDecimals).
+`lower` and `upper` are used to check that the real is in [lower, upper), the check use global `eps` as tolerance.
+This is not supposed to be used for validators.
+
+**`Real realStrict(Real lower, Real upper, Integer minDecimals, Integer maxDecimals)`**  
+**`Real realStrict(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, Constraint& constraint)`**  
+`lower` and `upper` are used to check that the real is in [lower, upper), the check does **not** use any `eps` as tolerance.
+`minDecimals` and `maxDecimals` are used to check that the token was given with the number of decimal places in [minDecimals, maxDecimals).
 If an constraint is provided it will be updated with the value of the parsed integer.
+This is supposed to be used for validators only.
 
 **`std::vector<std::string> strings([args], Integer count)`**  
 **`std::vector<std::string> strings([args], Integer count, char separator)`**  
@@ -283,6 +302,8 @@ If an constraint is provided it will be updated with the value of the parsed int
 **`std::vector<Integer> integers([args], Integer count, char separator)`**  
 **`std::vector<Real> reals([args], Integer count)`**  
 **`std::vector<Real> reals([args], Integer count, char separator)`**  
+**`std::vector<Real> realsStrict([args], Integer count)`**  
+**`std::vector<Real> realsStrict([args], Integer count, char separator)`**  
 Will extract the next `count` tokens by calling `string([args])`, `integer([args])` or `real([args])`.
 The tokens are expected to be separated by the char `separator` which must be `space` or `newline`.
 If this parameter is not provided a `space` is expected.

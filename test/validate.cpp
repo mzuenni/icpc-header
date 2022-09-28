@@ -543,7 +543,7 @@ void checkInputStream() {
 	assertExit([](){
 		std::istringstream rawIn("0.123456");
 		InputStream in(rawIn, true, true, Verdict(23));
-		in.real(-10, 10, 0, 3);
+		in.realStrict(-10, 10, 0, 3);
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("00.1");

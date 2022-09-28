@@ -346,6 +346,8 @@ struct Shape {
 		//for (const auto e : shape.raw) os << attribute(e.first, e.second);
 		return os;
 	}
+
+	virtual ~Shape() = default;
 };
 
 struct Rectangle final : public Shape {
