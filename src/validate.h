@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-//version 2.0.0                                                               //
+//version 2.1.0                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -180,10 +180,22 @@ constexpr Verdict FAIL(1);
 //============================================================================//
 // Output streams                                                             //
 //============================================================================//
-template<typename L, typename R>
-std::ostream& operator<<(std::ostream& os, const std::pair<L, R>& t);
-template<typename... Args>
-std::ostream& operator<<(std::ostream& os, const std::tuple<Args...>& t);
+namespace details {
+	template<typename Tuple, std::size_t... Is>
+	std::ostream& print(std::ostream& os, const Tuple& t, std::index_sequence<Is...>, char separator = DEFAULT_SEPARATOR) {
+		static_assert(std::tuple_size_v<Tuple> == sizeof...(Is));
+		return ((os << (Is == 0 ? std::string_view() : std::string_view(&separator, 1)) << std::get<Is>(t)), ...);
+	}
+
+	template<typename T>
+	std::ostream& print(std::ostream& os, T first, T last, char separator = DEFAULT_SEPARATOR) {
+		for (auto it = first; it != last; it++) {
+			if (it != first) os << separator;
+			os << *it;
+		}
+		return os;
+	}
+}
 
 class NullStream : public std::ostream {
 	class NullBuffer : public std::streambuf {
@@ -223,9 +235,22 @@ public:
 	OutputStream(const OutputStream&) = delete;
 	OutputStream& operator=(const OutputStream&) = delete;
 
+
+	template<typename L, typename R>
+	OutputStream& operator<<(const std::pair<L, R>& t) {
+		*os << t.first << DEFAULT_SEPARATOR << t.second;
+		return *this;
+	}
+
+	template<typename... Args>
+	OutputStream& operator<<(const std::tuple<Args...>& t) {
+		*os << details::print(os, t, std::index_sequence_for<Args...>());
+		return *this;
+	}
+
 	template<typename T>
-	OutputStream& operator<<(T&& x) {
-		*os << std::forward<T>(x);
+	OutputStream& operator<<(const T& x) {
+		*os << x;
 		return *this;
 	}
 
@@ -237,20 +262,20 @@ public:
 	template<char SEP = DEFAULT_SEPARATOR>
 	OutputStream& print() {return *this;}
 
-	template<char SEP = DEFAULT_SEPARATOR, typename Arg>
-	OutputStream& print(Arg&& arg) {
-		return *this << std::forward<Arg>(arg);
+	template<char SEP = DEFAULT_SEPARATOR, typename T>
+	OutputStream& print(const T& x) {
+		return *this << x;
 	}
 
-	template<char SEP = DEFAULT_SEPARATOR, typename Arg, typename... Args>
-	OutputStream& print(Arg&& arg, Args&&... args) {
-		*this << std::forward<Arg>(arg);
-		return ((*this << SEP << std::forward<Args>(args)), ...);
+	template<char SEP = DEFAULT_SEPARATOR, typename T, typename... Ts>
+	OutputStream& print(const T& x, const Ts&... xs) {
+		*this << x;
+		return ((*this << SEP << xs), ...);
 	}
 
-	template<char SEP = DEFAULT_SEPARATOR, typename... Args>
-	OutputStream& println(Args&&... args) {
-		print<SEP>(std::forward<Args>(args)...);
+	template<char SEP = DEFAULT_SEPARATOR, typename... T>
+	OutputStream& println(const T&... xs) {
+		print<SEP>(xs...);
 		return *this << std::endl;
 	}
 };
@@ -677,21 +702,6 @@ namespace details {
 		}
 	};
 
-	template<typename Tuple, std::size_t... Is>
-	std::ostream& print(std::ostream& os, const Tuple& t, std::index_sequence<Is...>, char separator = DEFAULT_SEPARATOR) {
-		static_assert(std::tuple_size_v<Tuple> == sizeof...(Is));
-		return ((os << (Is == 0 ? std::string_view() : std::string_view(&separator, 1)) << std::get<Is>(t)), ...);
-	}
-
-	template<typename T>
-	std::ostream& print(std::ostream& os, T first, T last, char separator = DEFAULT_SEPARATOR) {
-		for (auto it = first; it != last; it++) {
-			if (it != first) os << separator;
-			os << *it;
-		}
-		return os;
-	}
-
 	struct JoinListCaptcha {
 		std::function<void(std::ostream&, char separator)> callable;
 
@@ -768,16 +778,6 @@ auto join(details::JoinListCaptcha c, char separator = DEFAULT_SEPARATOR) {
 	return details::TempWriter([c = std::move(c), separator](std::ostream& os) {
 		c.callable(os, separator);
 	});
-}
-
-template<typename L, typename R>
-std::ostream& operator<<(std::ostream& os, const std::pair<L, R>& t) {
-	return os << t.first << DEFAULT_SEPARATOR << t.second;
-}
-
-template<typename... Args>
-std::ostream& operator<<(std::ostream& os, const std::tuple<Args...>& t) {
-	return details::print(os, t, std::index_sequence_for<Args...>());
 }
 
 

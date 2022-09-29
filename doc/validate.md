@@ -239,6 +239,7 @@ If the parameter does not exists it will instead return the `defaultValue`.
 
 ## class OutputStream
 This is just a wrapper for an `std::ostream` which allows changing the underlying output stream at any time.
+It also allows printing of tuples and pairs.
 
 
 ## class InputStream
