@@ -554,9 +554,9 @@ template<typename E = GraphDetail::NoData>
 using DiGraph = GraphDetail::GraphType<E, true>;
 
 // n independed vertices in range [0, n)
-template<typename E = NoData>
-Graph<E> independent(Integer n) {
-	return Graph<E>(n);
+template<typename E = NoData, bool DIR = false>
+GraphDetail::GraphType<E, DIR> independent(Integer n) {
+	return GraphDetail::GraphType<E, DIR>(n);
 }
 
 // n connected vertices in range [0, n)
