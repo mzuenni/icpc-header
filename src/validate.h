@@ -180,6 +180,11 @@ constexpr Verdict FAIL(1);
 //============================================================================//
 // Output streams                                                             //
 //============================================================================//
+template<typename L, typename R>
+std::ostream& operator<<(std::ostream& os, const std::pair<L, R>& t);
+template<typename... Args>
+std::ostream& operator<<(std::ostream& os, const std::tuple<Args...>& t);
+
 class NullStream : public std::ostream {
 	class NullBuffer : public std::streambuf {
 	protected:
