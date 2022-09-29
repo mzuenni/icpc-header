@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-//version 1.2.5                                                               //
+//version 2.0.0                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -129,9 +129,10 @@ constexpr std::string_view EMPTY_COMMAND				= "";
 constexpr std::string_view COMMAND_PREFIX				= "--";
 constexpr std::string_view CONSTRAINT_COMMAND			= "--constraints_file";
 constexpr std::string_view SEED_COMMAND					= "--seed";
-inline const std::regex INTEGER_REGEX("0|-?[1-9][0-9]*", std::regex_constants::optimize);
-inline const std::regex REAL_REGEX("-?(0|([1-9][0-9]*))(\\.[0-9]*)?([eE][+-]?(0|([1-9][0-9]*)))?", std::regex_constants::optimize);
-inline const std::regex STRICT_REAL_REGEX("-?(0|([1-9][0-9]*))\\.?[0-9]*", std::regex_constants::optimize);
+constexpr auto REGEX_OPTIONS							= std::regex::nosubs | std::regex::optimize;
+inline const std::regex INTEGER_REGEX("0|-?[1-9][0-9]*", REGEX_OPTIONS);
+inline const std::regex REAL_REGEX("-?(0|([1-9][0-9]*))(\\.[0-9]*)?([eE][+-]?(0|([1-9][0-9]*)))?", REGEX_OPTIONS);
+inline const std::regex STRICT_REAL_REGEX("-?(0|([1-9][0-9]*))\\.?[0-9]*", REGEX_OPTIONS);
 
 static_assert(2'000'000'000'000'000'000_int < LARGE / 2, "LARGE too small");
 static_assert(LARGE <= std::numeric_limits<Integer>::max() / 2, "LARGE too big");
@@ -967,8 +968,8 @@ constexpr bool isPrime(Integer n) {
 
 std::vector<Integer> primes(Integer lower, Integer upper) {
 	judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
-	lower = std::max(2_int, lower);
-	upper = std::max(2_int, upper);
+	lower = std::max<Integer>(2, lower);
+	upper = std::max<Integer>(2, upper);
 	Integer count = upper - lower;
 	Integer cache = (count + 1) / 2;
 
@@ -1281,7 +1282,7 @@ namespace Random {
 			} while (true);
 		}
 	}
-	Integer binomial(Integer lower, Integer upper, Integer n, Real p) { // in [lower, upper)
+	Integer binomial(Integer lower, Integer upper, Integer n, Real p) {// in [lower, upper)
 		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
 		while (true) {
 			Integer res = binomial(n, p);
@@ -1295,7 +1296,7 @@ namespace Random {
 		Integer sampleU = upper / 2;
 		if (sampleL < sampleU) {
 			for (Integer i = 0; i < details::PRIME_TRIALS and i < 4 * (upper - lower); i++) {
-				Integer res = std::max(2_int, 2*integer(sampleL, sampleU) | 1);
+				Integer res = std::max<Integer>(2, 2*integer(sampleL, sampleU) | 1);
 				if (isPrime(res)) return res;
 			}
 		}
@@ -1863,8 +1864,8 @@ class InputStream final {
 	std::istream* in;
 	bool spaceSensitive, caseSensitive;
 	Verdict onFail;
-	Real floatAbsTol = DEFAULT_EPS;
-	Real floatRelTol = DEFAULT_EPS;
+	Real floatAbsTol;
+	Real floatRelTol;
 
 	void init() {
 		if (spaceSensitive) *in >> std::noskipws;
@@ -1965,7 +1966,7 @@ private:
 		if (separator == ' ') return [this](){space();};
 		if (separator == '\n') return [this](){newline();};
 		judgeAssert<std::invalid_argument>(false, "Separator must be ' '  or '\\n'!");
-		return [](){};
+		return {};
 	}
 
 	template<typename T>
@@ -2119,9 +2120,10 @@ public:
 		return parse<Real>(string(REAL_REGEX));
 	}
 
-	// we dont use EPS for bound checking! (this is supposed for input validation anyway)
-	Real real(Real lower, Real upper) {
+	Real real(Real lower, Real upper) {// uses eps
 		Real res = real();
+		if (details::floatEqual(res, lower, floatAbsTol, floatRelTol)) return res;
+		if (details::floatEqual(res, upper, floatAbsTol, floatRelTol)) return res;
 		if (std::isnan(res) or !(res >= lower) or !(res < upper)) {
 			ValidateBase::juryOut << "Real " << res << " out of range [" << lower << ", " << upper << ")!";
 			fail();
@@ -2131,35 +2133,6 @@ public:
 
 	Real real(Real lower, Real upper, Constraint& constraint) {
 		Real res = real(lower, upper);
-		constraint.log(lower, upper, res);
-		return res;
-	}
-
-	Real real(Real lower, Real upper, Integer minDecimals, Integer maxDecimals) {
-		std::string t = string(STRICT_REAL_REGEX);
-		auto dot = t.find('.');
-		Integer decimals = dot == std::string::npos ? 0 : t.size() - dot - 1;
-		if (decimals < minDecimals or decimals >= maxDecimals) {
-			ValidateBase::juryOut << "Real " << t << " has wrong amount of decimals!";
-			fail();
-			return 0;
-		}
-		try {
-			Real res = parse<Real>(t);
-			if (std::isnan(res) or !(res >= lower) or !(res < upper)) {
-				ValidateBase::juryOut << "Real " << res << " out of range [" << lower << ", " << upper << ")!";
-				fail();
-			}
-			return res;
-		} catch(...) {
-			ValidateBase::juryOut << "Could not parse token \"" << t << "\" as real!";
-			fail();
-			return 0;
-		}
-	}
-
-	Real real(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, Constraint& constraint) {
-		Real res = real(lower, upper, minDecimals, maxDecimals);
 		constraint.log(lower, upper, res);
 		return res;
 	}
@@ -2189,14 +2162,54 @@ public:
 		return reals<Real, Real, Constraint&>(lower, upper, constraint, count, separator);
 	}
 
-	std::vector<Real> reals(Real lower, Real upper, Integer minDecimals, Integer maxDecimals,
-	                        Integer count, char separator = DEFAULT_SEPARATOR) {
-		return reals<Real, Real, Integer, Integer>(lower, upper, minDecimals, maxDecimals, count, separator);
+	Real realStrict(Real lower, Real upper, Integer minDecimals, Integer maxDecimals) {// does not use eps
+		std::string t = string(STRICT_REAL_REGEX);
+		auto dot = t.find('.');
+		Integer decimals = dot == std::string::npos ? 0 : t.size() - dot - 1;
+		if (decimals < minDecimals or decimals >= maxDecimals) {
+			ValidateBase::juryOut << "Real " << t << " has wrong amount of decimals!";
+			fail();
+			return 0;
+		}
+		try {
+			Real res = parse<Real>(t);
+			if (std::isnan(res) or !(res >= lower) or !(res < upper)) {
+				ValidateBase::juryOut << "Real " << res << " out of range [" << lower << ", " << upper << ")!";
+				fail();
+			}
+			return res;
+		} catch(...) {
+			ValidateBase::juryOut << "Could not parse token \"" << t << "\" as real!";
+			fail();
+			return 0;
+		}
 	}
 
-	std::vector<Real> reals(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, Constraint& constraint,
-	                        Integer count, char separator = DEFAULT_SEPARATOR) {
-		return reals<Real, Real, Integer, Integer, Constraint&>(lower, upper, minDecimals, maxDecimals, constraint, count, separator);
+	Real realStrict(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, Constraint& constraint) {
+		Real res = realStrict(lower, upper, minDecimals, maxDecimals);
+		constraint.log(lower, upper, res);
+		return res;
+	}
+
+	template<typename... Args>
+	std::vector<Real> realsStrict(Args... args, Integer count, char separator) {
+		auto sepCall = checkSeparator(separator);
+		std::vector<Real> res(count);
+		for (Integer i = 0; i < count; i++) {
+			res[i] = realStrict(args...);
+			if (i + 1 < count) sepCall();
+		}
+		return res;
+	}
+
+	std::vector<Real> realsStrict(Real lower, Real upper, Integer minDecimals, Integer maxDecimals,
+	                              Integer count, char separator = DEFAULT_SEPARATOR) {
+		return realsStrict<Real, Real, Integer, Integer>(lower, upper, minDecimals, maxDecimals, count, separator);
+	}
+
+	std::vector<Real> realsStrict(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, Constraint& constraint,
+	                              Integer count, char separator = DEFAULT_SEPARATOR) {
+		return realsStrict<Real, Real, Integer, Integer, Constraint&>(lower, upper, minDecimals, maxDecimals, constraint, count, separator);
 	}
 
 	void expectString(std::string_view expected) {
@@ -2350,6 +2363,20 @@ namespace ValidateBase {
 		return details::floatEqual(given, expected, floatAbsTol_, floatRelTol_);
 	}
 
+	bool floatLess(Real given,
+	               Real expected,
+	               Real floatAbsTol_ = floatAbsTol,
+	               Real floatRelTol_ = floatRelTol) {
+		return given <= expected || floatEqual(given, expected, floatAbsTol_, floatRelTol_);
+	}
+
+	bool floatGreater(Real given,
+	                  Real expected,
+	                  Real floatAbsTol_ = floatAbsTol,
+	                  Real floatRelTol_ = floatRelTol) {
+		return given >= expected || floatEqual(given, expected, floatAbsTol_, floatRelTol_);
+	}
+
 	constexpr bool stringEqual(std::string_view a, std::string_view b, bool caseSensitive_ = caseSensitive) {
 		return details::stringEqual(a, b, caseSensitive_);
 	}
@@ -2452,319 +2479,5 @@ namespace Generator {
 	}
 
 } // namespace Generator
-
-//============================================================================//
-// ctd like syntax...                                                         //
-//============================================================================//
-namespace ctd {
-	namespace details {
-		template<typename C, typename... Args>
-		class TempReader final {
-			C callable;
-			std::tuple<Args...> args;
-		public:
-			constexpr explicit TempReader(C callable_, Args... args_) : callable(callable_), args(args_...) {}
-
-			TempReader(const TempReader&) = delete;
-			TempReader(TempReader&&) = delete;
-			TempReader& operator=(const TempReader&) = delete;
-			TempReader& operator=(TempReader&&) = delete;
-
-			friend InputStream& operator>>(InputStream& is, const TempReader& reader) {
-				std::apply(reader.callable, std::tuple_cat(std::tie(is), reader.args));
-				return is;
-			}
-		};
-
-		template<typename... Args>
-		constexpr auto integer(Args... args) {
-			auto f = [](InputStream& is, auto... curArgs) {
-				is.integer(curArgs...);
-			};
-			return details::TempReader(f, args...);
-		}
-
-		template<typename... Args>
-		auto integerStore(Integer& res, Args... args) {
-			auto f = [&res](InputStream& is, auto... curArgs) {
-				res = is.integer(curArgs...);
-			};
-			return details::TempReader(f, args...);
-		}
-
-		template<typename... Args>
-		constexpr auto real(Args... args) {
-			auto f = [](InputStream& is, auto... curArgs) {
-				is.real(curArgs...);
-			};
-			return details::TempReader(f, args...);
-		}
-
-		template<typename... Args>
-		auto realStore(Real& res, Args... args) {
-			auto f = [&res](InputStream& is, auto... curArgs) {
-				res = is.real(curArgs...);
-			};
-			return details::TempReader(f, args...);
-		}
-
-		template<typename... Args>
-		constexpr auto string(Args... args) {
-			auto f = [](InputStream& is, auto... curArgs) {
-				is.string(curArgs...);
-			};
-			return details::TempReader(f, args...);
-		}
-
-		template<typename... Args>
-		auto stringStore(std::string& res, Args... args) {
-			auto f = [&res](InputStream& is, auto... curArgs) {
-				res = is.string(curArgs...);
-			};
-			return details::TempReader(f, args...);
-		}
-
-		template<typename... Args>
-		constexpr auto integers(Args... args) {
-			auto f = [](InputStream& is, auto... curArgs) {
-				is.integers(curArgs...);
-			};
-			return details::TempReader(f, args...);
-		}
-
-		template<typename... Args>
-		auto integersStore(std::vector<Integer>& res, Args... args) {
-			auto f = [&res](InputStream& is, auto... curArgs) {
-				res = is.integers(curArgs...);
-			};
-			return details::TempReader(f, args...);
-		}
-
-		template<typename... Args>
-		constexpr auto reals(Args... args) {
-			auto f = [](InputStream& is, auto... curArgs) {
-				is.reals(curArgs...);
-			};
-			return details::TempReader(f, args...);
-		}
-
-		template<typename... Args>
-		auto realsStore(std::vector<Real>& res, Args... args) {
-			auto f = [&res](InputStream& is, auto... curArgs) {
-				res = is.reals(curArgs...);
-			};
-			return details::TempReader(f, args...);
-		}
-
-		template<typename... Args>
-		constexpr auto strings(Args... args) {
-			auto f = [](InputStream& is, auto... curArgs) {
-				is.strings(curArgs...);
-			};
-			return details::TempReader(f, args...);
-		}
-
-		template<typename... Args>
-		auto stringsStore(std::vector<std::string>& res, Args... args) {
-			auto f = [&res](InputStream& is, auto... curArgs) {
-				res = is.strings(curArgs...);
-			};
-			return details::TempReader(f, args...);
-		}
-	}
-
-	constexpr auto SPACE = details::TempReader([](InputStream& is) {is.space();});
-	constexpr auto NEWLINE = details::TempReader([](InputStream& is) {is.newline();});
-	constexpr auto ENDFILE = details::TempReader([](InputStream& is) {is.eof();});
-
-	constexpr auto INT() {
-		return details::integer();
-	}
-	constexpr auto INT(Integer lower, Integer upper) {
-		return details::integer(lower, upper);
-	}
-	auto INT(Integer lower, Integer upper, Constraint& constraint) {
-		return details::integer(lower, upper, std::ref(constraint));
-	}
-	auto INT(Integer& res) {
-		return details::integerStore(res);
-	}
-	auto INT(Integer lower, Integer upper, Integer& res) {
-		return details::integerStore(res, lower, upper);
-	}
-	auto INT(Integer lower, Integer upper, Integer& res, Constraint& constraint) {
-		return details::integerStore(res, lower, upper, std::ref(constraint));
-	}
-
-	constexpr auto REAL() {
-		return details::real();
-	}
-	constexpr auto REAL(Real lower, Real upper) {
-		return details::real(lower, upper);
-	}
-	constexpr auto REAL(Real lower, Real upper, Integer minDecimals, Integer maxDecimals) {
-		return details::real(lower, upper, minDecimals, maxDecimals);
-	}
-	auto REAL(Real lower, Real upper, Constraint& constraint) {
-		return details::real(lower, upper, std::ref(constraint));
-	}
-	auto REAL(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, Constraint& constraint) {
-		return details::real(lower, upper, minDecimals, maxDecimals, std::ref(constraint));
-	}
-	auto REAL(Real& res) {
-		return details::realStore(res);
-	}
-	auto REAL(Real lower, Real upper, Real& res) {
-		return details::realStore(res, lower, upper);
-	}
-	auto REAL(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, Real& res) {
-		return details::realStore(res, lower, upper, minDecimals, maxDecimals);
-	}
-	auto REAL(Real lower, Real upper, Real& res, Constraint& constraint) {
-		return details::realStore(res, lower, upper, std::ref(constraint));
-	}
-	auto REAL(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, Real& res, Constraint& constraint) {
-		return details::realStore(res, lower, upper, minDecimals, maxDecimals, std::ref(constraint));
-	}
-
-	constexpr auto STRING() {
-		return details::string();
-	}
-	constexpr auto STRING(Integer lower, Integer upper) {
-		return details::string(lower, upper);
-	}
-	auto STRING(Integer lower, Integer upper, Constraint& constraint) {
-		return details::string(lower, upper, std::ref(constraint));
-	}
-	auto STRING(const std::regex& pattern) {
-		return details::string(std::cref(pattern));
-	}
-	auto STRING(const std::regex& pattern, Integer lower, Integer upper) {
-		return details::string(std::cref(pattern), lower, upper);
-	}
-	auto STRING(const std::regex& pattern, Integer lower, Integer upper, Constraint& constraint) {
-		return details::string(std::cref(pattern), lower, upper, std::ref(constraint));
-	}
-	auto STRING(std::string& res) {
-		return details::stringStore(res);
-	}
-	auto STRING(Integer lower, Integer upper, std::string& res) {
-		return details::stringStore(res, lower, upper);
-	}
-	auto STRING(Integer lower, Integer upper, std::string& res, Constraint& constraint) {
-		return details::stringStore(res, lower, upper, std::ref(constraint));
-	}
-	auto STRING(const std::regex& pattern, std::string& res) {
-		return details::stringStore(res, std::cref(pattern));
-	}
-	auto STRING(const std::regex& pattern, Integer lower, Integer upper, std::string& res) {
-		return details::stringStore(res, std::cref(pattern), lower, upper);
-	}
-	auto STRING(const std::regex& pattern, Integer lower, Integer upper, std::string& res, Constraint& constraint) {
-		return details::stringStore(res, std::cref(pattern), lower, upper, std::ref(constraint));
-	}
-
-	constexpr auto INTS(Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::integers(count, separator);
-	}
-	constexpr auto INTS(Integer lower, Integer upper, Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::integers(lower, upper, count, separator);
-	}
-	auto INTS(Integer lower, Integer upper, Constraint& constraint, Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::integers(lower, upper, std::ref(constraint), count, separator);
-	}
-	auto INTS(std::vector<Integer>& res, Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::integersStore(res, count, separator);
-	}
-	auto INTS(Integer lower, Integer upper, std::vector<Integer>& res, Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::integersStore(res, lower, upper, count, separator);
-	}
-	auto INTS(Integer lower, Integer upper, std::vector<Integer>& res, Constraint& constraint,
-	          Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::integersStore(res, lower, upper, std::ref(constraint), count, separator);
-	}
-
-	constexpr auto REALS(Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::reals(count, separator);
-	}
-	constexpr auto REALS(Real lower, Real upper, Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::reals(lower, upper, count, separator);
-	}
-	constexpr auto REALS(Real lower, Real upper, Integer minDecimals, Integer maxDecimals,
-	                     Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::reals(lower, upper, minDecimals, maxDecimals, count, separator);
-	}
-	auto REALS(Real lower, Real upper, Constraint& constraint, Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::reals(lower, upper, std::ref(constraint), count, separator);
-	}
-	auto REALS(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, Constraint& constraint, Integer count,
-	           char separator = DEFAULT_SEPARATOR) {
-		return details::reals(lower, upper, minDecimals, maxDecimals, std::ref(constraint), count, separator);
-	}
-	auto REALS(std::vector<Real>& res, Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::realsStore(res, count, separator);
-	}
-	auto REALS(Real lower, Real upper, std::vector<Real>& res, Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::realsStore(res, lower, upper, count, separator);
-	}
-	auto REALS(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, std::vector<Real>& res,
-	           Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::realsStore(res, lower, upper, minDecimals, maxDecimals, count, separator);
-	}
-	auto REALS(Real lower, Real upper, std::vector<Real>& res, Constraint& constraint,
-	           Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::realsStore(res, lower, upper, std::ref(constraint), count, separator);
-	}
-	auto REALS(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, std::vector<Real>& res, Constraint& constraint,
-	           Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::realsStore(res, lower, upper, minDecimals, maxDecimals, std::ref(constraint), count, separator);
-	}
-
-	constexpr auto STRINGS(Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::strings(count, separator);
-	}
-	constexpr auto STRINGS(Integer lower, Integer upper, Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::strings(lower, upper, count, separator);
-	}
-	auto STRINGS(Integer lower, Integer upper, Constraint& constraint,
-	             Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::strings(lower, upper, std::ref(constraint), count, separator);
-	}
-	auto STRINGS(const std::regex& pattern, Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::strings(std::cref(pattern), count, separator);
-	}
-	auto STRINGS(const std::regex& pattern, Integer lower, Integer upper,
-	             Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::strings(std::cref(pattern), lower, upper, count, separator);
-	}
-	auto STRINGS(const std::regex& pattern, Integer lower, Integer upper, Constraint& constraint,
-	             Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::strings(std::cref(pattern), lower, upper, std::ref(constraint), count, separator);
-	}
-	auto STRINGS(std::vector<std::string>& res, Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::stringsStore(res, count, separator);
-	}
-	auto STRINGS(Integer lower, Integer upper, std::vector<std::string>& res,
-	             Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::stringsStore(res, lower, upper, count, separator);
-	}
-	auto STRINGS(Integer lower, Integer upper, std::vector<std::string>& res, Constraint& constraint,
-	             Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::stringsStore(res, lower, upper, std::ref(constraint), count, separator);
-	}
-	auto STRINGS(const std::regex& pattern, std::vector<std::string>& res,
-	             Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::stringsStore(res, std::cref(pattern), count, separator);
-	}
-	auto STRINGS(const std::regex& pattern, Integer lower, Integer upper, std::vector<std::string>& res,
-	             Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::stringsStore(res, std::cref(pattern), lower, upper, count, separator);
-	}
-	auto STRINGS(const std::regex& pattern, Integer lower, Integer upper, std::vector<std::string>& res, Constraint& constraint,
-	             Integer count, char separator = DEFAULT_SEPARATOR) {
-		return details::stringsStore(res, std::cref(pattern), lower, upper, std::ref(constraint), count, separator);
-	}
-
-} // namespace ctd
 
 #endif

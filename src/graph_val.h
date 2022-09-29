@@ -44,66 +44,78 @@ public:
 	}
 };
 
-class BaseGraph {
-	friend class Graph;
-	friend class DiGraph;
+class Graph;
+class DiGraph;
 
-	Integer offset, edges;
-	std::vector<std::set<Integer>> adj;
-	std::optional<Integer> selfloop;
-	std::optional<std::pair<Integer, Integer>> multiedge;
+namespace details {
+	class BaseGraph {
+		friend class ::Graph;
+		friend class ::DiGraph;
 
-	explicit BaseGraph(Integer l, Integer u) : offset(l), edges(0), adj(u-l) {}
-	explicit BaseGraph(Integer n) : BaseGraph(0, n) {}
+		Integer offset, edges;
+		std::vector<std::set<Integer>> adj;
+		std::optional<Integer> selfloop;
+		std::optional<std::pair<Integer, Integer>> multiedge;
 
-	void _addEdge(Integer a, Integer b) {
-		if (a == b) selfloop = a;
+		explicit BaseGraph(Integer l, Integer u) : offset(l), edges(0), adj(u-l) {}
+		explicit BaseGraph(Integer n) : BaseGraph(0, n) {}
 
-		if (adj[a - offset].count(b - offset) > 0) multiedge = {a, b};
-		adj[a - offset].insert(b - offset);
+		void addEdge_(Integer a, Integer b) {
+			if (a == b) selfloop = a;
 
-		edges++;
-	}
-public:
-	std::optional<Integer> hasSelfloop() const {return selfloop;}
-	std::optional<std::pair<Integer, Integer>> hasMultiedge() const {return multiedge;}
+			if (adj[a - offset].count(b - offset) > 0) multiedge = {a, b};
+			adj[a - offset].insert(b - offset);
 
-	const std::set<Integer>& operator[](Integer id) const & {
-		return adj[id - offset];
-	}
+			edges++;
+		}
+	public:
+		std::optional<Integer> hasSelfloop() const {return selfloop;}
+		std::optional<std::pair<Integer, Integer>> hasMultiedge() const {return multiedge;}
 
-	const std::set<Integer>&& operator[](Integer id) const && {
-		return std::move(adj[id - offset]);
-	}
+		const std::set<Integer>& operator[](Integer id) const & {
+			return adj[id - offset];
+		}
 
-	std::size_t size() const {
-		return adj.size();
-	}
+		const std::set<Integer>&& operator[](Integer id) const && {
+			return std::move(adj[id - offset]);
+		}
 
-	Integer nodeCount() const {
-		return static_cast<Integer>(adj.size());
-	}
+		std::size_t size() const {
+			return adj.size();
+		}
 
-	Integer edgeCount() const {
-		return edges;
-	}
+		Integer nodeCount() const {
+			return static_cast<Integer>(adj.size());
+		}
 
-	bool hasEdge(Integer a, Integer b) const {
-		return adj[a - offset].count(b - offset) > 0;
-	}
-};
+		Integer edgeCount() const {
+			return edges;
+		}
 
-class Graph final : public BaseGraph {
+		bool hasEdge(Integer a, Integer b) const {
+			return adj[a - offset].count(b - offset) > 0;
+		}
+	};
+}
+
+class Graph final : private details::BaseGraph {
 	UnionFind uf, buf;
 	Integer components;
 	bool forest = true;
 	bool bipartite = true;
 public:
-	explicit Graph(Integer l, Integer r) : BaseGraph(l, r), uf(r-l), buf(2*(r-l)), components(r-l) {}
+	explicit Graph(Integer l, Integer r) : details::BaseGraph(l, r), uf(r-l), buf(2*(r-l)), components(r-l) {}
 	explicit Graph(Integer n) : Graph(0, n) {}
 
+	using details::BaseGraph::hasSelfloop;
+	using details::BaseGraph::operator[];
+	using details::BaseGraph::size;
+	using details::BaseGraph::nodeCount;
+	using details::BaseGraph::edgeCount;
+	using details::BaseGraph::hasEdge;
+
 	void addEdge(Integer a, Integer b) {
-		_addEdge(a, b);
+		addEdge_(a, b);
 		a -= offset;
 		b -= offset;
 		adj[b].insert(a);
@@ -127,14 +139,21 @@ public:
 	bool isBipartite() const {return bipartite;}
 };
 
-class DiGraph final : public BaseGraph  {
+class DiGraph final : private details::BaseGraph  {
 	std::vector<std::set<Integer>> rev;
 public:
-	explicit DiGraph(Integer l, Integer r) : BaseGraph(l, r), rev(r-l) {}
+	explicit DiGraph(Integer l, Integer r) : details::BaseGraph(l, r), rev(r-l) {}
 	explicit DiGraph(Integer n) : DiGraph(0, n) {}
 
+	using details::BaseGraph::hasSelfloop;
+	using details::BaseGraph::operator[];
+	using details::BaseGraph::size;
+	using details::BaseGraph::nodeCount;
+	using details::BaseGraph::edgeCount;
+	using details::BaseGraph::hasEdge;
+
 	void addEdge(Integer a, Integer b) {
-		_addEdge(a, b);
+		addEdge_(a, b);
 		rev[b - offset].insert(a - offset);
 	}
 
