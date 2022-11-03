@@ -342,6 +342,12 @@ Returns a uniformally distributed real in [0, 1), [0, upper) or [lower, upper).
 **`Integer binomial(Integer lower, Integer upper, Integer n, Real p)`**   
 Generates a number according to some distribution. The generated integer will always be in [lower, upper).
 
+**`Integer maximum(Integer upper, Integer n)`**  
+**`Integer maximum(Integer lower, Integer upper, Integer n)`** 
+**`Integer minimum(Integer upper, Integer n)`**  
+**`Integer minimum(Integer lower, Integer upper, Integer n)`** 
+Random variable distributed like the maximum/minimum of `n` uniform integers in [0, upper) or [lower, upper).
+
 **`Integer prime(Integer upper)`**  
 **`Integer prime(Integer lower, Integer upper)`** 
 Generates a unirformally choosen prime in the [0, upper) or [lower, upper).
@@ -499,7 +505,7 @@ Converts a `char` or `std::string` to the given case.
 > Note: defaultCase is lowerCase.
 
 ## class ConstraintsLogger 
-An instance of this class is provided for input validators as `constraint` after calling `init(argc, argv).
+An instance of this class is provided for input and output validators as `constraint` after calling `init(argc, argv).
 #### Methods
 **`Constraint& operator[](const std::string& name)`**  
 Returns a `constraint` which can be given to an input stream to automatically log informations about the parsed input.

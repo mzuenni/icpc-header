@@ -107,12 +107,17 @@ Generates a uniformally random tree with n vertices in [0, n).
 Generates a `Graph` with n vertices in [0, n).
 Two vertices `a` and `b` are connected with probability `p` i.e. this creates an Erdös-Renyi random graph.
 
-**`Graph randomGraph(Integer n, double p)`**  
-**`Graph<E> randomGraph<E>(Integer n, double p)`**  
-**`DiGraph<E> randomGraph(Integer n, double p)`**  
-**`DiGraph<E> randomGraph<E, true>(Integer n, double p)`**  
+**`Graph randomGraph(Integer n, Integer m)`**  
+**`Graph<E> randomGraph<E>(Integer n, Integer m)`**  
+**`DiGraph<E> randomGraph(Integer n, Integer m)`**  
+**`DiGraph<E> randomGraph<E, true>(Integer n, Integer m)`**  
+Generates a `Graph` with n vertices in [0, n) and exactly m edges.
+This is similiar to an Erdös-Renyi random graph with some specific `p`.
+
+**`Graph randomGrowingGraph(Integer n, double p)`**  
+**`Graph<E> randomGrowingGraph<E>(Integer n, double p)`**  
 Generates a `Graph` with n vertices in [0, n).
-Two vertices `a` and `b` are connected with probability `p` i.e. this creates an Erdös-Renyi random graph.
+The degree distribution will be linear.
 
 **`Graph<E> randomGraph(std::vector<Integer> degree)`**  
 **`Graph<E> randomGraph(std::vector<Integer>& degree, Integer flips)`**  

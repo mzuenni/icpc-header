@@ -366,10 +366,8 @@ namespace GraphDetail {
 			return *this;
 		}
 
-		Graph& permutate() {
-			std::vector<Integer> perm(size());
-			std::iota(perm.begin(), perm.end(), minId);
-			Random::shuffle(perm.begin(), perm.end());
+		Graph& permutate(const std::vector<Integer>& perm) {
+			judgeAssert<std::invalid_argument>(isPerm(perm, minId), "not a permutation");
 			for (auto& n : adj) n.clear();
 			Random::shuffle(edges.begin(), edges.end());
 			for (auto& e : edges) {
@@ -385,6 +383,13 @@ namespace GraphDetail {
 			}
 			buildAdj();
 			return *this;
+		}
+
+		Graph& permutate() {
+			std::vector<Integer> perm(size());
+			std::iota(perm.begin(), perm.end(), minId);
+			Random::shuffle(perm.begin(), perm.end());
+			return permutate(perm);
 		}
 
 		GraphType<E, true>& reverse() {
@@ -749,6 +754,28 @@ GraphDetail::GraphType<E, DIR> randomGraph(Integer n, Real p) {
 			neighbours = Random::distinct(deg, i + 1, n);
 			for (Integer j : neighbours) res.addEdge(i, j);
 		}
+	}
+	return res;
+}
+
+// generate a random graph (Erdös-Renyi)
+// each edge exists with a given number of edges
+template<typename E = NoData, bool DIR = false>
+GraphDetail::GraphType<E, DIR> randomGraph(Integer n, Integer m) {
+	GraphDetail::GraphType<E, DIR> res(n);
+	Integer lim = n * (n-1);
+	if constexpr (!DIR) lim /= 2;
+	auto edges = Random::distinct(m, 0, lim);
+	for (Integer x : edges) {
+		Integer i = x / n;
+		Integer j = x % n;
+		if constexpr(!DIR) {
+			if (j <= i) {
+				i = n - 2 - i;
+				j = n - 1 - j;
+			}
+		}
+		res.addEdge(i, j);
 	}
 	return res;
 }

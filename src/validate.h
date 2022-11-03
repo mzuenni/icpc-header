@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-//version 2.1.0                                                               //
+//version 2.2.3                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -30,6 +30,7 @@
 //#define DOUBLE_FALLBACK
 
 #include <algorithm>
+#include <array>
 #include <bitset>
 #include <cctype>
 #include <cmath>
@@ -149,6 +150,36 @@ constexpr void judgeAssert(bool asserted, std::string_view message) {
 
 
 //============================================================================//
+// SFINAE                                                                     //
+//============================================================================//
+namespace details {
+	template<typename T, typename = void>
+	struct IsContainer : std::false_type {};
+
+	template<typename T>
+	struct IsContainer<T, std::void_t<decltype(std::begin(std::declval<std::add_lvalue_reference_t<T>>()))>> : std::true_type {};
+
+	template<typename T>
+	struct IsStdArray : std::false_type {};
+
+	template<typename T, std::size_t N>
+	struct IsStdArray<std::array<T, N>> : std::true_type {};
+
+	template<typename T, typename = void>
+	struct IsTupleLike : std::false_type {};
+
+	template<typename T>
+	struct IsTupleLike<T, std::void_t<decltype(sizeof(std::tuple_size<T>))>> : std::true_type {};
+
+	template<typename T, typename = void>
+	struct HasOstreamOperator : std::false_type {};
+
+	template<typename T>
+	struct HasOstreamOperator<T, std::void_t<decltype(std::declval<std::ostream>() << std::declval<T>())>> : std::true_type {};
+}
+
+
+//============================================================================//
 // Verdicts                                                                   //
 //============================================================================//
 struct Verdict final {
@@ -180,25 +211,8 @@ constexpr Verdict FAIL(1);
 //============================================================================//
 // Output streams                                                             //
 //============================================================================//
-namespace details {
-	template<typename Tuple, std::size_t... Is>
-	std::ostream& print(std::ostream& os, const Tuple& t, std::index_sequence<Is...>, char separator = DEFAULT_SEPARATOR) {
-		static_assert(std::tuple_size_v<Tuple> == sizeof...(Is));
-		return ((os << (Is == 0 ? std::string_view() : std::string_view(&separator, 1)) << std::get<Is>(t)), ...);
-	}
-
-	template<typename T>
-	std::ostream& print(std::ostream& os, T first, T last, char separator = DEFAULT_SEPARATOR) {
-		for (auto it = first; it != last; it++) {
-			if (it != first) os << separator;
-			os << *it;
-		}
-		return os;
-	}
-}
-
-class NullStream : public std::ostream {
-	class NullBuffer : public std::streambuf {
+class NullStream final : public std::ostream {
+	class NullBuffer final : public std::streambuf {
 	protected:
 		std::streamsize xsputn(const char* /**/, std::streamsize n) override {
 			return n;
@@ -209,7 +223,11 @@ class NullStream : public std::ostream {
 	} nullBuffer;
 public:
 	NullStream() : std::ostream(&nullBuffer) {}
-} nullStream;
+};
+
+namespace details {
+	NullStream nullStream;
+}
 
 class OutputStream final {
 	std::unique_ptr<std::ofstream> managed;
@@ -222,7 +240,7 @@ class OutputStream final {
 	}
 
 public:
-	OutputStream() : os(&nullStream) {}
+	OutputStream() : os(&details::nullStream) {}
 	OutputStream(std::ostream& os_) : os(&os_) {init();}
 	explicit OutputStream(const std::filesystem::path& path) : managed(std::make_unique<std::ofstream>(path)), os(managed.get()) {
 		judgeAssert<std::runtime_error>(managed->good(), "Could not open File: " + path.string());
@@ -238,20 +256,23 @@ public:
 
 	template<typename L, typename R>
 	OutputStream& operator<<(const std::pair<L, R>& t) {
-		*os << t.first << DEFAULT_SEPARATOR << t.second;
-		return *this;
+		return *this << t.first << DEFAULT_SEPARATOR << t.second;
 	}
 
 	template<typename... Args>
 	OutputStream& operator<<(const std::tuple<Args...>& t) {
-		*os << details::print(os, t, std::index_sequence_for<Args...>());
-		return *this;
+		return join(t, std::index_sequence_for<Args...>(), DEFAULT_SEPARATOR);
 	}
 
 	template<typename T>
 	OutputStream& operator<<(const T& x) {
-		*os << x;
-		return *this;
+		if constexpr ((std::is_array_v<T> and !std::is_same_v<std::decay_t<T>, char*>) or
+		              (details::IsContainer<T>{} and !details::HasOstreamOperator<T>{})) {
+			return join(std::begin(x), std::end(x), DEFAULT_SEPARATOR);
+		} else {
+			*os << x;
+			return *this;
+		}
 	}
 
 	OutputStream& operator<<(std::ostream& (*manip)(std::ostream&)) {
@@ -259,24 +280,20 @@ public:
 		return *this;
 	}
 
-	template<char SEP = DEFAULT_SEPARATOR>
-	OutputStream& print() {return *this;}
-
-	template<char SEP = DEFAULT_SEPARATOR, typename T>
-	OutputStream& print(const T& x) {
-		return *this << x;
+	template<typename Tuple, std::size_t... Is>
+	OutputStream& join(const Tuple& t, std::index_sequence<Is...> /**/, char separator) {
+		static_assert(std::tuple_size_v<Tuple> == sizeof...(Is));
+		((*os << (Is == 0 ? std::string_view() : std::string_view(&separator, 1)), *this << std::get<Is>(t)), ...);
+		return *this;
 	}
 
-	template<char SEP = DEFAULT_SEPARATOR, typename T, typename... Ts>
-	OutputStream& print(const T& x, const Ts&... xs) {
-		*this << x;
-		return ((*this << SEP << xs), ...);
-	}
-
-	template<char SEP = DEFAULT_SEPARATOR, typename... T>
-	OutputStream& println(const T&... xs) {
-		print<SEP>(xs...);
-		return *this << std::endl;
+	template<typename T>
+	OutputStream& join(T first, T last, char separator) {
+		for (auto it = first; it != last; it++) {
+			if (it != first) *os << separator;
+			*this << *it;
+		}
+		return *this;
 	}
 };
 
@@ -286,28 +303,113 @@ namespace ValidateBase {
 	OutputStream juryOut(std::cout);
 }
 
-
-//============================================================================//
-// SFINAE                                                                     //
-//============================================================================//
+// allow printing colletions as:
+// join(begin(), end(), [sep])
 namespace details {
-	template<typename T, typename = void>
-	struct IsContainer : std::false_type {};
+	template<typename C>
+	class TempWriter final {
+		C callable;
+	public:
+		constexpr explicit TempWriter(const C& callable_) : callable(callable_) {}
 
-	template<typename T>
-	struct IsContainer<T, std::void_t<decltype(std::begin(std::declval<std::add_lvalue_reference_t<T>>()))>> : std::true_type {};
+		TempWriter(const TempWriter&) = delete;
+		TempWriter(TempWriter&&) = delete;
+		TempWriter& operator=(const TempWriter&) = delete;
+		TempWriter& operator=(TempWriter&&) = delete;
 
-	template<typename T>
-	struct IsStdArray : std::false_type {};
+		std::string asString() const {
+			std::ostringstream os;
+			OutputStream tmp(os);
+			tmp << *this;
+			return os.str();
+		}
 
-	template<typename T, std::size_t N>
-	struct IsStdArray<std::array<T, N>> : std::true_type {};
+		explicit operator std::string() const {
+			return asString();
+		}
 
-	template<typename T, typename = void>
-	struct IsTupleLike : std::false_type {};
+		friend OutputStream& operator<<(OutputStream& os, const TempWriter<C>& writer) {
+			writer.callable(os);
+			return os;
+		}
+	};
 
-	template<typename T>
-	struct IsTupleLike<T, std::void_t<decltype(sizeof(std::tuple_size<T>))>> : std::true_type {};
+	struct JoinListCapture {
+		std::function<void(OutputStream&, char separator)> callable;
+
+		template<typename... Args>
+		JoinListCapture(Args&&... args)
+			: callable([t = std::forward_as_tuple(args...)](OutputStream& os, char separator) {
+			os.join(t, std::index_sequence_for<Args...>(), separator);
+		}) {}
+	};
+}
+
+template<typename T>
+constexpr auto join(T first, T last, char separator = DEFAULT_SEPARATOR) {
+	return details::TempWriter([=](OutputStream& os) {
+		os.join(first, last, separator);
+	});
+}
+
+template<typename CR,
+         typename = std::enable_if_t<details::IsContainer<CR>{}>,
+         typename = std::enable_if_t<!details::IsStdArray<std::remove_cv_t<std::remove_reference_t<CR>>>{}>>
+constexpr auto join(CR&& c, char separator = DEFAULT_SEPARATOR) {
+	if constexpr(std::is_rvalue_reference_v<CR&&>) {
+		if constexpr (std::is_array_v<CR>) {
+			return details::TempWriter([c, separator](OutputStream& os) {
+				os.join(std::begin(c), std::end(c), separator);
+			});
+		} else {
+			return details::TempWriter([c = std::move(c), separator](OutputStream& os) {
+				os.join(std::begin(c), std::end(c), separator);
+			});
+		}
+	} else {
+		return join(std::begin(c), std::end(c), separator);
+	}
+}
+
+template<typename CR, std::size_t N = std::tuple_size<std::decay_t<CR>>::value>
+constexpr auto join(CR&& c, char separator = DEFAULT_SEPARATOR) {
+	if constexpr(std::is_rvalue_reference_v<CR&&>) {
+		return details::TempWriter([c = std::move(c), separator](OutputStream& os) {
+			os.join(c, std::make_index_sequence<N>{}, separator);
+		});
+	} else {
+		return details::TempWriter([&c, separator](OutputStream& os) {
+			os.join(c, std::make_index_sequence<N>{}, separator);
+		});
+	}
+}
+
+template<typename T, std::size_t N,
+         typename = std::enable_if_t<std::is_same_v<std::remove_cv_t<T>, char>>>
+constexpr auto join(T (&c)[N], char separator = DEFAULT_SEPARATOR) {
+	static_assert(N > 0, "c-strings should be null terminated!");
+	return join(std::begin(c), std::prev(std::end(c)), separator);
+}
+
+template<typename T, std::size_t N,
+         typename = std::enable_if_t<std::is_same_v<std::remove_cv_t<T>, char>>>
+constexpr auto join(T (&&c)[N], char separator = DEFAULT_SEPARATOR) {
+	static_assert(N > 0, "c-strings should be null terminated!");
+	return details::TempWriter([c, separator](OutputStream& os) {
+		os.join(std::begin(c), std::prev(std::end(c)), separator);
+	});
+}
+
+template<typename T,
+         typename = std::enable_if_t<!std::is_array<T>{}>,
+         typename = std::enable_if_t<!details::IsContainer<T>{}>,
+         typename = std::enable_if_t<!details::IsTupleLike<T>{}>>
+constexpr auto join(const T& t, char separator = DEFAULT_SEPARATOR) = delete;
+
+auto join(details::JoinListCapture c, char separator = DEFAULT_SEPARATOR) {
+	return details::TempWriter([c = std::move(c), separator](OutputStream& os) {
+		c.callable(os, separator);
+	});
 }
 
 
@@ -668,116 +770,6 @@ template<typename L, typename R>
 constexpr std::complex<typename std::common_type<L, R>::type>
 convert(const std::pair<L,R>& t) {
 	return {getX(t), getY(t)};
-}
-
-
-// allow printing colletions as:
-// join(begin(), end(), [sep])
-namespace details {
-	template<typename C>
-	class TempWriter final {
-		C callable;
-	public:
-		constexpr explicit TempWriter(const C& callable_) : callable(callable_) {}
-
-		TempWriter(const TempWriter&) = delete;
-		TempWriter(TempWriter&&) = delete;
-		TempWriter& operator=(const TempWriter&) = delete;
-		TempWriter& operator=(TempWriter&&) = delete;
-
-		std::string asString() const {
-			std::ostringstream os;
-			OutputStream tmp(os);
-			os << *this;
-			return os.str();
-		}
-
-		explicit operator std::string() const {
-			return asString();
-		}
-
-		friend std::ostream& operator<<(std::ostream& os, const TempWriter<C>& writer) {
-			writer.callable(os);
-			return os;
-		}
-	};
-
-	struct JoinListCaptcha {
-		std::function<void(std::ostream&, char separator)> callable;
-
-		template<typename... Args>
-		JoinListCaptcha(Args&&... args)
-			: callable([t = std::forward_as_tuple(args...)](std::ostream& os, char separator) {
-			print(os, t, std::index_sequence_for<Args...>(), separator);
-		}) {}
-	};
-}
-
-template<typename T>
-constexpr auto join(T first, T last, char separator = DEFAULT_SEPARATOR) {
-	return details::TempWriter([=](std::ostream& os) {
-		details::print(os, first, last, separator);
-	});
-}
-
-template<typename CR,
-         typename = std::enable_if_t<details::IsContainer<CR>{}>,
-         typename = std::enable_if_t<!details::IsStdArray<std::remove_cv_t<std::remove_reference_t<CR>>>{}>>
-constexpr auto join(CR&& c, char separator = DEFAULT_SEPARATOR) {
-	if constexpr(std::is_rvalue_reference_v<CR&&>) {
-		if constexpr (std::is_array_v<CR>) {
-			return details::TempWriter([c, separator](std::ostream& os) {
-				details::print(os, std::begin(c), std::end(c), separator);
-			});
-		} else {
-			return details::TempWriter([c = std::move(c), separator](std::ostream& os) {
-				details::print(os, std::begin(c), std::end(c), separator);
-			});
-		}
-	} else {
-		return join(std::begin(c), std::end(c), separator);
-	}
-}
-
-template<typename CR, std::size_t N = std::tuple_size<std::decay_t<CR>>::value>
-constexpr auto join(CR&& c, char separator = DEFAULT_SEPARATOR) {
-	if constexpr(std::is_rvalue_reference_v<CR&&>) {
-		return details::TempWriter([c = std::move(c), separator](std::ostream& os) {
-			details::print(os, c, std::make_index_sequence<N>{}, separator);
-		});
-	} else {
-		return details::TempWriter([&c, separator](std::ostream& os) {
-			details::print(os, c, std::make_index_sequence<N>{}, separator);
-		});
-	}
-}
-
-template<typename T, std::size_t N,
-         typename = std::enable_if_t<std::is_same_v<std::remove_cv_t<T>, char>>>
-constexpr auto join(T (&c)[N], char separator = DEFAULT_SEPARATOR) {
-	static_assert(N > 0, "c-strings should be null terminated!");
-	return join(std::begin(c), std::prev(std::end(c)), separator);
-}
-
-template<typename T, std::size_t N,
-         typename = std::enable_if_t<std::is_same_v<std::remove_cv_t<T>, char>>>
-constexpr auto join(T (&&c)[N], char separator = DEFAULT_SEPARATOR) {
-	static_assert(N > 0, "c-strings should be null terminated!");
-	return details::TempWriter([c, separator](std::ostream& os) {
-		details::print(os, std::begin(c), std::prev(std::end(c)), separator);
-	});
-}
-
-template<typename T,
-         typename = std::enable_if_t<!std::is_array<T>{}>,
-         typename = std::enable_if_t<!details::IsContainer<T>{}>,
-         typename = std::enable_if_t<!details::IsTupleLike<T>{}>>
-constexpr auto join(const T& t, char separator = DEFAULT_SEPARATOR) = delete;
-
-auto join(details::JoinListCaptcha c, char separator = DEFAULT_SEPARATOR) {
-	return details::TempWriter([c = std::move(c), separator](std::ostream& os) {
-		c.callable(os, separator);
-	});
 }
 
 
@@ -1223,7 +1215,7 @@ namespace Random {
 
 	Integer geometric(Real p) {// theoretically in [0, inf)
 		judgeAssert<std::domain_error>(0.0_real <= p and p < 1.0_real, "p must be in [0,1)!");
-		return static_cast<Integer>(std::floor(std::log(real()) / std::log1p(-p)));
+		return std::llround(std::floor(std::log(real()) / std::log1p(-p)));
 	}
 	Integer geometric(Integer lower, Integer upper, Real p) {// in [lower, upper)
 		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
@@ -1231,7 +1223,7 @@ namespace Random {
 		while (true) {
 			// https://en.wikipedia.org/wiki/Geometric_distribution
 			// "The exponential distribution is the continuous analogue of the geometric distribution[...]"
-			Integer res = lower + static_cast<Integer>(std::floor(std::log(real()) / std::log1p(-p)));
+			Integer res = lower + std::llround(std::floor(std::log(real()) / std::log1p(-p)));
 			if (res < upper) return res;
 		}
 	}
@@ -1259,7 +1251,7 @@ namespace Random {
 			// BTRS algorithm
 			// https://epub.wu.ac.at/1242/1/document.pdf
 			Real q = 1.0_real - p;
-			Real spq = sqrt(n * p * q);
+			Real spq = std::sqrt(n * p * q);
 			Real b = 1.15_real + 2.53_real * spq;
 			Real a = -0.0873_real + 0.0248_real * b + 0.01_real * p;
 			Real c = n * p + 0.5_real;
@@ -1271,14 +1263,14 @@ namespace Random {
 					v = real();
 					Real u = real() - 0.5_real;
 					us = 0.5_real - std::abs(u);
-					res = std::floor((2.0_real * a / us + b) * u + c);
+					res = static_cast<Integer>(std::floor((2.0_real * a / us + b) * u + c));
 				} while (res < 0 or res > n);
 				if (us >= 0.07_real and v <= vr) {
 					return swap ? n - res : res;
 				}
 				Real alpha = (2.83_real + 5.1_real / b) * spq;
 				Real lpq = std::log(p / q);
-				Integer m = std::floor((n + 1) * p);
+				Integer m = static_cast<Integer>(std::floor((n + 1) * p));
 				Real h = details::logFac(m) + details::logFac(n - m);
 				v += alpha / (a / (us * us) + b);
 				if (v <= h - details::logFac(res) - details::logFac(n - res) + (res - m) * lpq) {
@@ -1293,6 +1285,31 @@ namespace Random {
 			Integer res = binomial(n, p);
 			if (lower <= res and res < upper) return res;
 		}
+	}
+
+	Integer maximum(Integer lower, Integer upper, Integer n) {// in [lower, upper)
+		judgeAssert<std::invalid_argument>(n > 0, "n musst be positive!");
+		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
+		if (n < 5) {
+			Integer res = upper;
+			for (Integer i = 0; i < n; i++) res = std::max(res, integer(lower, upper))
+			return res;
+		} else {// such large n seem unlikely
+			UInteger ul = static_cast<UInteger>(lower);
+			UInteger uu = static_cast<UInteger>(upper);
+			UInteger res = std::min(uu - ul - 1, (uu - ul) * std::exp2(std::log2(real()) / k));
+			return static_cast<Integer>(res + ul);
+		}
+	}
+	Integer maximum(Integer upper, Integer n) {
+		return maximum(0, upper, n);
+	}
+
+	Integer minimum(Integer lower, Integer upper, Integer n) {// in [lower, upper)
+		return upper - 1 - maximum(lower, upper, n);
+	}
+	Integer minimum(Integer upper, Integer n) {
+		return minimum(0, upper, n);
 	}
 
 	Integer prime(Integer lower, Integer upper) {// in [lower, upper)
@@ -1568,8 +1585,7 @@ public:
 	}
 
 	Integer asInteger(Integer defaultValue) const {
-		if (token) return asInteger();
-		return defaultValue;
+		return token ? asInteger() : defaultValue;
 	}
 
 	Real asReal() const {
@@ -1577,8 +1593,7 @@ public:
 	}
 
 	Real asReal(Real defaultValue) const {
-		if (token) return asReal();
-		return defaultValue;
+		return token ? asReal() : defaultValue;
 	}
 };
 
@@ -1729,22 +1744,18 @@ public:
 //============================================================================//
 template<typename T>
 class Bounds final {
+	bool hadMin, hadMax;	// was value==lower/upper at some point
 	T min, max;				// range of seen values
 	T lower, upper;			// bounds for value
-	bool hadMin, hadMax;	// was value==lower/upper at some point
 public:
 	constexpr explicit Bounds(T lower_, T upper_, T value_) :
+	                          hadMin(false), hadMax(false),
 	                          min(value_), max(value_),
-	                          lower(lower_), upper(upper_),
-	                          hadMin(false), hadMax(false) {
+	                          lower(lower_), upper(upper_) {
 		update(lower_, upper_, value_);
 	}
 
 	void update(T lower_, T upper_, T value_) {
-		min = std::min(min, value_);
-		max = std::max(max, value_);
-		lower = std::min(lower, lower_);
-		upper = std::max(upper, upper_);
 		if constexpr (std::is_same_v<T, Real>) {
 			hadMin |= details::floatEqual(value_, lower_, DEFAULT_EPS, DEFAULT_EPS);
 			hadMax |= details::floatEqual(value_, upper_, DEFAULT_EPS, DEFAULT_EPS);
@@ -1752,13 +1763,18 @@ public:
 			hadMin |= value_ == lower_;
 			hadMax |= value_ == upper_;
 		}
+		min = std::min(min, value_);
+		max = std::max(max, value_);
+		lower = std::min(lower, lower_);
+		upper = std::max(upper, upper_);
 	}
 
-	void write(std::ostream& os) const {
-		os << hadMin << " " << hadMax << " ";
-		os << lower << " " << upper << " ";
-		os << min << " " << max;
+	friend std::ostream& operator<<(std::ostream& os, const Bounds<T>& bounds) {
+		os << bounds.hadMin << " " << bounds.hadMax << " ";
+		os << bounds.min << " " << bounds.max << " ";
+		return os << bounds.lower << " " << bounds.upper;
 	}
+
 };
 
 namespace details {
@@ -1848,9 +1864,9 @@ public:
 		for (const auto& [name, id] : byName) {
 			const Constraint& c = *(constraints[id]);
 			if (c.type) {
-				os << "LocationNotSupported:??? " << name << " ";
-				if (c.bound.index() == 1) std::get<1>(c.bound).write(os);
-				if (c.bound.index() == 2) std::get<2>(c.bound).write(os);
+				os << "LocationNotSupported:" << name << " " << name << " ";
+				if (c.bound.index() == 1) os << std::get<1>(c.bound);
+				if (c.bound.index() == 2) os << std::get<2>(c.bound);
 				os << std::endl;
 			}
 		}
@@ -1960,14 +1976,14 @@ public:
 	}
 
 private:
-	inline void check(const std::string& token, const std::regex& pattern) {
+	void check(const std::string& token, const std::regex& pattern) {
 		if (!std::regex_match(token, pattern)) {
 			ValidateBase::juryOut << "Token \"" << token << "\" does not match pattern!";
 			fail();
 		}
 	}
 
-	inline std::function<void()> checkSeparator(char separator) {
+	std::function<void()> checkSeparator(char separator) {
 		if (separator == ' ') return [this](){space();};
 		if (separator == '\n') return [this](){newline();};
 		judgeAssert<std::invalid_argument>(false, "Separator must be ' '  or '\\n'!");
@@ -2411,12 +2427,23 @@ namespace ValidateBase {
 
 } // namespace ValidateBase
 
+namespace ConstraintsBase {
+	ConstraintsLogger constraint;
+
+	void initConstraints() {
+		if (auto file = ValidateBase::arguments[CONSTRAINT_COMMAND]) {
+			constraint = ConstraintsLogger(file.asString());
+		}
+	}
+
+} // namespace ConstraintsBase
+
 //called as ./validator [arguments] < inputfile
 namespace InputValidator {
 	using namespace ValidateBase;
+	using namespace ConstraintsBase;
 
 	InputStream testIn;
-	ConstraintsLogger constraint;
 
 	void init(int argc, char** argv) {
 		spaceSensitive = true;
@@ -2426,9 +2453,7 @@ namespace InputValidator {
 		juryOut = OutputStream(std::cout);
 
 		testIn = InputStream(std::cin, spaceSensitive, caseSensitive, WA, floatAbsTol, floatRelTol);
-		if (auto file = arguments[CONSTRAINT_COMMAND]) {
-			constraint = ConstraintsLogger(file.asString());
-		}
+		initConstraints();
 	}
 
 } // namespace InputValidator
@@ -2436,6 +2461,7 @@ namespace InputValidator {
 //called as ./validator input judgeanswer feedbackdir < teamoutput
 namespace OutputValidator {
 	using namespace ValidateBase;
+	using namespace ConstraintsBase;
 
 	InputStream testIn;
 	InputStream juryAns;
@@ -2448,6 +2474,7 @@ namespace OutputValidator {
 		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, FAIL);
 		juryAns = InputStream(std::filesystem::path(arguments[2]), false, caseSensitive, FAIL);
 		teamAns = InputStream(std::cin, spaceSensitive, caseSensitive, WA);
+		initConstraints();
 	}
 
 } // namespace OutputValidator
