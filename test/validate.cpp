@@ -262,7 +262,7 @@ void checkUniform(const F& f, Integer iterations, Integer different, const std::
 	for (auto e : count) counts.push_back(e.second);
 	sort(counts.begin(), counts.end());
 	Integer diff = counts.back() - counts.front();
-	Integer ma = 4*sqrt(counts.front() + counts.back());
+	Integer ma = std::llround(4*std::sqrt(counts.front() + counts.back()));
 	assert(diff < ma, location);
 }
 

@@ -1292,13 +1292,13 @@ namespace Random {
 		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
 		if (n < 5) {
 			Integer res = upper;
-			for (Integer i = 0; i < n; i++) res = std::max(res, integer(lower, upper))
+			for (Integer i = 0; i < n; i++) res = std::max(res, integer(lower, upper));
 			return res;
 		} else {// such large n seem unlikely
 			UInteger ul = static_cast<UInteger>(lower);
 			UInteger uu = static_cast<UInteger>(upper);
-			UInteger res = std::min(uu - ul - 1, (uu - ul) * std::exp2(std::log2(real()) / k));
-			return static_cast<Integer>(res + ul);
+			UInteger res = (uu - ul) * std::exp2(std::log2(real()) / n);
+			return std::min(upper - 1, static_cast<Integer>(res + ul));
 		}
 	}
 	Integer maximum(Integer upper, Integer n) {
@@ -1483,15 +1483,15 @@ namespace Random {
 		return res;
 	}
 
-	std::string bracketSequence(Integer n) {//proper bracket sequence of length 2*n
-		judgeAssert<std::invalid_argument>(n <= 0x7FFF'FFFF, "n too large!");
-		std::string res(2 * n, '(');
+	std::string bracketSequence(Integer n, char open = '(', char close = ')') {//proper bracket sequence of length 2*n
+		judgeAssert<std::invalid_argument>(0 <= n and n <= 0x7FFF'FFFF, "n out of range!");
+		std::string res(2 * n, open);
 		for (Integer i = 0, diff = 0; i < 2 * n; i++) {
 			Integer opened = (i + diff) / 2;
 			if (integer((2 * n - i) * (diff + 1)) < (n - opened) * (diff + 2)) {
 				diff++;
 			} else {
-				res[i] = ')';
+				res[i] = close;
 				diff--;
 			}
 		}
