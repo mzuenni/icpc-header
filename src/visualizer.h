@@ -295,7 +295,7 @@ public:
 	SVG& operator=(SVG&&) = default;
 
 	void write() const {
-		if (!fileName) return;
+		if (!fileName || out.str().empty()) return;
 		std::ofstream os(*fileName);
 		os << "<?xml " << attribute("version", "1.0") << attribute("encoding", "UTF8")<< "?>" << std::endl;
 		os << "<svg " << attribute("xmlns", "http://www.w3.org/2000/svg")
