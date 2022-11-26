@@ -10,6 +10,7 @@
 #ifndef VISUALIZER_H
 #define VISUALIZER_H
 
+#include <algorithm>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
