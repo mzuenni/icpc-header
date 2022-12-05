@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-//version 2.2.3                                                               //
+//version 2.2.4                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -157,7 +157,9 @@ namespace details {
 	struct IsContainer : std::false_type {};
 
 	template<typename T>
-	struct IsContainer<T, std::void_t<decltype(std::begin(std::declval<std::add_lvalue_reference_t<T>>()))>> : std::true_type {};
+	struct IsContainer<T, std::void_t<decltype(std::begin(std::declval<std::add_lvalue_reference_t<T>>()))>> : std::true_type {
+		using value_type = std::remove_reference_t<decltype(*std::begin(std::declval<std::add_lvalue_reference_t<T>>()))>;
+	};
 
 	template<typename T>
 	struct IsStdArray : std::false_type {};
@@ -439,7 +441,8 @@ bool contains(const C& container, const K& key) {
 
 template<typename C1, typename C2>
 void append(C1& c1, const C2& c2) {
-	static_assert(std::is_same_v<typename C1::value_type, typename C2::value_type>, "cannot append container of different value type!");
+	static_assert(std::is_same_v<typename details::IsContainer<C1>::value_type,
+	                             typename details::IsContainer<C2>::value_type>, "cannot append container of different value type!");
 	if (static_cast<const void*>(&c1) != static_cast<const void*>(&c2)) {
 		for (auto&& e : c2) c1.emplace(c1.end(), e);
 	} else {
@@ -472,7 +475,7 @@ namespace details {
 	struct Flatten {using value_type = T;};
 
 	template<typename T>
-	struct Flatten<T, std::enable_if_t<IsContainer<T>{}>> : Flatten<typename T::value_type> {};
+	struct Flatten<T, std::enable_if_t<IsContainer<T>{}>> : Flatten<typename IsContainer<T>::value_type> {};
 
 	template<typename CR, typename V>
 	void flatAppend(CR&& c, std::vector<V>& res) {
@@ -482,7 +485,7 @@ namespace details {
 		} else if constexpr (!IsContainer<C>{}) {
 			static_assert(IsContainer<C>{}, "invalid base type for flatten()!");
 		} else {
-			if constexpr (std::is_same_v<typename C::value_type, V>) {
+			if constexpr (std::is_same_v<IsContainer<C>::value_type, V>) {
 				res.reserve(res.size() + c.size());
 			}
 			if constexpr (std::is_rvalue_reference_v<CR&&>) {
@@ -527,8 +530,8 @@ bool isPerm(RandomIt first, RandomIt last, typename std::iterator_traits<RandomI
 	}
 	return true;
 }
-template<typename C, typename std::enable_if_t<std::is_integral_v<typename C::value_type>, bool> = true>
-bool isPerm(const C& c, typename C::value_type offset = 0) {
+template<typename C, typename std::enable_if_t<std::is_integral_v<typename details::IsContainer<C>::value_type>, bool> = true>
+bool isPerm(const C& c, typename details::IsContainer<C>::value_type offset = 0) {
 	return isPerm(std::begin(c), std::end(c), offset);
 }
 
@@ -1343,7 +1346,7 @@ namespace Random {
 	}
 
 	template<typename C>
-	typename C::value_type select(const C& c) {
+	typename ::details::IsContainer<C>::value_type select(const C& c) {
 		return select(std::begin(c), std::end(c));
 	}
 
@@ -1376,7 +1379,7 @@ namespace Random {
 	void shuffle(RandomIt first, RandomIt last) {
 		using std::swap;
 		auto n = last - first;
-		for (auto i = n-1; i > 0; --i) {
+		for (auto i = n-1; i > 0; i--) {
 			swap(first[i], first[integer(0, i+1)]);
 		}
 	}
