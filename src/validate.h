@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-//version 2.2.4                                                               //
+//version 2.2.5                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -113,6 +113,7 @@ constexpr std::string_view ALPHA_NUMERIC				= "0123456789abcdefghijklmnopqrstuvw
 constexpr std::string_view LOWER_ALPHA_NUMERIC			= ALPHA_NUMERIC.substr(0, 10 + 26);
 constexpr std::string_view UPPER_ALPHA_NUMERIC			= "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 constexpr std::string_view DIGITS						= ALPHA_NUMERIC.substr(0, 10);
+constexpr std::string_view BRACKETS						= "()[]{}<>";
 
 
 //============================================================================//
