@@ -305,6 +305,11 @@ void checkRandom() {
 	std::string test = "test";
 	checkUniform<std::string>([&](){return Random::shuffle(test), test;}, 1'000'000, 12);
 	checkUniform<std::vector<Integer>>([](){return Random::perm(4);}, 1'000'000, 24);
+	checkUniform<std::vector<Integer>>([](){return Random::perm(std::vector<Integer>{4});}, 1'000'000, 6);
+	checkUniform<std::vector<Integer>>([](){return Random::perm({3,1});}, 1'000'000, 8);
+	checkUniform<std::vector<Integer>>([](){return Random::perm({2,2});}, 1'000'000, 3);
+	checkUniform<std::vector<Integer>>([](){return Random::perm({2,1,1});}, 1'000'000, 6);
+	checkUniform<std::vector<Integer>>([](){return Random::perm({1,1,1,1});}, 1'000'000, 1);
 	checkUniform<std::vector<Integer>>([](){return Random::multiple(3, 3);}, 1'000'000, 3*3*3);
 	checkUniform<std::vector<Integer>>([](){return Random::partition(10, 3);}, 1'000'000, 6*6);
 	checkUniform<std::string>([](){return Random::bracketSequence(4);}, 1'000'000, 14);

@@ -363,6 +363,12 @@ Each possible output has the same probability to get generated.
 Generates a permutation of the numbers [0, count) respectively [offset, offset+count).
 Each possible output has the same probability to get generated.
 
+**`std::vector<Integer> perm(std::vector<Integer> cycles)`**  
+**`std::vector<Integer> perm(std::vector<Integer> cycles)`**  
+Generates a permutation of the numbers [0, sum{cycles}) respectively [offset, offset+sum{cycles}).
+The cycle lengths of the generates permutations will be the values in `cycles`.
+Each possible output has the same probability to get generated.
+
 **`std::vector<Integer> multiple(Integer count, Integer lower, Integer upper)`**  
 **`std::vector<Integer> multiple(Integer count, Integer upper)`**  
 **`std::vector<Integer> increasing(Integer count, Integer lower, Integer upper)`**  

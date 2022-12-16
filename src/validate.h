@@ -1428,6 +1428,20 @@ namespace Random {
 		return distinct(count, offset, offset+count);
 	}
 
+	std::vector<Integer> perm(const std::vector<Integer>& cycles, Integer offset = 0) {
+		auto p = perm(std::accumulate(cycles.begin(), cycles.end(), 0_int));
+		std::vector<Integer> res(p.size());
+		Integer tmp = 0;
+		for (std::size_t i = 0; i < cycles.size(); tmp += cycles[i], i++) {
+			judgeAssert<std::invalid_argument>(cycles[i] > 0, "cycle lengths must be positive!");
+			for (Integer j = tmp; j + 1 < tmp + cycles[i]; j++) {
+				res[p[j]] = p[j + 1] + offset;
+			}
+			res[p[tmp + cycles[i] - 1]] = p[tmp] + offset;
+		}
+		return res;
+	}
+
 	std::vector<Integer> multiple(Integer count, Integer lower, Integer upper) {
 		std::vector<Integer> res(count);
 		for (Integer& x : res) x = integer(lower, upper);
