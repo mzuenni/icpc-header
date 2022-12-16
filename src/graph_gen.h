@@ -11,7 +11,7 @@
 // This header requires validate.h zo to generate random graphs in a          //
 // deterministic and reproducable fashion.                                    //
 //============================================================================//
-//version 1.0.0                                                               //
+//version 1.0.1                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -333,8 +333,7 @@ namespace GraphDetail {
 					adj.emplace_back();
 				}
 				for (const auto& e : o.edges) {
-					edges.push_back(e);
-					addEdge(&(edges.back()));
+					addEdge(e.fromXorTo ^ e.to, e.to, e.data);
 				}
 			}
 			return *this;
