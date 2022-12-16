@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
 
 	//check stuff, this can also be done on the fly!
 	if (g.hasSelfloop()) juryOut << "selfloop: " << g.hasSelfloop().value() << WA;
-	if (g.hasMultiedge()) juryOut << "multiedge: " << g.hasMultiedge()->first << " " << g.hasMultiedge()->second << WA;
+	if (g.hasMultiedge()) juryOut << "multiedge: " << g.hasMultiedge().value() << WA;
 	if (!g.isConnected()) juryOut << "not connected!" << WA;
 	if (!g.isTree()) juryOut << "not a tree!" << WA;
 	if (!g.isBipartite()) juryOut << "WTF, trees are always bipartite?!" << FAIL;

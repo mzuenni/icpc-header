@@ -108,6 +108,7 @@ public:
 	explicit Graph(Integer n) : Graph(0, n) {}
 
 	using details::BaseGraph::hasSelfloop;
+	using details::BaseGraph::hasMultiedge;
 	using details::BaseGraph::operator[];
 	using details::BaseGraph::size;
 	using details::BaseGraph::nodeCount;
@@ -146,6 +147,7 @@ public:
 	explicit DiGraph(Integer n) : DiGraph(0, n) {}
 
 	using details::BaseGraph::hasSelfloop;
+	using details::BaseGraph::hasMultiedge;
 	using details::BaseGraph::operator[];
 	using details::BaseGraph::size;
 	using details::BaseGraph::nodeCount;
