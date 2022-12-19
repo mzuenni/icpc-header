@@ -1,6 +1,6 @@
 root = true
 
-[*.{cpp,hpp}]
+[*.{cpp,hpp,h}]
 charset = utf-8
 indent_style = tab
 indent_size = 4
