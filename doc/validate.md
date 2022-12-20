@@ -510,6 +510,10 @@ Checks if a given char (all chars) belong to the alphabet fitting the name of th
 Converts a `char` or `std::string` to the given case.
 > Note: defaultCase is lowerCase.
 
+**`std::vector<Integer> thueMorse(Integer upper)`**  
+**`std::vector<Integer> thueMorse(Integer lower, Integer upper)`**  
+Generates the Thue-Morse sequence [0, upper) respectively [lower, upper).
+
 ## class ConstraintsLogger 
 An instance of this class is provided for input and output validators as `constraint` after calling `init(argc, argv).
 #### Methods
