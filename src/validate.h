@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-//version 2.2.6                                                               //
+//version 2.2.7                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -491,9 +491,6 @@ namespace details {
 		} else if constexpr (!IsContainer<C>{}) {
 			static_assert(IsContainer<C>{}, "invalid base type for flatten()!");
 		} else {
-			if constexpr (std::is_same_v<typename IsContainer<C>::value_type, V>) {
-				res.reserve(res.size() + c.size());
-			}
 			if constexpr (std::is_rvalue_reference_v<CR&&>) {
 				for (auto&& v : c) flatAppend(std::move(v), res);
 			} else {
