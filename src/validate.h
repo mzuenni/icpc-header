@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-//version 2.2.5                                                               //
+//version 2.2.7                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -99,7 +99,7 @@ using Settings::DEFAULT_PRECISION;
 using Settings::DEFAULT_EPS;
 using Settings::exitVerdict;
 
-// useful string constants
+// useful constants
 constexpr std::string_view LETTER						= "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 constexpr std::string_view LOWER						= LETTER.substr(0, 26);
 constexpr std::string_view UPPER						= LETTER.substr(26);
@@ -114,6 +114,10 @@ constexpr std::string_view LOWER_ALPHA_NUMERIC			= ALPHA_NUMERIC.substr(0, 10 + 
 constexpr std::string_view UPPER_ALPHA_NUMERIC			= "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 constexpr std::string_view DIGITS						= ALPHA_NUMERIC.substr(0, 10);
 constexpr std::string_view BRACKETS						= "()[]{}<>";
+constexpr char NEWLINE									= '\n';
+constexpr char SPACE									= ' ';
+constexpr char NOSEP									= '\0';
+constexpr Real PI										= 3.1415926535897932384626433832795028_real;
 
 
 //============================================================================//
@@ -126,7 +130,7 @@ constexpr std::string_view FLOAT_ABSOLUTE_TOLERANCE		= "float_absolute_tolerance
 constexpr std::string_view FLOAT_RELATIVE_TOLERANCE		= "float_relative_tolerance";
 constexpr std::string_view FLOAT_TOLERANCE				= "float_tolerance";
 constexpr std::string_view JUDGE_MESSAGE				= "judgemessage.txt";
-constexpr char DEFAULT_SEPARATOR						= ' ';
+constexpr char DEFAULT_SEPARATOR						= SPACE;
 constexpr std::string_view EMPTY_COMMAND				= "";
 constexpr std::string_view COMMAND_PREFIX				= "--";
 constexpr std::string_view CONSTRAINT_COMMAND			= "--constraints_file";
@@ -286,14 +290,15 @@ public:
 	template<typename Tuple, std::size_t... Is>
 	OutputStream& join(const Tuple& t, std::index_sequence<Is...> /**/, char separator) {
 		static_assert(std::tuple_size_v<Tuple> == sizeof...(Is));
-		((*os << (Is == 0 ? std::string_view() : std::string_view(&separator, 1)), *this << std::get<Is>(t)), ...);
+		if (separator != NOSEP) ((*os << (Is == 0 ? std::string_view() : std::string_view(&separator, 1)), *this << std::get<Is>(t)), ...);
+		else ((*this << std::get<Is>(t)), ...);
 		return *this;
 	}
 
 	template<typename T>
 	OutputStream& join(T first, T last, char separator) {
 		for (auto it = first; it != last; it++) {
-			if (it != first) *os << separator;
+			if (it != first && separator != NOSEP) *os << separator;
 			*this << *it;
 		}
 		return *this;
@@ -486,9 +491,6 @@ namespace details {
 		} else if constexpr (!IsContainer<C>{}) {
 			static_assert(IsContainer<C>{}, "invalid base type for flatten()!");
 		} else {
-			if constexpr (std::is_same_v<IsContainer<C>::value_type, V>) {
-				res.reserve(res.size() + c.size());
-			}
 			if constexpr (std::is_rvalue_reference_v<CR&&>) {
 				for (auto&& v : c) flatAppend(std::move(v), res);
 			} else {
@@ -721,6 +723,19 @@ constexpr bool isVowel(std::string_view s) {
 constexpr bool isConsonant(std::string_view s) {
 	for (char c : s) if (!isConsonant(c)) return false;
 	return true;
+}
+
+std::vector<Integer> thueMorse(Integer lower, Integer upper) {
+	judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
+	std::vector<Integer> res(upper - lower);
+	for (Integer i = lower; i < upper; i++) {
+		res[i] = std::bitset<64>(i).count() % 2;
+	}
+	return res;
+}
+
+std::vector<Integer> thueMorse(Integer upper) {
+	return thueMorse(0, upper);
 }
 
 // allow using std::pair and std::complex similiar
@@ -1443,6 +1458,10 @@ namespace Random {
 		return res;
 	}
 
+	std::vector<Integer> perm(std::initializer_list<Integer> cycles, Integer offset = 0) {
+		return perm(std::vector<Integer>(cycles), offset);
+	}
+
 	std::vector<Integer> multiple(Integer count, Integer lower, Integer upper) {
 		std::vector<Integer> res(count);
 		for (Integer& x : res) x = integer(lower, upper);
@@ -1978,7 +1997,7 @@ public:
 	void space() {
 		if (spaceSensitive) {
 			noteof();
-			if (in->get() != std::char_traits<char>::to_int_type(' ')) {
+			if (in->get() != std::char_traits<char>::to_int_type(SPACE)) {
 				ValidateBase::juryOut << "Missing space!";
 				fail();
 			}
@@ -1988,7 +2007,7 @@ public:
 	void newline() {
 		if (spaceSensitive) {
 			noteof();
-			if (in->get() != std::char_traits<char>::to_int_type('\n')) {
+			if (in->get() != std::char_traits<char>::to_int_type(NEWLINE)) {
 				ValidateBase::juryOut << "Missing newline!";
 				fail();
 			}
@@ -2004,8 +2023,8 @@ private:
 	}
 
 	std::function<void()> checkSeparator(char separator) {
-		if (separator == ' ') return [this](){space();};
-		if (separator == '\n') return [this](){newline();};
+		if (separator == SPACE) return [this](){space();};
+		if (separator == NEWLINE) return [this](){newline();};
 		judgeAssert<std::invalid_argument>(false, "Separator must be ' '  or '\\n'!");
 		return {};
 	}
@@ -2294,7 +2313,7 @@ private:
 					std::string tmp;
 					*in >> tmp;
 					buffer += tmp;
-				} else if (in->peek() == std::char_traits<char>::to_int_type('\n')) {
+				} else if (in->peek() == std::char_traits<char>::to_int_type(NEWLINE)) {
 					line++;
 					in->get();
 					if (in->tellg() < originalPos) {
@@ -2314,7 +2333,7 @@ private:
 				ValidateBase::juryOut << " Line: " << line << ", Char: " << l << '\n';
 				if (extend) {
 					char tmp;
-					while ((buffer.size() < 80 or buffer.size() < r + 80) and in->get(tmp) and tmp != '\n') {
+					while ((buffer.size() < 80 or buffer.size() < r + 80) and in->get(tmp) and tmp != NEWLINE) {
 						buffer += tmp;
 					}
 				}
