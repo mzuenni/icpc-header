@@ -1297,7 +1297,7 @@ namespace Random {
 		judgeAssert<std::invalid_argument>(n > 0, "n musst be positive!");
 		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
 		if (n < 5) {
-			Integer res = upper;
+			Integer res = lower;
 			for (Integer i = 0; i < n; i++) res = std::max(res, integer(lower, upper));
 			return res;
 		} else {// such large n seem unlikely

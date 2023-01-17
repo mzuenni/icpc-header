@@ -733,6 +733,7 @@ Graph<E> pruefer(const std::vector<Integer>& code) {
 // generate a random tree with vertices [0, n)
 template<typename E = NoData>
 Graph<E> randomTree(Integer n) {
+	if (n <= 2) return clique<E>(n);
 	std::vector<Integer> code(n - 2);
 	for (Integer& x : code) x = Random::integer(n);
 	return pruefer<E>(code);
