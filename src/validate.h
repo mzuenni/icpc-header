@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-//version 2.2.7                                                               //
+//version 2.2.8                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -77,11 +77,11 @@ constexpr Real operator ""_real(long double value) {return static_cast<Real>(val
 // settings which can be overwritten before the include!
 namespace Settings {
 	namespace details {
-		using RandomEngine								= std::mt19937_64;
-		constexpr Integer LARGE							= 0x3FFF'FFFF'FFFF'FFFF;
-		constexpr bool DEFAULT_CASE_LOWER				= true;
-		constexpr int DEFAULT_PRECISION					= 6;
-		constexpr Real DEFAULT_EPS						= 1e-6_real;
+		using RandomEngine                              = std::mt19937_64;
+		constexpr Integer LARGE                         = 0x3FFF'FFFF'FFFF'FFFF;
+		constexpr bool DEFAULT_CASE_LOWER               = true;
+		constexpr int DEFAULT_PRECISION                 = 6;
+		constexpr Real DEFAULT_EPS                      = 1e-6_real;
 
 		[[noreturn]] void exitVerdict(int exitCode) {
 			//throw exitCode;
@@ -100,42 +100,42 @@ using Settings::DEFAULT_EPS;
 using Settings::exitVerdict;
 
 // useful constants
-constexpr std::string_view LETTER						= "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-constexpr std::string_view LOWER						= LETTER.substr(0, 26);
-constexpr std::string_view UPPER						= LETTER.substr(26);
-constexpr std::string_view VOWEL						= "aeiouAEIOU";
-constexpr std::string_view LOWER_VOWELS					= VOWEL.substr(0, 5);
-constexpr std::string_view UPPER_VOWELS					= VOWEL.substr(5);
-constexpr std::string_view CONSONANT					= "bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ";
-constexpr std::string_view LOWER_CONSONANT				= CONSONANT.substr(0, 21);
-constexpr std::string_view UPPER_CONSONANT				= CONSONANT.substr(21);
-constexpr std::string_view ALPHA_NUMERIC				= "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-constexpr std::string_view LOWER_ALPHA_NUMERIC			= ALPHA_NUMERIC.substr(0, 10 + 26);
-constexpr std::string_view UPPER_ALPHA_NUMERIC			= "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-constexpr std::string_view DIGITS						= ALPHA_NUMERIC.substr(0, 10);
-constexpr std::string_view BRACKETS						= "()[]{}<>";
-constexpr char NEWLINE									= '\n';
-constexpr char SPACE									= ' ';
-constexpr char NOSEP									= '\0';
-constexpr Real PI										= 3.1415926535897932384626433832795028_real;
+constexpr std::string_view LETTER                       = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+constexpr std::string_view LOWER                        = LETTER.substr(0, 26);
+constexpr std::string_view UPPER                        = LETTER.substr(26);
+constexpr std::string_view VOWEL                        = "aeiouAEIOU";
+constexpr std::string_view LOWER_VOWELS                 = VOWEL.substr(0, 5);
+constexpr std::string_view UPPER_VOWELS                 = VOWEL.substr(5);
+constexpr std::string_view CONSONANT                    = "bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ";
+constexpr std::string_view LOWER_CONSONANT              = CONSONANT.substr(0, 21);
+constexpr std::string_view UPPER_CONSONANT              = CONSONANT.substr(21);
+constexpr std::string_view ALPHA_NUMERIC                = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+constexpr std::string_view LOWER_ALPHA_NUMERIC          = ALPHA_NUMERIC.substr(0, 10 + 26);
+constexpr std::string_view UPPER_ALPHA_NUMERIC          = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+constexpr std::string_view DIGITS                       = ALPHA_NUMERIC.substr(0, 10);
+constexpr std::string_view BRACKETS                     = "()[]{}<>";
+constexpr char NEWLINE                                  = '\n';
+constexpr char SPACE                                    = ' ';
+constexpr char NOSEP                                    = '\0';
+constexpr Real PI                                       = 3.1415926535897932384626433832795028_real;
 
 
 //============================================================================//
 // internal definitions and constants                                         //
 //============================================================================//
-constexpr UInteger DEFAULT_SEED							= 3141592653589793238_uint;
-constexpr std::string_view CASE_SENSITIVE				= "case_sensitive";
-constexpr std::string_view SPACE_SENSITIVE				= "space_change_sensitive";
-constexpr std::string_view FLOAT_ABSOLUTE_TOLERANCE		= "float_absolute_tolerance";
-constexpr std::string_view FLOAT_RELATIVE_TOLERANCE		= "float_relative_tolerance";
-constexpr std::string_view FLOAT_TOLERANCE				= "float_tolerance";
-constexpr std::string_view JUDGE_MESSAGE				= "judgemessage.txt";
-constexpr char DEFAULT_SEPARATOR						= SPACE;
-constexpr std::string_view EMPTY_COMMAND				= "";
-constexpr std::string_view COMMAND_PREFIX				= "--";
-constexpr std::string_view CONSTRAINT_COMMAND			= "--constraints_file";
-constexpr std::string_view SEED_COMMAND					= "--seed";
-constexpr auto REGEX_OPTIONS							= std::regex::nosubs | std::regex::optimize;
+constexpr UInteger DEFAULT_SEED                         = 3141592653589793238_uint;
+constexpr std::string_view CASE_SENSITIVE               = "case_sensitive";
+constexpr std::string_view SPACE_SENSITIVE              = "space_change_sensitive";
+constexpr std::string_view FLOAT_ABSOLUTE_TOLERANCE     = "float_absolute_tolerance";
+constexpr std::string_view FLOAT_RELATIVE_TOLERANCE     = "float_relative_tolerance";
+constexpr std::string_view FLOAT_TOLERANCE              = "float_tolerance";
+constexpr std::string_view JUDGE_MESSAGE                = "judgemessage.txt";
+constexpr char DEFAULT_SEPARATOR                        = SPACE;
+constexpr std::string_view EMPTY_COMMAND                = "";
+constexpr std::string_view COMMAND_PREFIX               = "--";
+constexpr std::string_view CONSTRAINT_COMMAND           = "--constraints_file";
+constexpr std::string_view SEED_COMMAND                 = "--seed";
+constexpr auto REGEX_OPTIONS                            = std::regex::nosubs | std::regex::optimize;
 inline const std::regex INTEGER_REGEX("0|-?[1-9][0-9]*", REGEX_OPTIONS);
 inline const std::regex REAL_REGEX("-?(0|([1-9][0-9]*))(\\.[0-9]*)?([eE][+-]?(0|([1-9][0-9]*)))?", REGEX_OPTIONS);
 inline const std::regex STRICT_REAL_REGEX("-?(0|([1-9][0-9]*))\\.?[0-9]*", REGEX_OPTIONS);
@@ -250,7 +250,7 @@ public:
 	OutputStream() : os(&details::nullStream) {}
 	OutputStream(std::ostream& os_) : os(&os_) {init();}
 	explicit OutputStream(const std::filesystem::path& path) : managed(std::make_unique<std::ofstream>(path)), os(managed.get()) {
-		judgeAssert<std::runtime_error>(managed->good(), "Could not open File: " + path.string());
+		judgeAssert<std::runtime_error>(managed->good(), "OutputStream: Could not open File: " + path.string());
 		init();
 	}
 
@@ -298,7 +298,7 @@ public:
 	template<typename T>
 	OutputStream& join(T first, T last, char separator) {
 		for (auto it = first; it != last; it++) {
-			if (it != first && separator != NOSEP) *os << separator;
+			if (it != first and separator != NOSEP) *os << separator;
 			*this << *it;
 		}
 		return *this;
@@ -726,7 +726,7 @@ constexpr bool isConsonant(std::string_view s) {
 }
 
 std::vector<Integer> thueMorse(Integer lower, Integer upper) {
-	judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
+	judgeAssert<std::invalid_argument>(lower < upper, "thueMorse(): Lower must be less than upper!");
 	std::vector<Integer> res(upper - lower);
 	for (Integer i = lower; i < upper; i++) {
 		res[i] = std::bitset<64>(i).count() % 2;
@@ -798,8 +798,8 @@ namespace details {
 	// Test two numbers for equality, accounting for +/-INF, NaN and precision.
 	// Real expected is considered the reference value for relative error.
 	bool floatEqual(Real given, Real expected, Real floatAbsTol, Real floatRelTol) {
-		judgeAssert<std::domain_error>(floatAbsTol >= 0.0_real, "floatAbsTol must be positive!");
-		judgeAssert<std::domain_error>(floatRelTol >= 0.0_real, "floatRelTol must be positive!");
+		judgeAssert<std::domain_error>(floatAbsTol >= 0.0_real, "floatEqual(): floatAbsTol must be positive!");
+		judgeAssert<std::domain_error>(floatRelTol >= 0.0_real, "floatEqual(): floatRelTol must be positive!");
 		// Finite values are compared with some tolerance
 		if (std::isfinite(given) and std::isfinite(expected)) {
 			Real absDiff = std::abs(given-expected);
@@ -930,7 +930,7 @@ constexpr Integer applyMod(Integer x, Integer mod) {
 }
 
 constexpr Integer mulMod(Integer lhs, Integer rhs, Integer mod) {
-	judgeAssert<std::domain_error>(mod > 0, "mod must be positive!");
+	judgeAssert<std::domain_error>(mod > 0, "mulMod(): mod must be positive!");
 	UInteger ul = static_cast<UInteger>(applyMod(lhs, mod));
 	UInteger ur = static_cast<UInteger>(applyMod(rhs, mod));
 	UInteger um = static_cast<UInteger>(mod);
@@ -938,8 +938,8 @@ constexpr Integer mulMod(Integer lhs, Integer rhs, Integer mod) {
 }
 
 constexpr Integer powMod(Integer base, Integer exp, Integer mod) {
-	judgeAssert<std::domain_error>(mod > 0, "mod must be positive!");
-	judgeAssert<std::domain_error>(exp >= 0, "exp must be non negative!");
+	judgeAssert<std::domain_error>(mod > 0, "powMod(): mod must be positive!");
+	judgeAssert<std::domain_error>(exp >= 0, "powMod(): exp must be non negative!");
 	UInteger ub = static_cast<UInteger>(applyMod(base, mod));
 	UInteger ue = static_cast<UInteger>(exp);
 	UInteger um = static_cast<UInteger>(mod);
@@ -947,7 +947,7 @@ constexpr Integer powMod(Integer base, Integer exp, Integer mod) {
 }
 
 constexpr Integer multInv(Integer n, Integer mod) {
-	judgeAssert<std::domain_error>(mod > 0, "mod must be positive!");
+	judgeAssert<std::domain_error>(mod > 0, "multInv(): mod must be positive!");
 	Integer x = 0;
 	Integer y = 0;
 	Integer g = details::extendedEuclid(n, mod, x, y);
@@ -985,7 +985,7 @@ constexpr bool isPrime(Integer n) {
 }
 
 std::vector<Integer> primes(Integer lower, Integer upper) {
-	judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
+	judgeAssert<std::invalid_argument>(lower < upper, "primes(): Lower must be less than upper!");
 	lower = std::max<Integer>(2, lower);
 	upper = std::max<Integer>(2, upper);
 	Integer count = upper - lower;
@@ -1060,8 +1060,8 @@ constexpr bool areConvex(RandomIt first, RandomIt last) {
 	std::size_t n = 0;
 	for (auto it = first; it != last; it++) {
 		n++;
-		judgeAssert(std::abs(getX(*it)) <= 0x3FFF'FFFF, "coordinates too large!");
-		judgeAssert(std::abs(getY(*it)) <= 0x3FFF'FFFF, "coordinates too large!");
+		judgeAssert(std::abs(getX(*it)) <= 0x3FFF'FFFF, "areConvex(): coordinates too large!");
+		judgeAssert(std::abs(getY(*it)) <= 0x3FFF'FFFF, "areConvex(): coordinates too large!");
 	}
 	if (n < 3) return false;
 	bool hasArea = false;
@@ -1152,7 +1152,7 @@ namespace Random {
 		return static_cast<Integer>(details::randomNumberGenerator());
 	}
 	Integer integer(Integer lower, Integer upper) {// in [lower, upper)
-		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
+		judgeAssert<std::invalid_argument>(lower < upper, "Random::integer(): Lower must be less than upper!");
 		UInteger ul = static_cast<UInteger>(lower);
 		UInteger uu = static_cast<UInteger>(upper);
 		UInteger mask = details::bitMask(uu - ul - 1_uint);
@@ -1174,17 +1174,17 @@ namespace Random {
 		}
 	}
 	Real real(Real upper) {// in [0, upper)
-		judgeAssert<std::domain_error>(std::isfinite(upper), "Upper must be finite!");
-		judgeAssert<std::invalid_argument>(upper > 0.0_real, "Upper must be greater than zero!");
+		judgeAssert<std::domain_error>(std::isfinite(upper), "Random::real(): Upper must be finite!");
+		judgeAssert<std::invalid_argument>(upper > 0.0_real, "Random::real(): Upper must be greater than zero!");
 		while (true) {
 			Real res = real() * upper;
 			if (0.0_real <= res and res < upper) return res;
 		}
 	}
 	Real real(Real lower, Real upper) {// in [lower, upper)
-		judgeAssert<std::domain_error>(std::isfinite(lower), "Lower must be finite!");
-		judgeAssert<std::domain_error>(std::isfinite(upper), "Upper must be finite!");
-		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
+		judgeAssert<std::domain_error>(std::isfinite(lower), "Random::real(): Lower must be finite!");
+		judgeAssert<std::domain_error>(std::isfinite(upper), "Random::real(): Upper must be finite!");
+		judgeAssert<std::invalid_argument>(lower < upper, "Random::real(): Lower must be less than upper!");
 		while (true) {
 			Real x = real();
 			Real res = lower * (1.0_real - x) + upper * x;
@@ -1193,17 +1193,17 @@ namespace Random {
 	}
 
 	Real normal(Real mean, Real stddev) {// theoretically in (-inf, inf)
-		judgeAssert<std::domain_error>(stddev > 0.0_real, "standard deviation must be positive!");
+		judgeAssert<std::domain_error>(stddev > 0.0_real, "Random::normal(): Standard deviation must be positive!");
 		Real u1 = real();
 		Real u2 = real();
 		Real res = std::sqrt(-2.0_real * std::log(u1)) * std::cos(2.0_real * details::PI * u2);
 		return std::sqrt(stddev) * res + mean;
 	}
 	Real normal(Real lower, Real upper, Real mean, Real stddev) {// in [lower, upper)
-		judgeAssert<std::domain_error>(std::isfinite(lower), "Lower must be finite!");
-		judgeAssert<std::domain_error>(std::isfinite(upper), "Upper must be finite!");
-		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
-		judgeAssert<std::domain_error>(stddev > 0.0_real, "standard deviation must be positive!");
+		judgeAssert<std::domain_error>(!std::isnan(lower), "Random::normal(): Lower must not be NaN!");
+		judgeAssert<std::domain_error>(!std::isnan(upper), "Random::normal(): Upper must not be NaN!");
+		judgeAssert<std::invalid_argument>(lower < upper, "Random::normal(): Lower must be less than upper!");
+		judgeAssert<std::domain_error>(stddev > 0.0_real, "Random::normal(): Standard deviation must be positive!");
 		Real res;
 		while (true) {
 			Real u1 = real();
@@ -1220,14 +1220,14 @@ namespace Random {
 	}
 
 	Real exponential(Real lambda) {// theoretically in [0, inf)
-		judgeAssert<std::domain_error>(lambda > 0.0_real, "lambda must be positive!");
+		judgeAssert<std::domain_error>(lambda > 0.0_real, "Random::lambda(): lambda must be positive!");
 		return -std::log(real()) / lambda;
 	}
 	Real exponential(Real lower, Real upper, Real lambda) {// in [lower, upper)
-		judgeAssert<std::domain_error>(std::isfinite(lower), "Lower must be finite!");
-		judgeAssert<std::domain_error>(std::isfinite(upper), "Upper must be finite!");
-		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
-		judgeAssert<std::domain_error>(lambda > 0.0_real, "lambda must be positive!");
+		judgeAssert<std::domain_error>(std::isfinite(lower), "Random::exponential(): Lower must be finite!");
+		judgeAssert<std::domain_error>(!std::isnan(upper), "Random::exponential(): Upper must not be NaN!");
+		judgeAssert<std::invalid_argument>(lower < upper, "Random::exponential(): Lower must be less than upper!");
+		judgeAssert<std::domain_error>(lambda > 0.0_real, "Random::exponential(): Lambda must be positive!");
 		while (true) {
 			Real res = lower - std::log(real()) / lambda;
 			if (res < upper) return res;
@@ -1235,12 +1235,12 @@ namespace Random {
 	}
 
 	Integer geometric(Real p) {// theoretically in [0, inf)
-		judgeAssert<std::domain_error>(0.0_real <= p and p < 1.0_real, "p must be in [0,1)!");
+		judgeAssert<std::domain_error>(0.0_real <= p and p < 1.0_real, "Random::geometric(): p must be in [0,1)!");
 		return std::llround(std::floor(std::log(real()) / std::log1p(-p)));
 	}
 	Integer geometric(Integer lower, Integer upper, Real p) {// in [lower, upper)
-		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
-		judgeAssert<std::domain_error>(0.0_real <= p and p < 1.0_real, "p must be in [0,1)!");
+		judgeAssert<std::invalid_argument>(lower < upper, "Random::geometric(): Lower must be less than upper!");
+		judgeAssert<std::domain_error>(0.0_real <= p and p < 1.0_real, "Random::geometric(): p must be in [0,1)!");
 		while (true) {
 			// https://en.wikipedia.org/wiki/Geometric_distribution
 			// "The exponential distribution is the continuous analogue of the geometric distribution[...]"
@@ -1250,8 +1250,8 @@ namespace Random {
 	}
 
 	Integer binomial(Integer n, Real p) {// in [0, n]
-		judgeAssert<std::domain_error>(n >= 0, "n must be non negative!");
-		judgeAssert<std::domain_error>(0.0_real <= p and p < 1.0_real, "p must be in [0,1)!");
+		judgeAssert<std::domain_error>(n >= 0, "Random::binomial(): n must be non negative!");
+		judgeAssert<std::domain_error>(0.0_real <= p and p < 1.0_real, "Random::binomial(): p must be in [0,1)!");
 		bool swap = p > 0.5_real;
 		p = std::min(p, 1.0_real - p);
 		if (p*n <= 16.0_real) {
@@ -1301,7 +1301,7 @@ namespace Random {
 		}
 	}
 	Integer binomial(Integer lower, Integer upper, Integer n, Real p) {// in [lower, upper)
-		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
+		judgeAssert<std::invalid_argument>(lower < upper, "Random::binomial(): n Lower must be less than upper!");
 		while (true) {
 			Integer res = binomial(n, p);
 			if (lower <= res and res < upper) return res;
@@ -1309,8 +1309,8 @@ namespace Random {
 	}
 
 	Integer maximum(Integer lower, Integer upper, Integer n) {// in [lower, upper)
-		judgeAssert<std::invalid_argument>(n > 0, "n musst be positive!");
-		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
+		judgeAssert<std::invalid_argument>(n > 0, "Random::maximum(): n musst be positive!");
+		judgeAssert<std::invalid_argument>(lower < upper, "Random::maximum(): Lower must be less than upper!");
 		if (n < 5) {
 			Integer res = lower;
 			for (Integer i = 0; i < n; i++) res = std::max(res, integer(lower, upper));
@@ -1334,7 +1334,7 @@ namespace Random {
 	}
 
 	Integer prime(Integer lower, Integer upper) {// in [lower, upper)
-		judgeAssert<std::invalid_argument>(lower < upper, "Lower must be less than upper!");
+		judgeAssert<std::invalid_argument>(lower < upper, "Random::prime(): Lower must be less than upper!");
 		Integer sampleL = lower <= 2 ? 0 : (lower / 2);
 		Integer sampleU = upper / 2;
 		if (sampleL < sampleU) {
@@ -1343,7 +1343,7 @@ namespace Random {
 				if (isPrime(res)) return res;
 			}
 		}
-		judgeAssert<std::domain_error>(false, "range contains no primes?");
+		judgeAssert<std::domain_error>(false, "Random::prime(): range contains no primes?");
 		return -1;
 	}
 	Integer prime(Integer upper) {// in [0, upper)
@@ -1357,7 +1357,7 @@ namespace Random {
 	template<typename RandomIt>
 	typename std::iterator_traits<RandomIt>::reference
 	select(RandomIt first, RandomIt last) {
-		judgeAssert<std::invalid_argument>(first < last, "Lower must be less than upper!");
+		judgeAssert<std::invalid_argument>(first < last, "Random::select(): Lower must be less than upper!");
 		return first[integer(0, last - first)];
 	}
 
@@ -1421,8 +1421,8 @@ namespace Random {
 	// sequences                                                              //
 	//========================================================================//
 	std::vector<Integer> distinct(Integer count, Integer lower, Integer upper) {
-		judgeAssert<std::invalid_argument>(count >= 0, "count must be non negative!");
-		judgeAssert<std::invalid_argument>(lower + count <= upper, "Lower must be less than upper + count!");
+		judgeAssert<std::invalid_argument>(count >= 0, "Random::distinct(): Count must be non negative!");
+		judgeAssert<std::invalid_argument>(lower + count <= upper, "Random::distinct(): Lower must be less than upper + count!");
 		std::map<Integer, Integer> used;
 		std::vector<Integer> res;
 		for (Integer i = 0; i < count; i++) {
@@ -1449,7 +1449,7 @@ namespace Random {
 		std::vector<Integer> res(p.size());
 		Integer tmp = 0;
 		for (std::size_t i = 0; i < cycles.size(); tmp += cycles[i], i++) {
-			judgeAssert<std::invalid_argument>(cycles[i] > 0, "cycle lengths must be positive!");
+			judgeAssert<std::invalid_argument>(cycles[i] > 0, "Random::perm(): Cycle lengths must be positive!");
 			for (Integer j = tmp; j + 1 < tmp + cycles[i]; j++) {
 				res[p[j]] = p[j + 1] + offset;
 			}
@@ -1508,9 +1508,9 @@ namespace Random {
 	}
 
 	std::vector<Integer> partition(Integer n, Integer k, Integer min = 1) {
-		judgeAssert<std::invalid_argument>(n > 0, "n must be positive!");
-		judgeAssert<std::invalid_argument>(k > 0, "k must be positive!");
-		judgeAssert<std::invalid_argument>(min <= 0 or k <= n / min, "k too large!");
+		judgeAssert<std::invalid_argument>(n > 0, "Random::partition(): n must be positive!");
+		judgeAssert<std::invalid_argument>(k > 0, "Random::partition(): k must be positive!");
+		judgeAssert<std::invalid_argument>(min <= 0 or k <= n / min, "Random::partition(): k too large!");
 		n -= (min - 1) * k;
 		std::vector<Integer> res = increasing(k-1, 1, n);
 		res.emplace_back(n);
@@ -1523,7 +1523,7 @@ namespace Random {
 	}
 
 	std::string bracketSequence(Integer n, char open = '(', char close = ')') {//proper bracket sequence of length 2*n
-		judgeAssert<std::invalid_argument>(0 <= n and n <= 0x7FFF'FFFF, "n out of range!");
+		judgeAssert<std::invalid_argument>(0 <= n and n <= 0x7FFF'FFFF, "Random::bracketSequence(): n out of range!");
 		std::string res(2 * n, open);
 		for (Integer i = 0, diff = 0; i < 2 * n; i++) {
 			Integer opened = (i + diff) / 2;
@@ -1542,10 +1542,10 @@ namespace Random {
 	//========================================================================//
 	template<typename Point = std::pair<Integer, Integer>>
 	std::vector<Point> convex(Integer n, Integer dim) {
-		judgeAssert<std::invalid_argument>(dim <= 0x3FFF'FFFF, "dim too large!");
-		judgeAssert<std::invalid_argument>(dim > 0, "dim must be positive!");
-		judgeAssert<std::invalid_argument>(n <= 8*dim - 8, "dim too small!");
-		judgeAssert<std::invalid_argument>(n >= 3, "n too small!");
+		judgeAssert<std::invalid_argument>(dim <= 0x3FFF'FFFF, "Random::convex(): dim too large!");
+		judgeAssert<std::invalid_argument>(dim > 0, "Random::convex(): dim must be positive!");
+		judgeAssert<std::invalid_argument>(n <= 8*dim - 8, "Random::convex(): dim too small!");
+		judgeAssert<std::invalid_argument>(n >= 3, "Random::convex(): n too small!");
 
 		while (true) {
 			Integer left = 1 + binomial(n - 2, 0.5);
@@ -1603,7 +1603,7 @@ class ParamaterBase {
 	template<typename T>
 	T parse(std::string_view s) const {
 		T res = {};
-		judgeAssert<std::invalid_argument>(details::parse<T>(s, res), "Could not parse args");
+		judgeAssert<std::invalid_argument>(details::parse<T>(s, res), "Command: Could not parse args");
 		return res;
 	}
 
@@ -1660,7 +1660,7 @@ public:
 	explicit Command(const std::vector<std::string>& raw_, Integer first_, Integer count_)
 	                 : ParamaterBase(count_ == 0 ? ParamaterBase() : ParamaterBase(raw_[first_])),
 	                   raw(raw_), first(first_), count(count_), found(true) {
-		judgeAssert<std::invalid_argument>(count >= 0, "Invalid command in args!");
+		judgeAssert<std::invalid_argument>(count >= 0, "Command: Invalid command in args!");
 	}
 
 	bool exists() const {
@@ -1725,7 +1725,7 @@ class CommandParser final {
 		return s.size() > 2 and s.substr(0, 2) == COMMAND_PREFIX;
 	}
 	void addCommand(std::string_view command, Integer first, Integer count = 0) {
-		judgeAssert<std::invalid_argument>(commands.count(command) == 0, "Duplcated command in args!");
+		judgeAssert<std::invalid_argument>(commands.count(command) == 0, "Command: Duplcated command in args!");
 		commands.emplace(command, std::pair<Integer, Integer>{first, count});
 	}
 
@@ -1757,17 +1757,17 @@ public:
 	CommandParser& operator=(const CommandParser&) = delete;
 
 	std::string_view operator[](Integer t) const {
-		judgeAssert<std::out_of_range>(t >= 0 and t < static_cast<Integer>(raw.size()), "Index out of args!");
+		judgeAssert<std::out_of_range>(t >= 0 and t < static_cast<Integer>(raw.size()), "Command: Index out of args!");
 		return raw[t];
 	}
 	Command operator[](std::string_view command) const & {
-		judgeAssert<std::invalid_argument>(details::isToken(command), "command must not contain a space!");
+		judgeAssert<std::invalid_argument>(details::isToken(command), "Command: must not contain a space!");
 		auto it = commands.find(command);
 		if (it == commands.end()) return Command(raw);
 		return Command(raw, it->second.first, it->second.second);
 	}
 	Command getRaw(std::string_view command) const & {
-		judgeAssert<std::invalid_argument>(details::isToken(command), "command must not contain a space!");
+		judgeAssert<std::invalid_argument>(details::isToken(command), "Command: must not contain a space!");
 		auto it = tokens.find(command);
 		if (it == tokens.end()) return Command(raw);
 		return Command(raw, it->second, raw.size() - it->second);
@@ -1846,7 +1846,7 @@ class Constraint final {
 			type = details::getTypeIndex<X>();
 			bound = Bounds<T>(lower, upper, value);
 		}
-		judgeAssert<std::logic_error>(type == details::getTypeIndex<X>(), "Constraint changed Type!");
+		judgeAssert<std::logic_error>(type == details::getTypeIndex<X>(), "Constraint: type must not change!");
 		std::get<Bounds<T>>(bound).update(lower, upper, value);
 	}
 public:
@@ -1888,7 +1888,7 @@ public:
 	ConstraintsLogger& operator=(const ConstraintsLogger&) = delete;
 
 	Constraint& operator[](const std::string& name) & {
-		judgeAssert<std::invalid_argument>(details::isToken(name), "name must not contain a space!");
+		judgeAssert<std::invalid_argument>(details::isToken(name), "Constraint: name must not contain a space!");
 		auto res = byName.try_emplace(name, constraints.size());
 		if (res.second) constraints.emplace_back(std::make_unique<Constraint>());
 		return *(constraints[res.first->second]);
@@ -1933,7 +1933,7 @@ class InputStream final {
 	}
 
 	void checkIn() {
-		judgeAssert<std::runtime_error>(in != nullptr, "InputStream is not initialized!");
+		judgeAssert<std::runtime_error>(in != nullptr, "InputStream: not initialized!");
 	}
 
 public:
@@ -1951,7 +1951,7 @@ public:
 	                     onFail(onFail_),
 	                     floatAbsTol(floatAbsTol_),
 	                     floatRelTol(floatRelTol_) {
-		judgeAssert<std::runtime_error>(managed->good(), "Could not open File: " + path.string());
+		judgeAssert<std::runtime_error>(managed->good(), "InputStream: Could not open File: " + path.string());
 		init();
 	}
 	explicit InputStream(std::istream& in_,
@@ -2025,7 +2025,7 @@ private:
 	std::function<void()> checkSeparator(char separator) {
 		if (separator == SPACE) return [this](){space();};
 		if (separator == NEWLINE) return [this](){newline();};
-		judgeAssert<std::invalid_argument>(false, "Separator must be ' '  or '\\n'!");
+		judgeAssert<std::invalid_argument>(false, "InputStream: Separator must be ' '  or '\\n'!");
 		return {};
 	}
 
@@ -2273,7 +2273,7 @@ public:
 	}
 
 	void expectString(std::string_view expected) {
-		judgeAssert<std::invalid_argument>(details::isToken(expected), "expected must not contain a space!");
+		judgeAssert<std::invalid_argument>(details::isToken(expected), "InputStream: expected must not contain a space!");
 		std::string seen = string();
 		if (!details::stringEqual(seen, expected, caseSensitive)) {
 			ValidateBase::juryOut << "Expected \"" << expected << "\" but got \"" << seen << "\"!";
@@ -2369,7 +2369,7 @@ namespace details {
 	struct InitGuard {
 		~InitGuard() {
 			if (std::uncaught_exceptions() == 0) {
-				judgeAssert<std::logic_error>(initialized(), "init(argc, argv) was never called!");
+				judgeAssert<std::logic_error>(initialized(), "validate.h: init(argc, argv) was never called!");
 			}
 		}
 	} initGuard;
@@ -2395,7 +2395,7 @@ public:
 	}
 
 	Setting<T>& operator=(T value_) {
-		judgeAssert<std::logic_error>(!details::initialized(), "Cannot change setting after init(argc, argv) was called!");
+		judgeAssert<std::logic_error>(!details::initialized(), "validate.h: Cannot change setting after init(argc, argv) was called!");
 		value = value_;
 		return *this;
 	}
@@ -2427,14 +2427,14 @@ namespace ValidateBase {
 	               Real expected,
 	               Real floatAbsTol_ = floatAbsTol,
 	               Real floatRelTol_ = floatRelTol) {
-		return given <= expected || floatEqual(given, expected, floatAbsTol_, floatRelTol_);
+		return given <= expected or floatEqual(given, expected, floatAbsTol_, floatRelTol_);
 	}
 
 	bool floatGreater(Real given,
 	                  Real expected,
 	                  Real floatAbsTol_ = floatAbsTol,
 	                  Real floatRelTol_ = floatRelTol) {
-		return given >= expected || floatEqual(given, expected, floatAbsTol_, floatRelTol_);
+		return given >= expected or floatEqual(given, expected, floatAbsTol_, floatRelTol_);
 	}
 
 	constexpr bool stringEqual(std::string_view a, std::string_view b, bool caseSensitive_ = caseSensitive) {
@@ -2443,7 +2443,7 @@ namespace ValidateBase {
 
 	namespace details {
 		void init(int argc, char** argv) {
-			judgeAssert<std::logic_error>(!::details::initialized(), "init(argc, argv) was called twice!");
+			judgeAssert<std::logic_error>(!::details::initialized(), "validate.h: init(argc, argv) was called twice!");
 
 			//std::ios_base::sync_with_stdio(false);
 			//cin.tie(nullptr);

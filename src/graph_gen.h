@@ -118,7 +118,7 @@ namespace GraphDetail {
 		explicit GraphType(Integer from, Integer to) :
 			adj(to - from),
 			minId(from) {
-			judgeAssert<std::invalid_argument>(from <= to, "from must not be greater than to!");
+			judgeAssert<std::invalid_argument>(from <= to, "Graph::from must not be greater than to!");
 		}
 		// construct empty graph with vertices in [0, n)
 		explicit GraphType(Integer n = 0) :
@@ -190,7 +190,7 @@ namespace GraphDetail {
 		}
 
 		Graph range(Integer from, Integer to) const {
-			judgeAssert<std::invalid_argument>(from <= to, "from must not be greater than to!");
+			judgeAssert<std::invalid_argument>(from <= to, "Graph: from must not be greater than to!");
 			Graph res(from, to);
 			from = std::max(static_cast<Integer>(0), from - minId);
 			to = std::min(nodeCount(), to - minId);
@@ -366,7 +366,7 @@ namespace GraphDetail {
 		}
 
 		Graph& permutate(const std::vector<Integer>& perm) {
-			judgeAssert<std::invalid_argument>(isPerm(perm, minId), "not a permutation");
+			judgeAssert<std::invalid_argument>(isPerm(perm, minId), "nGraph: not a permutation");
 			for (auto& n : adj) n.clear();
 			Random::shuffle(edges.begin(), edges.end());
 			for (auto& e : edges) {
@@ -392,7 +392,7 @@ namespace GraphDetail {
 		}
 
 		GraphType<E, true>& reverse() {
-			static_assert(DIR, "reverse() is only available on directed graphs!");
+			static_assert(DIR, "Graph: reverse() is only available on directed graphs!");
 			for (auto& n : adj) n.clear();
 			for (auto& e : edges) {
 				e.to ^= e.fromXorTo;
@@ -402,7 +402,7 @@ namespace GraphDetail {
 		}
 
 		GraphType<E, false> undirected() const {
-			static_assert(DIR, "undirected() is only available on directed graphs!");
+			static_assert(DIR, "Graph: undirected() is only available on directed graphs!");
 			GraphType<E, false> res(minId, minId + nodeCount());
 			res.edges = edges;
 			res.buildAdj();
@@ -411,7 +411,7 @@ namespace GraphDetail {
 
 		template<typename PRED>
 		GraphType<E, true> directed(const PRED&& p) const {
-			static_assert(!DIR, "directed() is only available on undirected graphs!");
+			static_assert(!DIR, "Graph: directed() is only available on undirected graphs!");
 			GraphType<E, true> res(minId, minId + nodeCount());
 			for (const auto& e : getEdges()) {
 				if (p(e.from, e.to)) res.addEdge(e.from, e.to, *e);
@@ -743,7 +743,7 @@ Graph<E> randomTree(Integer n) {
 // each edge exists with probability p
 template<typename E = NoData, bool DIR = false>
 GraphDetail::GraphType<E, DIR> randomGraph(Integer n, Real p) {
-	judgeAssert<std::domain_error>(0.0_real <= p and p <= 1.0_real, "p must be in [0,1]!");
+	judgeAssert<std::domain_error>(0.0_real <= p and p <= 1.0_real, "randomGraph(): p must be in [0,1]!");
 	GraphDetail::GraphType<E, DIR> res(n);
 	for (Integer i = 0; i < n; i++) {
 		Integer deg = Random::binomial(i, p);
@@ -783,7 +783,7 @@ GraphDetail::GraphType<E, DIR> randomGraph(Integer n, Integer m) {
 // generate a random graph with linear growing degrees
 template<typename E = NoData>
 Graph<E> randomGrowingGraph(Integer n, Real p) {
-	judgeAssert<std::domain_error>(0.0_real <= p and p <= 1.0_real, "p must be in [0,1]!");
+	judgeAssert<std::domain_error>(0.0_real <= p and p <= 1.0_real, "randomGrowingGraph(): p must be in [0,1]!");
 	Graph<E> res(n);
 	for (Integer i = 0; i < n; i++) {
 		Integer deg = p * Random::real(0, i+1);
@@ -805,7 +805,7 @@ Graph<E> randomGraph(const std::vector<Integer>& degree, Integer averageFlips = 
 		auto [d, c] = pq.top();
 		pq.pop();
 		if (std::ssize(pq) < d or d < 0) {
-			throw std::invalid_argument("Invalid degree sequence!");
+			throw std::invalid_argument("randomGraph(): Invalid degree sequence!");
 		}
 		std::vector<std::pair<Integer, Integer>> todo;
 		for (Integer i = 0; i < d; i++) {

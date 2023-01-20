@@ -1,4 +1,4 @@
-# visiualizer.h
+# visiualizer_svg.h
 A simple library to draw svg images.
 
 
@@ -60,6 +60,15 @@ Multiplies each color part with `f` i.e. fades the color to black.
 **`constexpr Color operator+(Color x) const`**  
 **`constexpr Color& operator+=(Color x)`**  
 Adds each color part separately and clamps the result.
+
+**`constexpr Color operator-(Color x) const`**  
+**`constexpr Color& operator-=(Color x)`**  
+Subtracts each color part separately and clamps the result.
+
+**`constexpr bool operator==(Color x)`**  
+**`constexpr bool operator!=(Color x)`**  
+Checks if two points are equal or not.
+
 
 #### Related (non class) Methods
 **`constexpr Color lerp(Color a, Color b, Real f)`**  

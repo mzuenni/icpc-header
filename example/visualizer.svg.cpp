@@ -1,5 +1,5 @@
 #include <bits/stdc++.h>
-#include "../src/visualizer.h"
+#include "../src/visualizer_svg.h"
 
 int main(int argc, char** argv) {
 	Visualizer::init(argc, argv);			// open files

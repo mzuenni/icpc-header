@@ -1,5 +1,5 @@
 //============================================================================//
-// visiualizer.h                                                              //
+// visiualizer_svg.h                                                          //
 //============================================================================//
 // This header can be used to generate svg files                              //
 //============================================================================//
@@ -7,8 +7,8 @@
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
-#ifndef VISUALIZER_H
-#define VISUALIZER_H
+#ifndef VISUALIZER_SVG_H
+#define VISUALIZER_SVG_H
 
 #include <algorithm>
 #include <iostream>
@@ -63,6 +63,14 @@ struct Color {
 		}
 	}
 
+	constexpr bool operator==(const Color& o) const {
+		return r == o.r and g == o.g and b == o.b;
+	}
+
+	constexpr bool operator!=(const Color& o) const {
+		return r != o.r or g != o.g or b != o.b;
+	}
+
 	friend std::ostream& operator<<(std::ostream& os, const Color& c) {
 		std::ios_base::fmtflags flags(os.flags());
 		os << "#" << std::hex;
@@ -103,8 +111,8 @@ constexpr std::uint8_t clamp_color(double c) {
 
 constexpr Color operator*(Real f, const Color& c) {
 	return Color(clamp_color(c.r*f),
-				 clamp_color(c.g*f),
-				 clamp_color(c.b*f));
+	             clamp_color(c.g*f),
+	             clamp_color(c.b*f));
 }
 
 constexpr Color operator*(const Color& c, Real f) {
@@ -117,12 +125,23 @@ constexpr Color& operator*=(Color& c, Real f) {
 
 constexpr Color operator+(const Color& a, const Color& b) {
 	return Color(clamp_color(a.r+b.r),
-				 clamp_color(a.g+b.g),
-				 clamp_color(a.b+b.b));
+	             clamp_color(a.g+b.g),
+	             clamp_color(a.b+b.b));
 }
 
 constexpr Color& operator+=(Color& a, const Color& b) {
 	return a=a+b;
+}
+
+
+constexpr Color operator-(const Color& a, const Color& b) {
+	return Color(clamp_color(a.r-b.r),
+	             clamp_color(a.g-b.g),
+	             clamp_color(a.b-b.b));
+}
+
+constexpr Color& operator-=(Color& a, const Color& b) {
+	return a=a-b;
 }
 
 constexpr Color lerp(const Color& a, const Color& b, Real f) {
@@ -131,20 +150,19 @@ constexpr Color lerp(const Color& a, const Color& b, Real f) {
 }
 
 // some default colors
-constexpr Color BLACK		= Color(0x00_c);
-constexpr Color DARKGRAY	= Color(0x40_c);
-constexpr Color GRAY		= Color(0x80_c);
-constexpr Color LIGHTGRAY	= Color(0xC0_c);
-constexpr Color WHITE		= Color(0xFF_c);
+constexpr Color BLACK       = Color(0x00_c);
+constexpr Color DARKGRAY    = Color(0x40_c);
+constexpr Color GRAY        = Color(0x80_c);
+constexpr Color LIGHTGRAY   = Color(0xC0_c);
+constexpr Color WHITE       = Color(0xFF_c);
 
-constexpr Color RED			= Color(0xFF,0x00,0x00);
-constexpr Color GREEN		= Color(0x00,0xFF,0x00);
-constexpr Color BLUE		= Color(0x00,0x00,0xFF);
+constexpr Color RED         = Color(0xFF,0x00,0x00);
+constexpr Color GREEN       = Color(0x00,0xFF,0x00);
+constexpr Color BLUE        = Color(0x00,0x00,0xFF);
 
-
-constexpr Color YELLOW		= Color(0xFF,0xFF,0x00);
-constexpr Color MAGENTA		= Color(0xFF,0x00,0xFF);
-constexpr Color CYAN		= Color(0x00,0xFF,0xFF);
+constexpr Color YELLOW      = Color(0xFF,0xFF,0x00);
+constexpr Color MAGENTA     = Color(0xFF,0x00,0xFF);
+constexpr Color CYAN        = Color(0x00,0xFF,0xFF);
 
 template<typename K, typename V>
 std::string attribute(K key, V value) {
@@ -295,7 +313,7 @@ public:
 	SVG& operator=(SVG&&) = default;
 
 	void write() const {
-		if (!fileName || out.str().empty()) return;
+		if (!fileName or out.str().empty()) return;
 		std::ofstream os(*fileName);
 		os << "<?xml " << attribute("version", "1.0") << attribute("encoding", "UTF8")<< "?>" << std::endl;
 		os << "<svg " << attribute("xmlns", "http://www.w3.org/2000/svg")
