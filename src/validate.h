@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-//version 2.2.8                                                               //
+//version 2.2.9                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -2366,7 +2366,7 @@ namespace details {
 		return std::exchange(value, value |= set);
 	}
 
-	struct InitGuard {
+	struct InitGuard final {
 		~InitGuard() {
 			if (std::uncaught_exceptions() == 0) {
 				judgeAssert<std::logic_error>(initialized(), "validate.h: init(argc, argv) was never called!");
@@ -2380,24 +2380,49 @@ namespace details {
 // Settings                                                                   //
 //============================================================================//
 template<typename T>
-class Setting {
+class SettingBase {	
+	template<typename U>
+	friend class Setting;
+	friend class SettingCaseSensitive;
+
 	T value;
 
+	SettingBase(T value_) : value(value_) {}
+
 public:
-	Setting(T value_) : value(value_) {}
-	Setting(Setting<T>&& other) = delete;
-	Setting(const Setting<T>&) = delete;
-	Setting<T>& operator=(Setting<T>&& other) = delete;
-	Setting<T>& operator=(const Setting<T>&) = delete;
+	SettingBase(SettingBase<T>&& other) = delete;
+	SettingBase(const SettingBase<T>&) = delete;
+	SettingBase<T>& operator=(SettingBase<T>&& other) = delete;
+	SettingBase<T>& operator=(const SettingBase<T>&) = delete;
 
 	operator T() const {
 		return value;
 	}
 
-	Setting<T>& operator=(T value_) {
+	SettingBase<T>& operator=(T value_) {
 		judgeAssert<std::logic_error>(!details::initialized(), "validate.h: Cannot change setting after init(argc, argv) was called!");
 		value = value_;
 		return *this;
+	}
+};
+
+template<typename T>
+class Setting final : public SettingBase<T> {
+public:
+	Setting(T value) : SettingBase<T>(value) {}
+	using SettingBase<T>::operator T;
+	using SettingBase<T>::operator=;
+};
+
+class SettingCaseSensitive final : public SettingBase<bool> {
+public:
+	SettingCaseSensitive(bool value) : SettingBase<bool>(value) {}
+	using SettingBase<bool>::operator bool;
+	using SettingBase<bool>::operator=;
+
+	std::regex regex(std::string_view s, std::regex_constants::syntax_option_type f = std::regex_constants::ECMAScript) const {
+		if (!value) f |= std::regex_constants::icase;
+		return std::regex(s.data(), s.size(), f);
 	}
 };
 
@@ -2413,7 +2438,7 @@ namespace ValidateBase {
 	Setting<Real> floatAbsTol(DEFAULT_EPS);
 	Setting<Real> floatRelTol(DEFAULT_EPS);
 	Setting<bool> spaceSensitive(false);
-	Setting<bool> caseSensitive(false);
+	SettingCaseSensitive caseSensitive(false);
 
 	// Real r2 is considered the reference value for relative error.
 	bool floatEqual(Real given,

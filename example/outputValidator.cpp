@@ -19,9 +19,9 @@ int main(int argc, char **argv) {
 	} else {
 		Integer n = testIn.integer();					// get the testdata
 		Integer ans = teamAns.integer();				// get team answer
-		teamAns.newline();                              // only relevant when validating the jury answer
+		teamAns.newline();								// only relevant when validating the jury answer
 		if (2*ans != n) juryOut << "wrong answer" << WA;
-		teamAns.eof();                                  // check for garbage
+		teamAns.eof();									// check for garbage
 		juryOut << "OK possible" << AC;
 	}
 }

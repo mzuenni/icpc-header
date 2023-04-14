@@ -39,6 +39,7 @@ namespace Settings {
 The namespaces `InputValidator`, `OutputValidator`, `Interactor` and `Generator` contain shared global constants of type `Setting<T>`.
 These settings can be adjusted before the call to `init(argc, argv)`.
 > Note that the setting encoded in `argv` have priority and will override any manual setting assigned before!
+The `caseSensitive` setting has an additional funtion `regex()` to create a (depneding on the value of the setting) case (in)sensitive regex.
 
 #### Settings
 **`Setting<Real> floatAbsTol(DEFAULT_EPS);`**  
