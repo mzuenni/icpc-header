@@ -6,16 +6,21 @@ This library requires C++20
 ## Related Methods
 **`Graph independent(Integer n)`**  
 **`Graph<E> independent<E>(Integer n)`**  
+**`DiGraph<E> independent<E, true>(Integer n)`**  
 Generates a `Graph` with `n` independent vertices with ids in [0, n).
 
 **`Graph clique(Integer n)`**  
 **`Graph<E> clique<E>(Integer n)`**  
+**`DiGraph<E> clique<E, true>(Integer n)`**  
 Generates a `Graph` with `n` pairwise connected vertices with ids in [0, n).
+If directed all edges go from i to j with i < j.
 
 **`Graph bipartite(Integer n, Integer m)`**  
 **`Graph<E> bipartite<E>(Integer n, Integer m)`**  
+**`DiGraph<E> bipartite<E, true>(Integer n, Integer m)`**  
 Generates a `Graph` with two sets [0, n) and [n, n+m).
 Each of the first `n` vertices is connected to every of the last `m` vertices.
+If directed all edges go from [0, n) to [n, n+m).
 
 **`Graph path(Integer edges)`**  
 **`Graph<E> path<E>(Integer edges)`**  
@@ -33,8 +38,10 @@ In case of an undirected graph all edges exist in both directions
 
 **`Graph star(Integer leaves)`**  
 **`Graph<E> star<E>(Integer leaves)`**  
+**`DiGraph<E> star<E, true>(Integer leaves)`**  
 Generates a `Graph` with leaves+1 vertices in [0, leaves].
 The vertex `0` is connected to every other vertex.
+If directed all edges go the root to [1, leaves).
 
 **`Graph wheel(Integer outer)`**  
 **`Graph<E> wheel<E>(Integer outer)`**  

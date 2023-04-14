@@ -564,12 +564,13 @@ GraphDetail::GraphType<E, DIR> independent(Integer n) {
 }
 
 // n connected vertices in range [0, n)
-template<typename E = NoData>
-Graph<E> clique(Integer n) {
+// if directed all edges go from i to j with i < j
+template<typename E = NoData, bool DIR = false>
+GraphDetail::GraphType<E, DIR> clique(Integer n) {
 	// could be implemented as linegraph of a star.
-	Graph<E> res(n);
-	for (Integer i = 0; i < n; i++) {
-		for (Integer  j = 0; j < i; j++) {
+	GraphDetail::GraphType<E, DIR> res(n);
+	for (Integer j = 0; j < n; j++) {
+		for (Integer i = 0; i < j; i++) {
 			res.addEdge(i, j);
 		}
 	}
@@ -577,9 +578,10 @@ Graph<E> clique(Integer n) {
 }
 
 // complete bipartite graph with partition [0, n) and [n, n+m)
-template<typename E = NoData>
-Graph<E> bipartite(Integer n, Integer m) {
-	Graph<E> res(n+m);
+// if directed all edges go from [0, n) to [n, n+m)
+template<typename E = NoData, bool DIR = false>
+GraphDetail::GraphType<E, DIR> bipartite(Integer n, Integer m) {
+	GraphDetail::GraphType<E, DIR> res(n+m);
 	for (Integer i = 0; i < n; i++) {
 		for (Integer j = 0; j < m; j++) {
 			res.addEdge(i, n + j);
@@ -589,9 +591,10 @@ Graph<E> bipartite(Integer n, Integer m) {
 }
 
 // star with root = 0 and chilrden [1, leaves]
-template<typename E = NoData>
-Graph<E> star(Integer leaves) {
-	return bipartite<E>(1, leaves);
+// if directed all edges go the root to [1, leaves)
+template<typename E = NoData, bool DIR = false>
+GraphDetail::GraphType<E, DIR> star(Integer leaves) {
+	return bipartite<E, DIR>(1, leaves);
 }
 
 // path 0-1-2-...-edges with vertices [0, edges]
@@ -661,9 +664,9 @@ Graph<E> hypercube(Integer dimension) {
 // vertices in [0, (children^{level+1}-1)/(children-1))
 template<typename E = NoData, bool DIR = false>
 GraphDetail::GraphType<E, DIR> completeTree(Integer level, Integer children = 2) {
-	if (level <= 2) return star<E>(children);
+	if (level <= 2) return star<E, DIR>(children);
 	GraphDetail::GraphType<E, DIR> res(1);
-	GraphDetail::GraphType<E, DIR> sub = completeTree<E>(level - 1, children);
+	GraphDetail::GraphType<E, DIR> sub = completeTree<E, DIR>(level - 1, children);
 	for (Integer i = 0; i < children; i++) {
 		Integer next = res.nodeCount();
 		res.append(sub);
