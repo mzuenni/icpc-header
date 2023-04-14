@@ -11,7 +11,7 @@
 // This header requires validate.h zo to generate random graphs in a          //
 // deterministic and reproducable fashion.                                    //
 //============================================================================//
-//version 1.0.1                                                               //
+//version 1.0.3                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -734,12 +734,27 @@ Graph<E> pruefer(const std::vector<Integer>& code) {
 }
 
 // generate a random tree with vertices [0, n)
-template<typename E = NoData>
-Graph<E> randomTree(Integer n) {
-	if (n <= 2) return clique<E>(n);
-	std::vector<Integer> code(n - 2);
-	for (Integer& x : code) x = Random::integer(n);
-	return pruefer<E>(code);
+// if directed 0 is the root
+template<typename E = NoData, bool DIR = false>
+GraphDetail::GraphType<E, DIR> randomTree(Integer n) {
+	if constexpr (!DIR) {
+		if (n <= 2) return clique<E>(n);
+		std::vector<Integer> code(n - 2);
+		for (Integer& x : code) x = Random::integer(n);
+		return pruefer<E>(code);
+	} else {
+		Graph<E> tmp = randomTree<NoData, false>(n);
+		DiGraph<E> res(n);
+		auto dfs = [&tmp, &res](auto&& self, Integer cur, Integer pref) -> void {
+			for (auto edge : tmp[cur]) {
+				if (edge.to == pref) continue;
+				res.addEdge(cur, edge.to);
+				self(self, edge.to, cur);
+			}
+		};
+		dfs(dfs, tmp.getMinId(), tmp.getMinId() - 1);
+		return res;
+	}
 }
 
 // generate a random graph (Erdös-Renyi)

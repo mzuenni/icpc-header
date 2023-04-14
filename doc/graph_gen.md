@@ -105,7 +105,9 @@ If the tree is directed only the edges from the parent to the children exists.
 
 **`Graph randomTree(Integer n)`**  
 **`Graph<E> randomTree<E>(Integer n)`**  
+**`DiGraph<E> randomTree<E, true>(Integer n)`**  
 Generates a uniformally random tree with n vertices in [0, n).
+If directed vertex `0` is the root.
 
 **`Graph randomGraph(Integer n, double p)`**  
 **`Graph<E> randomGraph<E>(Integer n, double p)`**  
