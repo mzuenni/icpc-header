@@ -142,8 +142,10 @@ public:
 
 class DiGraph final : private details::BaseGraph  {
 	std::vector<std::set<Integer>> rev;
+	UnionFind uf;
+	Integer root, rootCount;
 public:
-	explicit DiGraph(Integer l, Integer r) : details::BaseGraph(l, r), rev(r-l) {}
+	explicit DiGraph(Integer l, Integer r) : details::BaseGraph(l, r), rev(r-l), uf(r-l), root(0), rootCount(r-l) {}
 	explicit DiGraph(Integer n) : DiGraph(0, n) {}
 
 	using details::BaseGraph::hasSelfloop;
@@ -156,7 +158,12 @@ public:
 
 	void addEdge(Integer a, Integer b) {
 		addEdge_(a, b);
-		rev[b - offset].insert(a - offset);
+		a -= offset;
+		b -= offset;
+		if (rev[b].empty()) rootCount--;
+		rev[b].insert(a);
+		if (!uf.unionSets(a, b)) root = nodeCount();
+		while (root < nodeCount() and !rev[root].empty()) root++;
 	}
 
 	const std::set<Integer>& inEdges(Integer id) const & {
@@ -196,6 +203,11 @@ public:
 		}
 		for (Integer& x : order) x += offset;
 		if (order.size() == adj.size()) return order;
+		return std::nullopt;
+	}
+
+	std::optional<Integer> isTree() const {
+		if (rootCount == 1 and edgeCount() + 1 == nodeCount()) return root + offset;
 		return std::nullopt;
 	}
 

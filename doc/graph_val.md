@@ -93,7 +93,11 @@ Returns an vertex id which has an selfloop, should a selfloop exist.
 Returns an edge `{a, b}` which exists twice, should a multiedge exist.
 
 **`std::optional<std::vector<Integer>> isDAG() const`**  
-Returns a topological order of the vertices iff the graph is a directed acyclic graph (DAG):
+Returns a topological order of the vertices iff the graph is a directed acyclic graph (DAG).
+> Note: this needs O(n+m) time!
+
+**`std::optional<Integer> isTree() const`**  
+Returns a root if the graph is a directed tree.
 
 
 ## class UnionFind
