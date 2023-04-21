@@ -414,8 +414,14 @@ namespace GraphDetail {
 			static_assert(!DIR, "Graph: directed() is only available on undirected graphs!");
 			GraphType<E, true> res(minId, minId + nodeCount());
 			for (const auto& e : getEdges()) {
-				if (p(e.from, e.to)) res.addEdge(e.from, e.to, *e);
-				if (p(e.to, e.from)) res.addEdge(e.to, e.from, *e);
+				if constexpr (std::is_invocable_r_v<bool, PRED, Integer, Integer, const E&>) {
+					if (p(e.from, e.to, *e)) res.addEdge(e.from, e.to, *e);
+					if (p(e.to, e.from, *e)) res.addEdge(e.to, e.from, *e);
+				} else {
+					static_assert(std::is_invocable_r_v<bool, PRED, Integer, Integer>, "Graph: pred has wrong signature!");
+					if (p(e.from, e.to)) res.addEdge(e.from, e.to, *e);
+					if (p(e.to, e.from)) res.addEdge(e.to, e.from, *e);
+				}
 			}
 			return res;
 		}
@@ -672,6 +678,7 @@ GraphDetail::GraphType<E, DIR> completeTree(Integer level, Integer children = 2)
 	}
 	return res;
 }
+
 
 // complete boolean lattice i->j <=> i|j==j
 // vertices in [0, 2^level)

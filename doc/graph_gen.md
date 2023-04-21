@@ -265,7 +265,10 @@ Creates a new graph which contains all edges which do not belong to this graph.
 **`DiGraph<E> directed() const`**  
 **`DiGraph<E> directed(predicate) const`**  
 Creates a directed version which contains all edges in both directions of the current graph.
-If a predicate is provided only edges for which `predicate(from, to)` is true will be added.
+If a predicate is provided only edges for which `predicate(from, to)` or `predicate(from, to, edgedata)` is true will be added.
+The predicate should have one of the two method signatures:  
+  - `bool(Integer, Integer)`  
+  - `bool(Integer, Integer, const E&)`  
 
 #### Methods DiGraph&lt;E>
 **`Graph<E> undirected() const`**  
