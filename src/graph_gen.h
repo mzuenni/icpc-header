@@ -11,7 +11,7 @@
 // This header requires validate.h zo to generate random graphs in a          //
 // deterministic and reproducable fashion.                                    //
 //============================================================================//
-//version 1.0.3                                                               //
+//version 1.0.4                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -594,6 +594,35 @@ GraphDetail::GraphType<E, DIR> bipartite(Integer n, Integer m) {
 	return res;
 }
 
+// generate a random bipartite graph (like Erdös-Renyi) with partitions [0, n) and [n, n+m)
+// each edge exists with a given number of edges k
+template<typename E = NoData, bool DIR = false>
+GraphDetail::GraphType<E, DIR> randomBipartite(Integer n, Integer m, Integer k) {
+	GraphDetail::GraphType<E, DIR> res(n+m);
+	Integer lim = n * m;
+	if constexpr (DIR) lim *= 2;
+	auto edges = Random::distinct(k, 0, lim);
+	for (Integer x : edges) {
+		Integer i = x % n;
+		Integer j = x / n + n;
+		if constexpr(DIR) {
+			if (x >= n * m) {
+				j -= m;
+				std::swap(i, j);
+			}
+		}
+		res.addEdge(i, j);
+	}
+	return res;
+}
+
+// generate a random bipartite graph (like Erdös-Renyi) with partitions [0, n) and [n, n+m)
+// each edge exists with probability p
+template<typename E = NoData, bool DIR = false>
+GraphDetail::GraphType<E, DIR> randomBipartite(Integer n, Integer m, Real p) {
+	return randomBipartite<E, DIR>(n, m, Random::binomial(n * m, p));
+}
+
 // star with root = 0 and chilrden [1, leaves]
 // if directed all edges go the root to [1, leaves)
 template<typename E = NoData, bool DIR = false>
@@ -763,26 +792,7 @@ GraphDetail::GraphType<E, DIR> randomTree(Integer n) {
 }
 
 // generate a random graph (Erdös-Renyi)
-// each edge exists with probability p
-template<typename E = NoData, bool DIR = false>
-GraphDetail::GraphType<E, DIR> randomGraph(Integer n, Real p) {
-	judgeAssert<std::domain_error>(0.0_real <= p and p <= 1.0_real, "randomGraph(): p must be in [0,1]!");
-	GraphDetail::GraphType<E, DIR> res(n);
-	for (Integer i = 0; i < n; i++) {
-		Integer deg = Random::binomial(i, p);
-		auto neighbours = Random::distinct(deg, 0, i);
-		for (Integer j : neighbours) res.addEdge(i, j);
-		if constexpr(DIR) {
-			deg = Random::binomial(n - i - 1, p);
-			neighbours = Random::distinct(deg, i + 1, n);
-			for (Integer j : neighbours) res.addEdge(i, j);
-		}
-	}
-	return res;
-}
-
-// generate a random graph (Erdös-Renyi)
-// each edge exists with a given number of edges
+// each edge exists with a given number of edges m
 template<typename E = NoData, bool DIR = false>
 GraphDetail::GraphType<E, DIR> randomGraph(Integer n, Integer m) {
 	GraphDetail::GraphType<E, DIR> res(n);
@@ -801,6 +811,13 @@ GraphDetail::GraphType<E, DIR> randomGraph(Integer n, Integer m) {
 		res.addEdge(i, j);
 	}
 	return res;
+}
+
+// generate a random graph (Erdös-Renyi)
+// each edge exists with probability p
+template<typename E = NoData, bool DIR = false>
+GraphDetail::GraphType<E, DIR> randomGraph(Integer n, Real p) {
+	return randomGraph<E, DIR>(n, Random::binomial(n * (n - 1) / 2, p));
 }
 
 // generate a random graph with linear growing degrees

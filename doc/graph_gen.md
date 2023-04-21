@@ -22,6 +22,20 @@ Generates a `Graph` with two sets [0, n) and [n, n+m).
 Each of the first `n` vertices is connected to every of the last `m` vertices.
 If directed all edges go from [0, n) to [n, n+m).
 
+**`Graph randomBipartite(Integer n, Integer m, Real p)`**  
+**`Graph<E> randomBipartite<E>(Integer n, Integer m, Real p)`**  
+**`DiGraph<E> randomBipartite(Integer n, Integer m, Real p)`**  
+**`DiGraph<E> randomBipartite<E, true>(Integer n, Integer m, Real p)`**  
+Generates a `Graph` with two sets [0, n) and [n, n+m).
+Two vertices `a` in [0, n) and `b` in [n, n+m) are connected with probability `p` i.e. this is a bipartite Erdös-Renyi random graph.
+
+**`Graph randomBipartite(Integer n, Integer m, Integer k)`**  
+**`Graph<E> randomBipartite<E>(Integer n, Integer m, Integer k)`**  
+**`DiGraph<E> randomBipartite(Integer n, Integer m, Integer k)`**  
+**`DiGraph<E> randomBipartite<E, true>(Integer n, Integer m, Integer k)`**  
+Generates a `Graph` with two sets [0, n) and [n, n+m) and exactly k edges.
+This is similiar to an Erdös-Renyi random bipartite graph with some specific `p`.
+
 **`Graph path(Integer edges)`**  
 **`Graph<E> path<E>(Integer edges)`**  
 **`DiGraph<E> path<E, true>(Integer edges)`**  
@@ -109,10 +123,10 @@ If the tree is directed only the edges from the parent to the children exists.
 Generates a uniformally random tree with n vertices in [0, n).
 If directed vertex `0` is the root.
 
-**`Graph randomGraph(Integer n, double p)`**  
-**`Graph<E> randomGraph<E>(Integer n, double p)`**  
-**`DiGraph<E> randomGraph(Integer n, double p)`**  
-**`DiGraph<E> randomGraph<E, true>(Integer n, double p)`**  
+**`Graph randomGraph(Integer n, Real p)`**  
+**`Graph<E> randomGraph<E>(Integer n, Real p)`**  
+**`DiGraph<E> randomGraph(Integer n, Real p)`**  
+**`DiGraph<E> randomGraph<E, true>(Integer n, Real p)`**  
 Generates a `Graph` with n vertices in [0, n).
 Two vertices `a` and `b` are connected with probability `p` i.e. this creates an Erdös-Renyi random graph.
 
@@ -123,8 +137,8 @@ Two vertices `a` and `b` are connected with probability `p` i.e. this creates an
 Generates a `Graph` with n vertices in [0, n) and exactly m edges.
 This is similiar to an Erdös-Renyi random graph with some specific `p`.
 
-**`Graph randomGrowingGraph(Integer n, double p)`**  
-**`Graph<E> randomGrowingGraph<E>(Integer n, double p)`**  
+**`Graph randomGrowingGraph(Integer n, Real p)`**  
+**`Graph<E> randomGrowingGraph<E>(Integer n, Real p)`**  
 Generates a `Graph` with n vertices in [0, n).
 The degree distribution will be linear.
 
