@@ -20,8 +20,8 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-// version 2.2.9                                                              //
-// https://github.com/mzuenni/icpc-header                                     //
+// version 2.2.10                                                              //
+// https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
 #ifndef VALIDATE_H
@@ -1250,7 +1250,7 @@ namespace Random {
 
 	Integer binomial(Integer n, Real p) {// in [0, n]
 		judgeAssert<std::domain_error>(n >= 0, "Random::binomial(): n must be non negative!");
-		judgeAssert<std::domain_error>(0.0_real <= p and p < 1.0_real, "Random::binomial(): p must be in [0,1)!");
+		judgeAssert<std::domain_error>(0.0_real <= p and p <= 1.0_real, "Random::binomial(): p must be in [0,1)!");
 		bool swap = p > 0.5_real;
 		p = std::min(p, 1.0_real - p);
 		if (p*n <= 16.0_real) {
