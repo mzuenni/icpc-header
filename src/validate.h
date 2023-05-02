@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-// version 2.2.10                                                              //
+// version 2.2.11                                                              //
 // https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -1192,7 +1192,7 @@ namespace Random {
 	}
 
 	Real normal(Real mean, Real stddev) {// theoretically in (-inf, inf)
-		judgeAssert<std::domain_error>(stddev > 0.0_real, "Random::normal(): Standard deviation must be positive!");
+		judgeAssert<std::domain_error>(stddev >= 0.0_real, "Random::normal(): Standard deviation must be non negative!");
 		Real u1 = real();
 		Real u2 = real();
 		Real res = std::sqrt(-2.0_real * std::log(u1)) * std::cos(2.0_real * details::PI * u2);
@@ -1202,7 +1202,7 @@ namespace Random {
 		judgeAssert<std::domain_error>(!std::isnan(lower), "Random::normal(): Lower must not be NaN!");
 		judgeAssert<std::domain_error>(!std::isnan(upper), "Random::normal(): Upper must not be NaN!");
 		judgeAssert<std::invalid_argument>(lower < upper, "Random::normal(): Lower must be less than upper!");
-		judgeAssert<std::domain_error>(stddev > 0.0_real, "Random::normal(): Standard deviation must be positive!");
+		judgeAssert<std::domain_error>(stddev >= 0.0_real, "Random::normal(): Standard deviation must be non negative!");
 		Real res;
 		while (true) {
 			Real u1 = real();
