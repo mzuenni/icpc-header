@@ -421,9 +421,7 @@ namespace GraphDetail {
 		}
 
 		GraphType<E, true> directed() const {
-			return directed([](Integer a, Integer b){
-				(void)a;
-				(void)b;
+			return directed([](Integer /**/, Integer /**/){
 				return true;
 			});
 		}

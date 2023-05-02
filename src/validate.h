@@ -5,29 +5,27 @@
 // - string tokens (get converted to lowercase)                               //
 // - integer tokens in [-2^63, 2^63)                                          //
 // - float tokens (relative and absolute error of 10^6 is allowed)            //
-// Tokens need to be separated by whitespace (any amount). The follwoing      //
+// Tokens need to be separated by whitespace (any amount). The following      //
 // command line flags allow stricter checking:                                //
 // - caseSensitive: string tokens don't get converted to lowercase            //
-// - space_change_sensitive: tokens need to be separated by the corecct       //
+// - space_change_sensitive: tokens need to be separated by the corect        //
 //   amount of whitespaces                                                    //
-// - FLOAT_{|RELATIVE|ABSOLUTE}_TOLERANCE: allowed relative/absolute error    //
+// - FLOAT_{RELATIVE|ABSOLUTE}_TOLERANCE: allowed relative/absolute error     //
 //                                                                            //
-// This header can be used to safely verify input files. In this case tokens  //
-// are case sensitive and all whitespaces have to be checked. Also            //
+// This header can also be used to safely verify input files. In this case    //
+// tokens are case sensitive and all whitespaces have to be checked. Also     //
 // whitespaces are not interchangeable.                                       //
 //                                                                            //
 // This header can be used to generate random numbers in a deterministic and  //
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-//version 2.2.9                                                               //
-//https://github.com/mzuenni/icpc-header                                      //
+// version 2.2.9                                                              //
+// https://github.com/mzuenni/icpc-header                                     //
 //============================================================================//
 
 #ifndef VALIDATE_H
 #define VALIDATE_H
-
-//#define DOUBLE_FALLBACK
 
 #include <algorithm>
 #include <array>
@@ -75,6 +73,7 @@ constexpr Real operator ""_real(unsigned long long int value) {return static_cas
 constexpr Real operator ""_real(long double value) {return static_cast<Real>(value);}
 
 // settings which can be overwritten before the include!
+//#define DOUBLE_FALLBACK
 namespace Settings {
 	namespace details {
 		using RandomEngine                              = std::mt19937_64;
@@ -1097,7 +1096,7 @@ constexpr bool areStrictlyConvex(const C& c) {
 //============================================================================//
 namespace Random {
 	// You should not rely on the implementation in details!
-	// Especially you should never use randomNumberGenerator on your own. there is no function in
+	// Especially you should never use randomNumberGenerator on your own. There is no function in
 	// c++ which uses a random engine and is not implementation defined.
 	namespace details {
 		constexpr Real PI = 3.141592653589793238462643383279502884_real;
