@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-// version 2.2.11                                                              //
+// version 2.2.12                                                              //
 // https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -106,8 +106,8 @@ constexpr std::string_view VOWEL                        = "aeiouAEIOU";
 constexpr std::string_view LOWER_VOWELS                 = VOWEL.substr(0, 5);
 constexpr std::string_view UPPER_VOWELS                 = VOWEL.substr(5);
 constexpr std::string_view CONSONANT                    = "bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ";
-constexpr std::string_view LOWER_CONSONANT              = CONSONANT.substr(0, 21);
-constexpr std::string_view UPPER_CONSONANT              = CONSONANT.substr(21);
+constexpr std::string_view LOWER_CONSONANT              = CONSONANT.substr(0, 26 - 5);
+constexpr std::string_view UPPER_CONSONANT              = CONSONANT.substr(26 - 5);
 constexpr std::string_view ALPHA_NUMERIC                = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 constexpr std::string_view LOWER_ALPHA_NUMERIC          = ALPHA_NUMERIC.substr(0, 10 + 26);
 constexpr std::string_view UPPER_ALPHA_NUMERIC          = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -561,27 +561,27 @@ template<typename RandomIt, typename BinaryPredicate>
 constexpr bool anyAdjacent(RandomIt first, RandomIt last, BinaryPredicate p) {
 	return std::adjacent_find(first, last, p) != last;
 }
-template<typename C>
-constexpr bool anyAdjacent(const C& c) {
-	return anyAdjacent(std::begin(c), std::end(c));
+template<typename C, typename BinaryPredicate>
+constexpr bool anyAdjacent(const C& c, BinaryPredicate p) {
+	return anyAdjacent(std::begin(c), std::end(c), p);
 }
 
 template<typename RandomIt, typename BinaryPredicate>
 constexpr bool noneAdjacent(RandomIt first, RandomIt last, BinaryPredicate p) {
 	return std::adjacent_find(first, last, p) == last;
 }
-template<typename C>
-constexpr bool noneAdjacent(const C& c) {
-	return noneAdjacent(std::begin(c), std::end(c));
+template<typename C, typename BinaryPredicate>
+constexpr bool noneAdjacent(const C& c, BinaryPredicate p) {
+	return noneAdjacent(std::begin(c), std::end(c), p);
 }
 
 template<typename RandomIt, typename BinaryPredicate>
 constexpr bool allAdjacent(RandomIt first, RandomIt last, BinaryPredicate p) {
 	return std::adjacent_find(first, last, std::not_fn(p)) == last;
 }
-template<typename C>
-constexpr bool allAdjacent(const C& c) {
-	return allAdjacent(std::begin(c), std::end(c));
+template<typename C, typename BinaryPredicate>
+constexpr bool allAdjacent(const C& c, BinaryPredicate p) {
+	return allAdjacent(std::begin(c), std::end(c), p);
 }
 
 template<typename RandomIt>
