@@ -366,7 +366,7 @@ namespace GraphDetail {
 		}
 
 		Graph& permutate(const std::vector<Integer>& perm) {
-			judgeAssert<std::invalid_argument>(isPerm(perm, minId), "nGraph: not a permutation");
+			judgeAssert<std::invalid_argument>(isPerm(perm, minId), "Graph: not a permutation");
 			for (auto& n : adj) n.clear();
 			Random::shuffle(edges.begin(), edges.end());
 			for (auto& e : edges) {
