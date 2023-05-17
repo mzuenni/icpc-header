@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-// version 2.2.12                                                              //
+// version 2.2.13                                                              //
 // https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -2275,7 +2275,23 @@ public:
 		judgeAssert<std::invalid_argument>(details::isToken(expected), "InputStream: expected must not contain a space!");
 		std::string seen = string();
 		if (!details::stringEqual(seen, expected, caseSensitive)) {
+			if (seen.size() > 80) {
+				seen = seen.substr(0, 75) + "[...]";
+			}
+			std::size_t diff = 0;
+			while (diff < seen.size() && diff < expected.size()) {
+				auto a = seen[diff];
+				auto b = expected[diff];
+				if (caseSensitive) {
+					a = toDefaultCase(a);
+					b = toDefaultCase(b);
+				}
+				if (a != b) break;
+			}
 			ValidateBase::juryOut << "Expected \"" << expected << "\" but got \"" << seen << "\"!";
+			if (diff > 5) {
+				ValidateBase::juryOut << " (different at position: " << diff+1 << ")";
+			}
 			fail();
 		}
 	}
@@ -2292,6 +2308,11 @@ public:
 		Real seen = real();
 		if (details::floatEqual(seen, expected, floatAbsTol, floatRelTol)) {
 			ValidateBase::juryOut << "Expected " << expected << " but got " << seen << "!";
+			if (std::isfinite(seen) and std::isfinite(expected)) {
+				Real absDiff = std::abs(seen-expected);
+				Real relDiff = std::abs((seen-expected)/expected);
+				ValidateBase::juryOut << " (abs: " << absDiff << ", rel: " << relDiff << ")";
+			}
 			fail();
 		}
 	}
