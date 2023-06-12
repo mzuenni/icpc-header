@@ -4,7 +4,7 @@
 // This header can be used to safely parse team output tokenwise. We support: //
 // - string tokens (get converted to lowercase)                               //
 // - integer tokens in [-2^63, 2^63)                                          //
-// - float tokens (relative and absolute error of 10^6 is allowed)            //
+// - float tokens (relative and absolute error of 10^6 is allowed by default) //
 // Tokens need to be separated by whitespace (any amount). The following      //
 // command line flags allow stricter checking:                                //
 // - caseSensitive: string tokens don't get converted to lowercase            //
@@ -20,8 +20,8 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-// version 2.2.13                                                              //
-// https://github.com/mzuenni/icpc-header                                      //
+// version 2.3.0                                                              //
+// https://github.com/mzuenni/icpc-header                                     //
 //============================================================================//
 
 #ifndef VALIDATE_H
@@ -99,18 +99,18 @@ using Settings::DEFAULT_EPS;
 using Settings::exitVerdict;
 
 // useful constants
-constexpr std::string_view LETTER                       = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-constexpr std::string_view LOWER                        = LETTER.substr(0, 26);
-constexpr std::string_view UPPER                        = LETTER.substr(26);
-constexpr std::string_view VOWEL                        = "aeiouAEIOU";
-constexpr std::string_view LOWER_VOWELS                 = VOWEL.substr(0, 5);
-constexpr std::string_view UPPER_VOWELS                 = VOWEL.substr(5);
-constexpr std::string_view CONSONANT                    = "bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ";
-constexpr std::string_view LOWER_CONSONANT              = CONSONANT.substr(0, 26 - 5);
-constexpr std::string_view UPPER_CONSONANT              = CONSONANT.substr(26 - 5);
-constexpr std::string_view ALPHA_NUMERIC                = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-constexpr std::string_view LOWER_ALPHA_NUMERIC          = ALPHA_NUMERIC.substr(0, 10 + 26);
-constexpr std::string_view UPPER_ALPHA_NUMERIC          = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+constexpr std::string_view LETTER                       = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+constexpr std::string_view UPPER                        = LETTER.substr(0, 26);
+constexpr std::string_view LOWER                        = LETTER.substr(26);
+constexpr std::string_view VOWEL                        = "AEIOUaeiou";
+constexpr std::string_view UPPER_VOWELS                 = VOWEL.substr(0, 5);
+constexpr std::string_view LOWER_VOWELS                 = VOWEL.substr(5);
+constexpr std::string_view CONSONANT                    = "BCDFGHJKLMNPQRSTVWXYZbcdfghjklmnpqrstvwxyz";
+constexpr std::string_view UPPER_CONSONANT              = CONSONANT.substr(0, 26 - 5);
+constexpr std::string_view LOWER_CONSONANT              = CONSONANT.substr(26 - 5);
+constexpr std::string_view ALPHA_NUMERIC                = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+constexpr std::string_view UPPER_ALPHA_NUMERIC          = ALPHA_NUMERIC.substr(0, 10 + 26);
+constexpr std::string_view LOWER_ALPHA_NUMERIC          = "0123456789abcdefghijklmnopqrstuvwxyz";
 constexpr std::string_view DIGITS                       = ALPHA_NUMERIC.substr(0, 10);
 constexpr std::string_view BRACKETS                     = "()[]{}<>";
 constexpr char NEWLINE                                  = '\n';
@@ -162,6 +162,7 @@ namespace details {
 
 	template<typename T>
 	struct IsContainer<T, std::void_t<decltype(std::begin(std::declval<std::add_lvalue_reference_t<T>>()))>> : std::true_type {
+		using iterator_type = decltype(std::begin(std::declval<std::add_lvalue_reference_t<T>>()));
 		using value_type = std::remove_reference_t<decltype(*std::begin(std::declval<std::add_lvalue_reference_t<T>>()))>;
 	};
 
@@ -512,6 +513,23 @@ auto flatten(CR&& c) {
 	return flatten<typename details::Flatten<C>::value_type, CR>(std::forward<CR>(c));
 }
 
+template<typename T>
+struct boolean {
+	bool value;
+	std::optional<T> reason;
+
+	constexpr boolean(bool value_) : value(value_) {}
+	constexpr boolean(bool value_, const T& reason_) : value(value_), reason(reason_) {}
+
+	constexpr operator bool() const {
+		return value;
+	}
+
+	constexpr bool hasReason() const {
+		return reason.has_value();
+	}
+};
+
 
 //============================================================================//
 // Utility                                                                    //
@@ -519,120 +537,132 @@ auto flatten(CR&& c) {
 // for sequences
 template<typename RandomIt,
          typename = std::enable_if_t<std::is_integral_v<typename std::iterator_traits<RandomIt>::value_type>>>
-bool isPerm(RandomIt first, RandomIt last, typename std::iterator_traits<RandomIt>::value_type offset = 0) {
+auto isPerm(RandomIt first, RandomIt last, typename std::iterator_traits<RandomIt>::value_type offset = 0) {
+	using T = typename std::iterator_traits<RandomIt>::value_type;
 	auto count = std::distance(first, last);
 	std::vector<bool> seen(count, false);
 	for (; first != last; first++) {
-		auto x = *first;
-		if (x < offset) return false;
-		x -= offset;
-		if (x >= count) return false;
-		if (seen[x]) return false;
-		seen[x] = true;
+		const T& x = *first;
+		if (x < offset or x - offset >= count or seen[x - offset]) {
+			return boolean<T>(false, x);
+		}
+		seen[x - offset] = true;
 	}
-	return true;
+	return boolean<T>(true);
 }
 template<typename C, typename std::enable_if_t<std::is_integral_v<typename details::IsContainer<C>::value_type>, bool> = true>
-bool isPerm(const C& c, typename details::IsContainer<C>::value_type offset = 0) {
+auto isPerm(const C& c, typename details::IsContainer<C>::value_type offset = 0) {
 	return isPerm(std::begin(c), std::end(c), offset);
 }
 
 template<typename itA, typename itB>
-bool isPerm(itA firstA, itA lastA, itB firstB, itB lastB) {
+auto isPerm(itA firstA, itA lastA, itB firstB, itB lastB) {
+	using T = typename std::iterator_traits<itA>::value_type;
 	std::vector<typename std::iterator_traits<itA>::value_type> a(firstA, lastA);
 	std::vector<typename std::iterator_traits<itB>::value_type> b(firstB, lastB);
-	if (a.size() != b.size()) return false;
+	if (a.size() != b.size()) return boolean<T>(false);
 	std::sort(a.begin(), a.end());
 	std::sort(b.begin(), b.end());
 	for (std::size_t i = 0; i < a.size(); i++) {
-		if (a[i] != b[i]) return false;
+		if (a[i] != b[i]) return boolean<T>(false, a[i]);
 	}
-	return true;
+	return boolean<T>(true);
 }
 template<typename C1,
          typename C2,
          typename = std::enable_if_t<details::IsContainer<C1>{}>,
          typename = std::enable_if_t<details::IsContainer<C2>{}>>
-bool isPerm(const C1& c1, const C2& c2) {
+auto isPerm(const C1& c1, const C2& c2) {
 	return isPerm(std::begin(c1), std::end(c1), std::begin(c2), std::end(c2));
 }
 
 template<typename RandomIt, typename BinaryPredicate>
-constexpr bool anyAdjacent(RandomIt first, RandomIt last, BinaryPredicate p) {
-	return std::adjacent_find(first, last, p) != last;
+constexpr boolean<Integer> anyAdjacent(RandomIt first, RandomIt last, BinaryPredicate p) {
+	if (first != last) {
+		for (Integer i = 1; std::next(first) != last; first++, i++) {
+			if (p(*first, *std::next(first))) {
+				return boolean<Integer>(true, i);
+			}
+		}
+	}
+	return boolean<Integer>(false);
 }
 template<typename C, typename BinaryPredicate>
-constexpr bool anyAdjacent(const C& c, BinaryPredicate p) {
+constexpr boolean<Integer> anyAdjacent(const C& c, BinaryPredicate p) {
 	return anyAdjacent(std::begin(c), std::end(c), p);
 }
 
 template<typename RandomIt, typename BinaryPredicate>
-constexpr bool noneAdjacent(RandomIt first, RandomIt last, BinaryPredicate p) {
-	return std::adjacent_find(first, last, p) == last;
+constexpr boolean<Integer> noneAdjacent(RandomIt first, RandomIt last, BinaryPredicate p) {
+	auto res = anyAdjacent(first, last, p);
+	res.value = !res.value;
+	return res;
 }
 template<typename C, typename BinaryPredicate>
-constexpr bool noneAdjacent(const C& c, BinaryPredicate p) {
+constexpr boolean<Integer> noneAdjacent(const C& c, BinaryPredicate p) {
 	return noneAdjacent(std::begin(c), std::end(c), p);
 }
 
 template<typename RandomIt, typename BinaryPredicate>
-constexpr bool allAdjacent(RandomIt first, RandomIt last, BinaryPredicate p) {
-	return std::adjacent_find(first, last, std::not_fn(p)) == last;
+constexpr boolean<Integer> allAdjacent(RandomIt first, RandomIt last, BinaryPredicate p) {
+	return noneAdjacent(first, last, std::not_fn(p));
 }
 template<typename C, typename BinaryPredicate>
-constexpr bool allAdjacent(const C& c, BinaryPredicate p) {
-	return allAdjacent(std::begin(c), std::end(c), p);
+constexpr boolean<Integer> allAdjacent(const C& c, BinaryPredicate p) {
+	return noneAdjacent(std::begin(c), std::end(c), p);
 }
 
 template<typename RandomIt>
-constexpr bool areIncreasing(RandomIt first, RandomIt last) {
+constexpr boolean<Integer> areIncreasing(RandomIt first, RandomIt last) {
 	using T = typename std::iterator_traits<RandomIt>::value_type;
 	return allAdjacent(first, last, std::less<T>());
 }
 template<typename C>
-constexpr bool areIncreasing(const C& c) {
+constexpr boolean<Integer> areIncreasing(const C& c) {
 	return areIncreasing(std::begin(c), std::end(c));
 }
 
 template<typename RandomIt>
-constexpr bool areNonDecreasing(RandomIt first, RandomIt last) {
+constexpr boolean<Integer> areNonDecreasing(RandomIt first, RandomIt last) {
 	using T = typename std::iterator_traits<RandomIt>::value_type;
 	return allAdjacent(first, last, std::less_equal<T>());
 }
 template<typename C>
-constexpr bool areNonDecreasing(const C& c) {
+constexpr boolean<Integer> areNonDecreasing(const C& c) {
 	return areNonDecreasing(std::begin(c), std::end(c));
 }
 
 template<typename RandomIt>
-constexpr bool areDecreasing(RandomIt first, RandomIt last) {
+constexpr boolean<Integer> areDecreasing(RandomIt first, RandomIt last) {
 	using T = typename std::iterator_traits<RandomIt>::value_type;
 	return allAdjacent(first, last, std::greater<T>());
 }
 template<typename C>
-constexpr bool areDecreasing(const C& c) {
+constexpr boolean<Integer> areDecreasing(const C& c) {
 	return areDecreasing(std::begin(c), std::end(c));
 }
 
 template<typename RandomIt>
-constexpr bool areNonIncreasing(RandomIt first, RandomIt last) {
+constexpr boolean<Integer> areNonIncreasing(RandomIt first, RandomIt last) {
 	using T = typename std::iterator_traits<RandomIt>::value_type;
 	return allAdjacent(first, last, std::greater_equal<T>());
 }
 template<typename C>
-constexpr bool areNonIncreasing(const C& c) {
+constexpr boolean<Integer> areNonIncreasing(const C& c) {
 	return areNonIncreasing(std::begin(c), std::end(c));
 }
 
 template<typename RandomIt>
-constexpr bool areDistinct(RandomIt first, RandomIt last) {
+constexpr auto areDistinct(RandomIt first, RandomIt last) {
 	using T = typename std::iterator_traits<RandomIt>::value_type;
 	std::vector<T> tmp(first, last);
 	std::sort(tmp.begin(), tmp.end());
-	return areIncreasing(tmp.begin(), tmp.end());
+	auto [b, v] = anyAdjacent(tmp, std::equal_to<T>());
+	if (v) return boolean<T>(!b, tmp[*v]);
+	return boolean<T>(!b);
 }
 template<typename C>
-constexpr bool areDistinct(const C& c) {
+constexpr auto areDistinct(const C& c) {
 	return areDistinct(std::begin(c), std::end(c));
 }
 
@@ -699,29 +729,29 @@ constexpr bool isLower(std::string_view s) {
 	return true;
 }
 
-constexpr bool isUpper(std::string_view s) {
-	for (char c : s) if (!isUpper(c)) return false;
-	return true;
+constexpr boolean<char> isUpper(std::string_view s) {
+	for (char c : s) if (!isUpper(c)) return boolean<char>(false, c);
+	return boolean<char>(true);
 }
 
-constexpr bool isLetter(std::string_view s) {
-	for (char c : s) if (!isLetter(c)) return false;
-	return true;
+constexpr boolean<char> isLetter(std::string_view s) {
+	for (char c : s) if (!isLetter(c)) return boolean<char>(false, c);
+	return boolean<char>(true);
 }
 
-constexpr bool isDigit(std::string_view s) {
-	for (char c : s) if (!isDigit(c)) return false;
-	return true;
+constexpr boolean<char> isDigit(std::string_view s) {
+	for (char c : s) if (!isDigit(c)) return boolean<char>(false, c);
+	return boolean<char>(true);
 }
 
-constexpr bool isVowel(std::string_view s) {
-	for (char c : s) if (!isVowel(c)) return false;
-	return true;
+constexpr boolean<char> isVowel(std::string_view s) {
+	for (char c : s) if (!isVowel(c)) return boolean<char>(false, c);
+	return boolean<char>(true);
 }
 
-constexpr bool isConsonant(std::string_view s) {
-	for (char c : s) if (!isConsonant(c)) return false;
-	return true;
+constexpr boolean<char> isConsonant(std::string_view s) {
+	for (char c : s) if (!isConsonant(c)) return boolean<char>(false, c);
+	return boolean<char>(true);
 }
 
 std::vector<Integer> thueMorse(Integer lower, Integer upper) {
@@ -817,18 +847,23 @@ namespace details {
 		return false;
 	}
 
-	constexpr bool stringEqual(std::string_view a, std::string_view b, bool caseSensitive) {
-		if (a.size() != b.size()) {
-			return false;
-		} else if (caseSensitive) {
-			return a == b;
-		} else {
-			for (std::size_t i = 0; i < a.size(); i++) {
-				if (toDefaultCase(a[i]) != toDefaultCase(b[i])) {
-					return false;
-				}
+	constexpr boolean<std::size_t> stringEqual(std::string_view a, std::string_view b, bool caseSensitive) {
+		std::size_t i = 0;
+		for (; i < a.size() and i < b.size(); i++) {
+			char aa = a[i];
+			char bb = b[i];
+			if (!caseSensitive) {
+				aa = toDefaultCase(aa);
+				bb = toDefaultCase(bb);
 			}
-			return true;
+			if (aa != bb) {
+				return boolean<std::size_t>(false, i);
+			}
+		}
+		if (a.size() != b.size()) {
+			return boolean<std::size_t>(false, i);
+		} else {
+			return boolean<std::size_t>(true);
 		}
 	}
 
@@ -846,8 +881,8 @@ namespace details {
 
 	template<typename T>
 	bool parse(std::string_view s, T& res) {
-		const auto* begin = s.data();
-		const auto* end = s.data() + s.size();
+		const char* begin = s.data();
+		const char* end = s.data() + s.size();
 		auto [ptr, ec] = std::from_chars(begin, end, res);
 		return ptr == end and ec == std::errc();
 	}
@@ -1414,6 +1449,18 @@ namespace Random {
 	void shuffle(std::complex<T>& t) {
 		using std::swap;
 		if (bit()) swap(getX(t), getY(t));
+	}
+
+	template<typename RandomIt>
+	Integer rotate(RandomIt first, RandomIt last) {
+		Integer rotation = integer(0, last - first);
+		std::rotate(first, first + rotation, last);
+		return rotation;
+	}
+
+	template<typename C>
+	Integer rotate(C& c) {
+		return rotate(std::begin(c), std::end(c));
 	}
 
 	//========================================================================//
@@ -2274,23 +2321,14 @@ public:
 	void expectString(std::string_view expected) {
 		judgeAssert<std::invalid_argument>(details::isToken(expected), "InputStream: expected must not contain a space!");
 		std::string seen = string();
-		if (!details::stringEqual(seen, expected, caseSensitive)) {
+		auto [eq, pos] = details::stringEqual(seen, expected, caseSensitive);
+		if (!eq) {
 			if (seen.size() > 80) {
 				seen = seen.substr(0, 75) + "[...]";
 			}
-			std::size_t diff = 0;
-			while (diff < seen.size() && diff < expected.size()) {
-				auto a = seen[diff];
-				auto b = expected[diff];
-				if (caseSensitive) {
-					a = toDefaultCase(a);
-					b = toDefaultCase(b);
-				}
-				if (a != b) break;
-			}
 			ValidateBase::juryOut << "Expected \"" << expected << "\" but got \"" << seen << "\"!";
-			if (diff > 5) {
-				ValidateBase::juryOut << " (different at position: " << diff+1 << ")";
+			if (pos and *pos > 5) {
+				ValidateBase::juryOut << " (different at position: " << *pos+1 << ")";
 			}
 			fail();
 		}
@@ -2482,7 +2520,7 @@ namespace ValidateBase {
 		return given >= expected or floatEqual(given, expected, floatAbsTol_, floatRelTol_);
 	}
 
-	constexpr bool stringEqual(std::string_view a, std::string_view b, bool caseSensitive_ = caseSensitive) {
+	constexpr boolean<std::size_t> stringEqual(std::string_view a, std::string_view b, bool caseSensitive_ = caseSensitive) {
 		return details::stringEqual(a, b, caseSensitive_);
 	}
 

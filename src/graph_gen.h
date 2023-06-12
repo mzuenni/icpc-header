@@ -249,6 +249,7 @@ namespace GraphDetail {
 		Edge addEdge(Integer from, Integer to, const E& data = {}) & {
 			assertNode(from);
 			assertNode(to);
+			judgeAssert(from != to, "Graph: invalid selfloop!");
 			auto it = adj[from - minId].find(from ^ to);
 			if (it == adj[from - minId].end()) {
 				edges.emplace_back(from ^ to, to, data);
@@ -391,6 +392,15 @@ namespace GraphDetail {
 			return permutate(perm);
 		}
 
+		Graph subgraph(Integer m) const {
+			if (m >= edgeCount()) return *this;
+			Graph res(minId, minId + nodeCount());
+			auto todo = Random::distinct(m, 0, edgeCount());
+			for (auto id : todo) res.edges.emplace_back(edges[id]);
+			res.buildAdj();
+			return res;
+		}
+
 		GraphType<E, true>& reverse() {
 			static_assert(DIR, "Graph: reverse() is only available on directed graphs!");
 			for (auto& n : adj) n.clear();
@@ -404,8 +414,9 @@ namespace GraphDetail {
 		GraphType<E, false> undirected() const {
 			static_assert(DIR, "Graph: undirected() is only available on directed graphs!");
 			GraphType<E, false> res(minId, minId + nodeCount());
-			res.edges = edges;
-			res.buildAdj();
+			for (const auto e : getEdges()) {
+				res.addEdge(e.from, e.to, *e);
+			}
 			return res;
 		}
 
@@ -415,14 +426,15 @@ namespace GraphDetail {
 			GraphType<E, true> res(minId, minId + nodeCount());
 			for (const auto& e : getEdges()) {
 				if constexpr (std::is_invocable_r_v<bool, PRED, Integer, Integer, const E&>) {
-					if (p(e.from, e.to, *e)) res.addEdge(e.from, e.to, *e);
-					if (p(e.to, e.from, *e)) res.addEdge(e.to, e.from, *e);
+					if (p(e.from, e.to, *e)) res.edges.emplace_back(e.from, e.to, *e);
+					if (p(e.to, e.from, *e)) res.edges.emplace_back(e.to, e.from, *e);
 				} else {
 					static_assert(std::is_invocable_r_v<bool, PRED, Integer, Integer>, "Graph: pred has wrong signature!");
-					if (p(e.from, e.to)) res.addEdge(e.from, e.to, *e);
-					if (p(e.to, e.from)) res.addEdge(e.to, e.from, *e);
+					if (p(e.from, e.to)) res.edges.emplace_back(e.from, e.to, *e);
+					if (p(e.to, e.from)) res.edges.emplace_back(e.to, e.from, *e);
 				}
 			}
+			res.buildAdj();
 			return res;
 		}
 
@@ -437,15 +449,16 @@ namespace GraphDetail {
 			for (Integer i = 0; i < nodeCount(); i++) {
 				for (Integer j = 0; j < i; j++) {
 					if (!hasEdge(i + minId, j + minId)) {
-						res.addEdge(i + minId, j + minId);
+						res.edges.emplace_back(i + minId, j + minId);
 					}
 					if constexpr (DIR) {
 						if (!hasEdge(j + minId, i + minId)) {
-							res.addEdge(j + minId, i + minId);
+							res.edges.emplace_back(j + minId, i + minId);
 						}
 					}
 				}
 			}
+			res.buildAdj();
 			return res;
 		}
 
@@ -454,25 +467,26 @@ namespace GraphDetail {
 			Graph res(minId, minId + nodeCount());
 			std::vector<bool> seen(nodeCount());
 			for (Integer i = 0; i < nodeCount(); i++) {
-				std::vector<std::pair<Integer, Integer>> todo = {{i, 0}};
-				for (std::size_t j = 0; j < todo.size(); j++) {
-					auto [c, d] = todo[j];
+				std::vector<std::pair<Integer, Integer>> queue = {{i, 0}};
+				for (std::size_t j = 0; j < queue.size(); j++) {
+					auto [c, d] = queue[j];
 					if (d < k) {
 						for (const auto& e : (*this)[c + minId]) {
 							if (!seen[e.to - minId]) {
 								seen[e.to - minId] = true;
-								todo.emplace_back(e.to - minId, d + 1);
+								queue.emplace_back(e.to - minId, d + 1);
 							}
 						}
 					}
 				}
-				for (auto [c, d] : todo) {
+				for (auto [c, d] : queue) {
 					seen[c] = false;
 					if (i != c) {
-						res.addEdge(i + minId, c + minId);
+						res.edges.emplace_back(i + minId, c + minId);
 					}
 				}
 			}
+			res.buildAdj();
 			return res;
 		}
 
@@ -481,17 +495,18 @@ namespace GraphDetail {
 		}
 
 		Graph product(const Graph& o) const {
+			static_assert(!DIR, "Graph: product() is only available on undirected graphs!");
 			Graph res(nodeCount() * o.nodeCount());
 			auto newId = [&](Integer a, Integer b){
 				return (b - o.minId) * nodeCount() + (a - minId);
 			};
 			for (const auto& e1 : getEdges()) {
 				for (const auto& e2 : o.getEdges()) {
-					Integer from = newId(e1.from, e2.from);
-					Integer to = newId(e1.to, e2.to);
-					res.addEdge(from, to);
+					res.edges.emplace_back(newId(e1.from, e2.from), newId(e1.to, e2.to));
+					res.edges.emplace_back(newId(e1.from, e2.to), newId(e1.to, e2.from));
 				}
 			}
+			res.buildAdj();
 			return res;
 		}
 
@@ -504,40 +519,49 @@ namespace GraphDetail {
 				for (Integer i = 0; i < nodeCount(); i++) {
 					Integer from = newId(i + minId, e.from);
 					Integer to = newId(i + minId, e.to);
-					res.addEdge(from, to);
+					res.edges.emplace_back(from, to);
 				}
 			}
 			for (const auto& e : getEdges()) {
 				for (Integer i = 0; i < o.nodeCount(); i++) {
 					Integer from = newId(e.from, i + o.minId);
 					Integer to = newId(e.to, i + o.minId);
-					res.addEdge(from, to);
+					res.edges.emplace_back(from, to);
 				}
 			}
+			res.buildAdj();
 			return res;
 		}
 
 		Graph strongProduct(const Graph& o) const {
+			static_assert(!DIR, "Graph: product() is only available on undirected graphs!");
 			return o.cartesian(*this).combine(o.product(*this));
 		}
 
 		Graph lineGraph() const {
-			static_assert(!DIR, "lineGraph() is only available on undirected graphs!");
-			GraphType<Integer, false> tmp(minId, minId + nodeCount());
+			Graph tmp(minId, minId + nodeCount());
 			Integer nextEdge = 0;
 			for (const auto& e : getEdges()) {
-				tmp.addEdge(e.from, e.to, nextEdge);
+				tmp.edges.emplace_back(e.from, e.to, nextEdge);
 				nextEdge++;
 			}
+			tmp.buildAdj();
 			Graph res(nextEdge);
-			for (Integer i = 0; i < tmp.nodeCount(); i++) {
-				auto tmpEdges = tmp[i];
-				for (const auto& e1 : tmpEdges) {
-					for (const auto& e2 : tmpEdges) {
-						if (*e1 < *e2) res.addEdge(*e1, *e2);
+			for (const auto& e1 : tmp.getEdges()) {
+				if constexpr (DIR) {
+					for (const auto& e2 : tmp[e1.to]) {
+						res.edges.emplace_back(*e1, *e2);
+					}
+				} else {
+					for (const auto& e2 : tmp[e1.to]) {
+						if (*e1 < *e2) res.edges.emplace_back(*e1, *e2);
+					}
+					for (const auto& e2 : tmp[e1.from]) {
+						if (*e1 < *e2) res.edges.emplace_back(*e1, *e2);
 					}
 				}
 			}
+			res.buildAdj();
 			return res;
 		}
 

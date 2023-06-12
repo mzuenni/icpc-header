@@ -152,12 +152,26 @@ void checkStrings() {
 	assert(!isConsonant(LETTER));
 	assert(isConsonant(CONSONANT));
 
-	assert(startsWith(LETTER, LOWER));
-	assert(endsWith(LETTER, UPPER));
-	assert(startsWith(VOWEL, LOWER_VOWELS));
-	assert(endsWith(VOWEL, UPPER_VOWELS));
-	assert(startsWith(CONSONANT, LOWER_CONSONANT));
-	assert(endsWith(CONSONANT, UPPER_CONSONANT));
+	assert(startsWith(LETTER, UPPER));
+	assert(endsWith(LETTER, LOWER));
+	assert(startsWith(VOWEL, UPPER_VOWELS));
+	assert(endsWith(VOWEL, LOWER_VOWELS));
+	assert(startsWith(CONSONANT, UPPER_CONSONANT));
+	assert(endsWith(CONSONANT, LOWER_CONSONANT));
+
+	assert(areIncreasing(LETTER));
+	assert(areIncreasing(UPPER));
+	assert(areIncreasing(LOWER));
+	assert(areIncreasing(VOWEL));
+	assert(areIncreasing(UPPER_VOWELS));
+	assert(areIncreasing(LOWER_VOWELS));
+	assert(areIncreasing(CONSONANT));
+	assert(areIncreasing(UPPER_CONSONANT));
+	assert(areIncreasing(LOWER_CONSONANT));
+	assert(areIncreasing(ALPHA_NUMERIC));
+	assert(areIncreasing(UPPER_ALPHA_NUMERIC));
+	assert(areIncreasing(LOWER_ALPHA_NUMERIC));
+	assert(areIncreasing(DIGITS));
 }
 
 void checkVerdict() {

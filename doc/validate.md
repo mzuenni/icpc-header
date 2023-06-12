@@ -63,10 +63,11 @@ Checks if two floating point numbers `given` and `expected` obey the relation `g
 For relative errors the `expected` value is used as refference value.
 If no tolerance is given the global setting `floatAbsTol` respectively `floatRelTol` get used as fallback.
 
-**`bool stringEqual(std::string_view a, std::string_view b)`**  
-**`bool stringEqual(std::string_view a, std::string_view b, bool caseSensitive)`**  
+**`boolean<Integer> stringEqual(std::string_view a, std::string_view b)`**  
+**`boolean<Integer> stringEqual(std::string_view a, std::string_view b, bool caseSensitive)`**  
 Checks if two strings are equal but may ignore the case of letters if `caseSensitive` is false.
 If `caseSensitive` is not provided the global setting `caseSensitive` gets used as fallback.
+If the strings are not equal the position of the first mismatch is returned as a whitness.
 
 
 ## namespace OutputValidator
@@ -105,10 +106,11 @@ Checks if two floating point numbers `given` and `expected` obey the relation `g
 For relative errors the `expected` value is used as refference value.
 If no tolerance is given the global setting `floatAbsTol` respectively `floatRelTol` get used as fallback.
 
-**`bool stringEqual(std::string_view a, std::string_view b)`**  
-**`bool stringEqual(std::string_view a, std::string_view b, bool caseSensitive)`**  
+**`boolean<Integer> stringEqual(std::string_view a, std::string_view b)`**  
+**`boolean<Integer> stringEqual(std::string_view a, std::string_view b, bool caseSensitive)`**  
 Checks if two strings are equal but may ignore the case of letters if `caseSensitive` is false.
 If `caseSensitive` is not provided the global setting `caseSensitive` gets used as fallback.
+If the strings are not equal the position of the first mismatch is returned as a whitness.
 
 
 ## namespace Interactor
@@ -147,10 +149,11 @@ Checks if two floating point numbers `given` and `expected` obey the relation `g
 For relative errors the `expected` value is used as refference value.
 If no tolerance is given the global setting `floatAbsTol` respectively `floatRelTol` get used as fallback.
 
-**`bool stringEqual(std::string_view a, std::string_view b)`**  
-**`bool stringEqual(std::string_view a, std::string_view b, bool caseSensitive)`**  
+**`boolean<Integer> stringEqual(std::string_view a, std::string_view b)`**  
+**`boolean<Integer> stringEqual(std::string_view a, std::string_view b, bool caseSensitive)`**  
 Checks if two strings are equal but may ignore the case of letters if `caseSensitive` is false.
 If `caseSensitive` is not provided the global setting `caseSensitive` gets used as fallback.
+If the strings are not equal the position of the first mismatch is returned as a whitness.
 
 
 ## namespace Generator
@@ -352,7 +355,7 @@ Random variable distributed like the maximum/minimum of `n` uniform integers in 
 **`Integer prime(Integer lower, Integer upper)`** 
 Generates a unirformally choosen prime in the [0, upper) or [lower, upper).
 
-##### Seqeunces
+##### Sequences
 **`std::vector<Integer> distinct(Integer count, Integer upper)`**  
 **`std::vector<Integer> distinct(Integer count, Integer lower, Integer upper)`**  
 Generates `count` different integers in [0, upper) respectively [lower, upper).
@@ -412,6 +415,10 @@ Uniformally select a value from a range, complete container, initializer list, p
 **`void shuffle(std::complex<T>& t)`**  
 Uniformally shuffle a range, complete container, pair or complex.
 
+**`Integer rotate(RandomIt first, RandomIt last)`**  
+**`Integer rotate(C& c)`**  
+Uniformally rotate a range, complete container and return the amount by which it was rotate left.
+
 
 ## Math functions
 **`constexpr Integer applyMod(Integer x, Integer mod)`**  
@@ -436,38 +443,65 @@ Returns all primes in [0, upper) or [lower, upper).
 Determines the sign of `x` as {-1,0,1}.
 
 
+## class boolean
+This is a wrapper for a `bool` which may additionally hold a reason for the `bool` value in for of some kind of a whitness or an counter example.
+
+#### Member
+**`bool value`**  
+**`std::optional<T> reason`**  
+
+#### Methods
+**`constexpr boolean(bool value)`**  
+**`constexpr boolean(bool value, T reason)`**  
+Creates a new `boolean` value
+
+**`constexpr operator bool() const`**  
+Allow implicit casting to a normal `bool`.
+
+**`constexpr bool hasReason() const`**  
+Checks if this boolean has a whitness or counter example.
+
+
 ## Utility functions
-**`bool isPerm(C c)`**  
-**`bool isPerm(RandomIt first, RandomIt last)`**  
-**`bool isPerm(C c, C::value_type offset)`**  
-**`bool isPerm(RandomIt first, RandomIt last, RandomIt::value_type offset)`**  
+**`boolean<T> isPerm(C c)`**  
+**`boolean<T> isPerm(RandomIt first, RandomIt last)`**  
+**`boolean<T> isPerm(C c, C::value_type offset)`**  
+**`boolean<T> isPerm(RandomIt first, RandomIt last, RandomIt::value_type offset)`**  
 Checks if `c` respectively [first, last) is an permutation of [0, n) respectively [offset, offset+n), where n is the distance between first and last.
+If the input is not a permutation a whitness in the form of a duplicate elemnt or a value outside of the allowed range is returned.
 > Note: this function is only defined for integer ranges.
 
 **`bool isPerm(C1 c1, C2, c2)`**  
 **`bool isPerm(itA firstA, itA lastA, itB firstB, itB lastB)`**  
-Checks if `c1` respectively [firstA, lastA) is an permutation of `c2` respectively [firstB, lastB)
+Checks if `c1` respectively [firstA, lastA) is an permutation of `c2` respectively [firstB, lastB).
+If the input is not a permutation but both ranges have the same number of elments a whitness in the form of an elemnt from \*[firstA, lastA) is returned.
 
-**`constexpr bool anyAdjacent(C c, BinaryPredicate p)`**  
-**`constexpr bool anyAdjacent(C c, BinaryPredicate p)`**  
-**`constexpr bool noneAdjacent(C c, BinaryPredicate p)`**  
-**`constexpr bool allAdjacent(C c, BinaryPredicate p)`**  
-**`constexpr bool anyAdjacent(RandomIt first, RandomIt last, BinaryPredicate p)`**  
-**`constexpr bool noneAdjacent(RandomIt first, RandomIt last, BinaryPredicate p)`**  
-**`constexpr bool allAdjacent(RandomIt first, RandomIt last, BinaryPredicate p)`**  
+**`constexpr boolean<Integer> anyAdjacent(C c, BinaryPredicate p)`**  
+**`constexpr boolean<Integer> anyAdjacent(C c, BinaryPredicate p)`**  
+**`constexpr boolean<Integer> noneAdjacent(C c, BinaryPredicate p)`**  
+**`constexpr boolean<Integer> allAdjacent(C c, BinaryPredicate p)`**  
+**`constexpr boolean<Integer> anyAdjacent(RandomIt first, RandomIt last, BinaryPredicate p)`**  
+**`constexpr boolean<Integer> noneAdjacent(RandomIt first, RandomIt last, BinaryPredicate p)`**  
+**`constexpr boolean<Integer> allAdjacent(RandomIt first, RandomIt last, BinaryPredicate p)`**  
 Checks if the predicate `p` evaluates to true for any, none or all adjacent entries in the container `c` respectively the range [first, last).
+If the `boolean` is `false` the length of the prefix for which it would have been true is returned as a whitness.
 
-**`constexpr bool areIncreasing(C c)`**  
-**`constexpr bool areNonDecreasing(C c)`**  
-**`constexpr bool areDecreasing(C c)`**  
-**`constexpr bool areNonIncreasing(C c)`**  
-**`constexpr bool areDistinct(C c)`**  
-**`constexpr bool areIncreasing(RandomIt first, RandomIt last)`**  
-**`constexpr bool areNonDecreasing(RandomIt first, RandomIt last)`**  
-**`constexpr bool areDecreasing(RandomIt first, RandomIt last)`**  
-**`constexpr bool areNonIncreasing(RandomIt first, RandomIt last)`**  
-**`constexpr bool areDistinct(RandomIt first, RandomIt last)`**  
+**`constexpr boolean<Integer> areIncreasing(C c)`**  
+**`constexpr boolean<Integer> areNonDecreasing(C c)`**  
+**`constexpr boolean<Integer> areDecreasing(C c)`**  
+**`constexpr boolean<Integer> areNonIncreasing(C c)`**  
+**`constexpr boolean<Integer> areIncreasing(RandomIt first, RandomIt last)`**  
+**`constexpr boolean<Integer> areNonDecreasing(RandomIt first, RandomIt last)`**  
+**`constexpr boolean<Integer> areDecreasing(RandomIt first, RandomIt last)`**  
+**`constexpr boolean<Integer> areNonIncreasing(RandomIt first, RandomIt last)`**  
 Checks if the container `c` respectively the range [first, last) is ordered according to the name of this function.
+If the `boolean` is `false` the length of the prefix for which it would have been true is returned as a whitness.
+
+
+**`constexpr boolean<T> areDistinct(C c)`**  
+**`constexpr boolean<T> areDistinct(RandomIt first, RandomIt last)`**  
+Checks if the container `c` respectively the range [first, last) only contains disjoint elements.
+If there is a duplicate element it is returned as a whitness.
 
 **`constexpr auto join(C c)`**  
 **`constexpr auto join(C c, char separator)`**  
@@ -493,13 +527,16 @@ If the container is given as rvalue the generated object stores all values, else
 **`constexpr bool isDigit(char c)`**  
 **`constexpr bool isVowel(char c)`**  
 **`constexpr bool isConsonant(char c)`**  
-**`constexpr bool isLower(std::string_view s)`**  
-**`constexpr bool isUpper(std::string_view s)`**  
-**`constexpr bool isLetter(std::string_view s)`**  
-**`constexpr bool isDigit(std::string_view s)`**  
-**`constexpr bool isVowel(std::string_view s)`**  
-**`constexpr bool isConsonant(std::string_view s)`**  
-Checks if a given char (all chars) belong to the alphabet fitting the name of the function.
+Checks if a given char belong to the alphabet fitting the name of the function.
+
+**`constexpr boolean<char> isLower(std::string_view s)`**  
+**`constexpr boolean<char> isUpper(std::string_view s)`**  
+**`constexpr boolean<char> isLetter(std::string_view s)`**  
+**`constexpr boolean<char> isDigit(std::string_view s)`**  
+**`constexpr boolean<char> isVowel(std::string_view s)`**  
+**`constexpr boolean<char> isConsonant(std::string_view s)`**  
+Checks if all chars of a given string belong to the alphabet fitting the name of the function.
+If not an invalid char from the string is given as a whitness.
 
 **`constexpr char toLower(char c)`**  
 **`constexpr char toUpper(char c)`**  
