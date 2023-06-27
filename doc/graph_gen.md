@@ -68,8 +68,8 @@ Generates a `Graph` with p+c vertices in [0, p+c).
 The first `p+1` vertices form a path and the last `c` vertices form a clique.
 
 **`Graph<E> broom(Integer p, Integer l)`**  
-Generates a `Graph` with p+c vertices in [0, p+c).
-The first `p+1` vertices form a path and the last `l+1` vertices form a star.
+Generates a `Graph` with p+l+1 vertices in [0, p+l].
+The first `p+1` vertices form a path and the last `l+1` vertices form a star where vertex `p+1` is also the center of the star.
 The last `l` vertices form the ends of the star.
 
 **`Graph grid(Integer n)`**  
