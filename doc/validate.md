@@ -401,6 +401,10 @@ Generates `n` points forming a convex polygon with points in (-dim,dim)<sup>2</s
 The points will be in counter clockwise order.
 Note that points may be collinear.
 
+**`std::vector<std::pair<Integer, Integer>> nonCollinearPoints(Integer n, Integer dim)`**  
+**`std::vector<Point> nonCollinearPoints(Integer n, Integer dim)`**  
+Generates `n` points in generel position with points in (-dim,dim)<sup>2</sup>.
+
 ##### utility
 **`const RandomIt::value_type& select(RandomIt first, RandomIt last)`**  
 **`C::value_type select(C c)`**  

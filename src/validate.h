@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-// version 2.3.0                                                              //
+// version 2.3.1                                                              //
 // https://github.com/mzuenni/icpc-header                                     //
 //============================================================================//
 
@@ -1361,7 +1361,7 @@ namespace Random {
 	}
 
 	Integer minimum(Integer lower, Integer upper, Integer n) {// in [lower, upper)
-		return upper - 1 - maximum(lower, upper, n);
+		return upper - 1 - maximum(0, upper - lower, n);
 	}
 	Integer minimum(Integer upper, Integer n) {
 		return minimum(0, upper, n);
@@ -1632,6 +1632,44 @@ namespace Random {
 			}
 			return res;
 		}
+	}
+
+	template<typename Point = std::pair<Integer, Integer>>
+	std::vector<Point> nonCollinearPoints(Integer n, Integer dim) {
+		judgeAssert<std::invalid_argument>(dim <= 0x1FFF'FFFF, "Random::nonCollinearPoints(): dim too large!");
+		judgeAssert<std::invalid_argument>(n >= 0, "Random::nonCollinearPoints(): dim must be non negative!");
+		judgeAssert<std::invalid_argument>(dim > n, "Random::nonCollinearPoints(): dim too small!");
+		Integer p = prime(dim - 1, 2*dim + 2);
+		Integer rotA = 0;
+		Integer rotB = 0;
+		while (rotA == 0 && rotB == 0) {
+			rotA = integer(0, p);
+			rotB = integer(0, p);
+		}
+		std::array<Integer, 3> abc = {
+			integer(1, p),
+			integer(0, p),
+			integer(0, p),
+		};
+		Integer dx = integer(-dim + 1, dim - p);
+		Integer dy = integer(-dim + 1, dim - p);
+
+		auto xs = distinct(n, p);
+		std::vector<Point> res;
+		for (auto tmpX : xs) {
+			Integer tmpY = 0;
+			for (Integer add : abc[0]) {
+				tmpY *= tmpX;
+				tmpY += add;
+				tmpY %= p;
+			}
+
+			Integer x = applyMod(tmpX * rotA - tmpY * rotB, p);
+			Integer y = applyMod(tmpX * rotB + tmpY * rotA, p);
+
+			res.emplace_back(x + dx, y + dy);
+		}
+		return res;
 	}
 
 } // namespace Random
@@ -2438,7 +2476,7 @@ namespace details {
 // Settings                                                                   //
 //============================================================================//
 template<typename T>
-class SettingBase {	
+class SettingBase {
 	template<typename U>
 	friend class Setting;
 	friend class SettingCaseSensitive;
