@@ -1276,7 +1276,7 @@ namespace Random {
 			Integer res = 0;
 			Integer y = 0;
 			Real lg = std::log1p(-p);
-			if (lg >= 0) return 0;
+			if (lg >= 0) return swap ? n : 0;
 			do {
 				y += std::llround(std::floor(std::log(real()) / lg)) + 1;
 				if (y > n) return swap ? n - res : res;
