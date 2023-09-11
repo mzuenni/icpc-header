@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-// version 2.3.1                                                              //
+// version 2.3.2                                                              //
 // https://github.com/mzuenni/icpc-header                                     //
 //============================================================================//
 
@@ -1151,24 +1151,6 @@ namespace Random {
 			x |= x >> 32;
 			return x;
 		}
-
-		Real logFac(Integer n) {
-			if (n < 16) {
-				Integer fac = 1;
-				for (Integer i = 2; i <= n; i++) fac *= i;
-				return std::log(fac);
-			} else {
-				// https://mathworld.wolfram.com/StirlingsSeries.html
-				return 0.5_real * std::log(2.0_real * PI)
-				     + (n + 0.5_real) * std::log(n + 1.0_real)
-				     - (n + 1)
-				     + 1.0_real / (12 * (n + 1.0_real))
-				     - 1.0_real / (360 * std::pow(n + 1.0_real, 3))
-				     + 1.0_real / (1260 * std::pow(n + 1.0_real, 5))
-				     - 1.0_real / (1680 * std::pow(n + 1.0_real, 7));
-				     //+ 1.0_real / (1188 * std::pow(n + 1.0_real, 9));
-			}
-		}
 	}
 
 	void seed(UInteger seed) {
@@ -1288,47 +1270,52 @@ namespace Random {
 		judgeAssert<std::domain_error>(0.0_real <= p and p <= 1.0_real, "Random::binomial(): p must be in [0,1)!");
 		bool swap = p > 0.5_real;
 		p = std::min(p, 1.0_real - p);
-		if (p*n <= 16.0_real) {
-			// inverse sampling
-			Real q = 1.0_real - p;
-			Real s = p / q;
-			Real a = (n + 1) * s;
-			Real r = std::pow(q, n);
-			Real u = real();
+		if (p*n < 10.0_real) {
+			// BG: Geometric method
+			// https://dl.acm.org/doi/pdf/10.1145/42372.42381
 			Integer res = 0;
-			while (u > r) {
-				u -= r;
+			Integer y = 0;
+			Real lg = std::log1p(-p);
+			if (lg >= 0) return 0;
+			do {
+				y += std::llround(std::floor(std::log(real()) / lg)) + 1;
+				if (y > n) return swap ? n - res : res;
 				res++;
-				r *= (a / res) - s;
-			}
-			return swap ? n - res : res;
+			} while (true);
 		} else {
 			// BTRS algorithm
 			// https://epub.wu.ac.at/1242/1/document.pdf
+			// note that the original paper has an error
+			// the break condition at the end has to be log(v) < h[...]
 			Real q = 1.0_real - p;
 			Real spq = std::sqrt(n * p * q);
 			Real b = 1.15_real + 2.53_real * spq;
 			Real a = -0.0873_real + 0.0248_real * b + 0.01_real * p;
 			Real c = n * p + 0.5_real;
 			Real vr = 0.92_real - 4.2_real / b;
+
+			bool initialized = false;
+			Real alpha, lpq, m, h;
 			do {
-				Real v, us;
-				Integer res;
-				do {
-					v = real();
-					Real u = real() - 0.5_real;
-					us = 0.5_real - std::abs(u);
-					res = static_cast<Integer>(std::floor((2.0_real * a / us + b) * u + c));
-				} while (res < 0 or res > n);
+				Real u = real() - 0.5_real;
+				Real us = 0.5_real - std::abs(u);
+				Integer res = std::llround(std::floor((2.0_real * a / us + b) * u + c));
+				if (res < 0 or res > n) continue;
+
+				Real v = real();
 				if (us >= 0.07_real and v <= vr) {
 					return swap ? n - res : res;
 				}
-				Real alpha = (2.83_real + 5.1_real / b) * spq;
-				Real lpq = std::log(p / q);
-				Integer m = static_cast<Integer>(std::floor((n + 1) * p));
-				Real h = details::logFac(m) + details::logFac(n - m);
-				v += alpha / (a / (us * us) + b);
-				if (v <= h - details::logFac(res) - details::logFac(n - res) + (res - m) * lpq) {
+
+				if (!initialized) {
+					Real alpha = (2.83_real + 5.1_real / b) * spq;
+					Real lpq = std::log(p / q);
+					Integer m = std::llround(std::floor((n + 1) * p));
+					Real h = std::lgamma(m + 1) + std::lgamma(n - m + 1);
+					initialized = true;
+				}
+				v *= alpha / (a / (us * us) + b);
+				if (std::log(v) <= h - std::lgamma(res + 1) - std::lgamma(n - res + 1) + (res - m) * lpq) {
 					return swap ? n - res : res;
 				}
 			} while (true);
