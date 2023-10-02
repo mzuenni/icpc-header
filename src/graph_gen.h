@@ -11,7 +11,7 @@
 // This header requires validate.h zo to generate random graphs in a          //
 // deterministic and reproducable fashion.                                    //
 //============================================================================//
-//version 1.0.4                                                               //
+//version 1.0.5                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -283,7 +283,7 @@ namespace GraphDetail {
 		}
 
 		bool eraseEdge(const Edge& edge) {
-			return removeEdge(edge.from, edge.to);
+			return eraseEdge(edge.from, edge.to);
 		}
 
 		std::ranges::view auto getEdges() const & {
@@ -826,7 +826,9 @@ GraphDetail::GraphType<E, DIR> randomGraph(Integer n, Integer m) {
 	for (Integer x : edges) {
 		Integer i = x / n;
 		Integer j = x % n;
-		if constexpr(!DIR) {
+		if constexpr(DIR) {
+			if (i == j) i = n - 1;
+		} else {
 			if (j <= i) {
 				i = n - 2 - i;
 				j = n - 1 - j;

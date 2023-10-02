@@ -1455,7 +1455,7 @@ namespace Random {
 	//========================================================================//
 	std::vector<Integer> distinct(Integer count, Integer lower, Integer upper) {
 		judgeAssert<std::invalid_argument>(count >= 0, "Random::distinct(): Count must be non negative!");
-		judgeAssert<std::invalid_argument>(lower + count <= upper, "Random::distinct(): Lower must be less than upper + count!");
+		judgeAssert<std::invalid_argument>(lower + count <= upper, "Random::distinct(): upper - lower must be at least count!");
 		std::map<Integer, Integer> used;
 		std::vector<Integer> res;
 		for (Integer i = 0; i < count; i++) {
