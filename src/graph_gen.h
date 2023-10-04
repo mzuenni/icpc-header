@@ -11,7 +11,7 @@
 // This header requires validate.h zo to generate random graphs in a          //
 // deterministic and reproducable fashion.                                    //
 //============================================================================//
-//version 1.0.5                                                               //
+//version 1.0.6                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -159,7 +159,8 @@ namespace GraphDetail {
 		}
 
 		Integer degree(Integer id) const {
-			return static_cast<Integer>(adj[id].size());
+			assertNode(id);
+			return static_cast<Integer>(adj[id + minId].size());
 		}
 
 		Integer getMinId() const {
