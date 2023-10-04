@@ -160,7 +160,7 @@ namespace GraphDetail {
 
 		Integer degree(Integer id) const {
 			assertNode(id);
-			return static_cast<Integer>(adj[id + minId].size());
+			return static_cast<Integer>(adj[id - minId].size());
 		}
 
 		Integer getMinId() const {
