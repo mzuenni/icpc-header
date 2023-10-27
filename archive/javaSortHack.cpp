@@ -49,7 +49,7 @@ private:
 			return;
 		}
 		Integer seventh = (length >> 3) + (length >> 6) + 1;
-		array<Integer, 5> e;
+		std::array<Integer, 5> e;
 		e[2] = (left + right) >> 1;
 		e[1] = e[2] - seventh;
 		e[0] = e[1] - seventh;
@@ -64,8 +64,8 @@ private:
 
 		for (Integer i = 1; i <= 4; i++) {
 			for (Integer j = i; j > 0 && myLess(data[e[j]], data[e[j - 1]]); j--) {
-				swap(data[e[j]], data[e[j-1]]);
-				swap(p[e[j]], p[e[j-1]]);
+				std::swap(data[e[j]], data[e[j-1]]);
+				std::swap(p[e[j]], p[e[j-1]]);
 			}
 		}
 
@@ -87,18 +87,18 @@ private:
 
 		for (Integer k = less - 1; ++k <= great; ) {
 			if (myLess(data[k], pivot1)) {
-				swap(data[k], data[less]);
-				swap(p[k], p[less]);
+				std::swap(data[k], data[less]);
+				std::swap(p[k], p[less]);
 				++less;
 			} else if (myGreater(data[k], pivot2)) {
 				while (myGreater(data[great], pivot2)) {
 					if (great-- == k) goto outerA;
 				}
-				swap(data[k], data[great]);
-				swap(p[k], p[great]);
+				std::swap(data[k], data[great]);
+				std::swap(p[k], p[great]);
 				if (myLess(data[k], pivot1)) {
-					swap(data[k], data[less]);
-					swap(p[k], p[less]);
+					std::swap(data[k], data[less]);
+					std::swap(p[k], p[less]);
 					++less;
 				}
 				--great;
@@ -121,18 +121,18 @@ private:
 		if (less < e[0] && e[4] < great) {
 			for (Integer k = less - 1; ++k <= great;) {
 				if (data[k] == pivot1) {
-					swap(data[k], data[less]);
-					swap(p[k], p[less]);
+					std::swap(data[k], data[less]);
+					std::swap(p[k], p[less]);
 					++less;
 				} else if (data[k] == pivot2) {
 					while (data[great] == pivot2) {
 						if (great-- == k) goto outerB;
 					}
-					swap(data[k], data[great]);
-					swap(p[k], p[great]);
+					std::swap(data[k], data[great]);
+					std::swap(p[k], p[great]);
 					if (data[k] == pivot1) {
-						swap(data[k], data[less]);
-						swap(p[k], p[less]);
+						std::swap(data[k], data[less]);
+						std::swap(p[k], p[less]);
 						++less;
 					}
 					--great;
