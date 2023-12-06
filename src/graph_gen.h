@@ -11,7 +11,7 @@
 // This header requires validate.h zo to generate random graphs in a          //
 // deterministic and reproducable fashion.                                    //
 //============================================================================//
-//version 1.0.6                                                               //
+//version 1.0.7                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -41,6 +41,8 @@ namespace GraphDetail {
 	struct EdgeWrapper final {
 		const Integer from, to;
 		E& data;
+		EdgeWrapper(Integer from_, Integer to_, E& data_) : from(from_), to(to_), data(data_) {}
+
 		E& operator*() {
 			return data;
 		}
@@ -49,10 +51,18 @@ namespace GraphDetail {
 		}
 
 		friend std::ostream& operator<<(std::ostream& os, const EdgeWrapper<E>& e) {
-			os << e.from << " " << e.to;
+			return os << e.from << " " << e.to;
 			if constexpr (!std::is_same_v<std::remove_cv_t<std::remove_reference_t<E>>, NoData>) os << " " << *e;
 			return os;
 		}
+	};
+	template<>
+	struct EdgeWrapper<NoData> final {
+		const Integer from, to;
+		EdgeWrapper(Integer from_, Integer to_) : from(from_), to(to_) {}
+		EdgeWrapper(Integer from_, Integer to_, NoData& /**/) : EdgeWrapper(from_, to_) {}
+
+		void operator*() const {}
 	};
 
 	// EdgeType is the internel representation of an edge that should never get exposed!
@@ -108,6 +118,10 @@ namespace GraphDetail {
 			Integer to = e->to;
 			if constexpr (!DIR) if (from != to) adj[to - minId].emplace(e);
 			return adj[from - minId].emplace(e).first;
+		}
+
+		void emplaceEdge(Integer from, Integer to, const E& data = {}) {
+			edges.emplace_back(from ^ to, to, data);
 		}
 
 		void buildAdj() {
@@ -253,7 +267,7 @@ namespace GraphDetail {
 			judgeAssert(from != to, "Graph: invalid selfloop!");
 			auto it = adj[from - minId].find(from ^ to);
 			if (it == adj[from - minId].end()) {
-				edges.emplace_back(from ^ to, to, data);
+				emplaceEdge(from, to, data);
 				it = addEdge(&(edges.back()));
 			} else {
 				(*it)->data = data;
@@ -427,12 +441,12 @@ namespace GraphDetail {
 			GraphType<E, true> res(minId, minId + nodeCount());
 			for (const auto& e : getEdges()) {
 				if constexpr (std::is_invocable_r_v<bool, PRED, Integer, Integer, const E&>) {
-					if (p(e.from, e.to, *e)) res.edges.emplace_back(e.from, e.to, *e);
-					if (p(e.to, e.from, *e)) res.edges.emplace_back(e.to, e.from, *e);
+					if (p(e.from, e.to, *e)) res.emplaceEdge(e.from, e.to, *e);
+					if (p(e.to, e.from, *e)) res.emplaceEdge(e.to, e.from, *e);
 				} else {
 					static_assert(std::is_invocable_r_v<bool, PRED, Integer, Integer>, "Graph: pred has wrong signature!");
-					if (p(e.from, e.to)) res.edges.emplace_back(e.from, e.to, *e);
-					if (p(e.to, e.from)) res.edges.emplace_back(e.to, e.from, *e);
+					if (p(e.from, e.to)) res.emplaceEdge(e.from, e.to, *e);
+					if (p(e.to, e.from)) res.emplaceEdge(e.to, e.from, *e);
 				}
 			}
 			res.buildAdj();
@@ -450,11 +464,11 @@ namespace GraphDetail {
 			for (Integer i = 0; i < nodeCount(); i++) {
 				for (Integer j = 0; j < i; j++) {
 					if (!hasEdge(i + minId, j + minId)) {
-						res.edges.emplace_back(i + minId, j + minId);
+						res.emplaceEdge(i + minId, j + minId);
 					}
 					if constexpr (DIR) {
 						if (!hasEdge(j + minId, i + minId)) {
-							res.edges.emplace_back(j + minId, i + minId);
+							res.emplaceEdge(j + minId, i + minId);
 						}
 					}
 				}
@@ -483,7 +497,7 @@ namespace GraphDetail {
 				for (auto [c, d] : queue) {
 					seen[c] = false;
 					if (i != c) {
-						res.edges.emplace_back(i + minId, c + minId);
+						res.emplaceEdge(i + minId, c + minId);
 					}
 				}
 			}
@@ -503,8 +517,8 @@ namespace GraphDetail {
 			};
 			for (const auto& e1 : getEdges()) {
 				for (const auto& e2 : o.getEdges()) {
-					res.edges.emplace_back(newId(e1.from, e2.from), newId(e1.to, e2.to));
-					res.edges.emplace_back(newId(e1.from, e2.to), newId(e1.to, e2.from));
+					res.emplaceEdge(newId(e1.from, e2.from), newId(e1.to, e2.to));
+					res.emplaceEdge(newId(e1.from, e2.to), newId(e1.to, e2.from));
 				}
 			}
 			res.buildAdj();
@@ -520,14 +534,14 @@ namespace GraphDetail {
 				for (Integer i = 0; i < nodeCount(); i++) {
 					Integer from = newId(i + minId, e.from);
 					Integer to = newId(i + minId, e.to);
-					res.edges.emplace_back(from, to);
+					res.emplaceEdge(from, to);
 				}
 			}
 			for (const auto& e : getEdges()) {
 				for (Integer i = 0; i < o.nodeCount(); i++) {
 					Integer from = newId(e.from, i + o.minId);
 					Integer to = newId(e.to, i + o.minId);
-					res.edges.emplace_back(from, to);
+					res.emplaceEdge(from, to);
 				}
 			}
 			res.buildAdj();
@@ -543,7 +557,7 @@ namespace GraphDetail {
 			Graph tmp(minId, minId + nodeCount());
 			Integer nextEdge = 0;
 			for (const auto& e : getEdges()) {
-				tmp.edges.emplace_back(e.from, e.to, nextEdge);
+				tmp.emplaceEdge(e.from, e.to, nextEdge);
 				nextEdge++;
 			}
 			tmp.buildAdj();
@@ -551,14 +565,14 @@ namespace GraphDetail {
 			for (const auto& e1 : tmp.getEdges()) {
 				if constexpr (DIR) {
 					for (const auto& e2 : tmp[e1.to]) {
-						res.edges.emplace_back(*e1, *e2);
+						res.emplaceEdge(*e1, *e2);
 					}
 				} else {
 					for (const auto& e2 : tmp[e1.to]) {
-						if (*e1 < *e2) res.edges.emplace_back(*e1, *e2);
+						if (*e1 < *e2) res.emplaceEdge(*e1, *e2);
 					}
 					for (const auto& e2 : tmp[e1.from]) {
-						if (*e1 < *e2) res.edges.emplace_back(*e1, *e2);
+						if (*e1 < *e2) res.emplaceEdge(*e1, *e2);
 					}
 				}
 			}
