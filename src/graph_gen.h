@@ -11,7 +11,7 @@
 // This header requires validate.h zo to generate random graphs in a          //
 // deterministic and reproducable fashion.                                    //
 //============================================================================//
-//version 1.0.7                                                               //
+//version 1.0.8                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -51,7 +51,13 @@ namespace GraphDetail {
 		}
 
 		friend std::ostream& operator<<(std::ostream& os, const EdgeWrapper<E>& e) {
-			return os << e.from << " " << e.to;
+			os << e.from << " " << e.to;
+			if constexpr (!std::is_same_v<std::remove_cv_t<std::remove_reference_t<E>>, NoData>) os << " " << *e;
+			return os;
+		}
+
+		friend OutputStream& operator<<(OutputStream& os, const EdgeWrapper<E>& e) {
+			os << e.from << " " << e.to;
 			if constexpr (!std::is_same_v<std::remove_cv_t<std::remove_reference_t<E>>, NoData>) os << " " << *e;
 			return os;
 		}
@@ -586,6 +592,12 @@ namespace GraphDetail {
 			return os;
 		}
 
+		friend OutputStream& operator<<(OutputStream& os, const Graph& g) {
+			os << g.nodeCount() << " " << g.edgeCount();
+			for (const auto& e : g.getEdges()) os << '\n' << e;
+			return os;
+		}
+
 	};
 } // GraphDetail
 
@@ -908,6 +920,46 @@ Graph<E> randomGraph(const std::vector<Integer>& degree, Integer averageFlips = 
 		res.eraseEdge(b.from, b.to);
 		res.addEdge(a.from, b.to);
 		res.addEdge(b.from, a.to);
+	}
+	return res;
+}
+
+// generates a worstcase instance for Ford Fulkerson with dfs.
+// The graph contains 2*n vertices and has 2^n flow from 0 to 2*n-1.
+// Figure 2: https://people.computing.clemson.edu/~bcdean/iterm.pdf
+// Note that the specific order of edghes is required
+Graph<Integer> ffWorstcase(Integer n) {
+	judgeAssert(0 < n && n <= 63, "ffWorstcase(): n out of bounds");
+	Graph<Integer> res(2 * n);
+	res.addEdge(n-1, n, 1);
+	for (Integer i = n - 2, j = n+1, c = 1; j < 2 * n; i--, j++, c *= 2) {
+		res.addEdge(i, i+1, c);
+		res.addEdge(i, j-1, c);
+		res.addEdge(i+1, j, c);
+		res.addEdge(j-1, j, c);
+	}
+	return res;
+}
+
+// generates a worstcase instance for various min cost max flow algorithms.
+// The graph contains 2*n+2 vertices and has flow from 0 to 2*n+1.
+// Figure 4: https://link.springer.com/article/10.1007/BF01580132
+Graph<std::pair<Integer, Integer>> mcmfWorstcase(Integer n) {
+	judgeAssert(0 < n && n <= 60, "mcmfWorstcase(): n out of bounds");
+	Graph<std::pair<Integer, Integer>> res(2 * n + 2);
+	Integer inf = 5 * (1ll << n) / 4;
+	for (Integer i = 0; i < n; i++) {
+		res.addEdge(0, i + 1, {i < 2 ? 2 * i + 1 : 5ll << (i - 2), 0});
+	}
+	res.addEdge(1, n + 1, {inf, 0});
+	for (Integer i = 0; i < n; i++) {
+		for (Integer j = 0; j < n; j++) {
+			if (i == j) continue;
+			res.addEdge(i + 1, j + 1 + n, {inf, (1ll << std::max(i, j)) - 1});
+		}
+	}
+	for (Integer i = 0; i < n; i++) {
+		res.addEdge(i + 1 + n, 2 * n + 1, {i < 2 ? 2: 5ll << (i - 2), 0});
 	}
 	return res;
 }
