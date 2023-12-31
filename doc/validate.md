@@ -76,6 +76,7 @@ Use this namespace if you want to write an output validator which gets called as
 #### Member
 **`OutputStream juryOut`**  
 **`OutputStream juryErr`**  
+**`OutputStream teamOut`**  
 **`CommandParser arguments`**  
 **`Setting<Real> floatAbsTol`**  
 **`Setting<Real> floatRelTol`**  
@@ -119,6 +120,7 @@ Use this namespace if you want to write an output validator for interactive prob
 #### Member
 **`OutputStream juryOut`**  
 **`OutputStream juryErr`**  
+**`OutputStream teamOut`**  
 **`CommandParser arguments`**  
 **`Setting<Real> floatAbsTol`**  
 **`Setting<Real> floatRelTol`**  
@@ -214,8 +216,11 @@ If the command does not exists or has no parameter it will instead return the `d
 >Note: If `defaultValue` should be returned but was not provided an error will be thrown.
 
 **`std::vector<std::string> asStrings() const`**  
+**`std::tuple<std::string...> asStrings<N>() const`**  
 **`std::vector<Integer> asIntegers() const`**  
+**`std::tuple<Integer...> asIntegers<N>() const`**  
 **`std::vector<Real> asReals() const`**  
+**`std::tuple<Real...> asReals<N>() const`**  
 Return all parameters of this command.
 
 **`Paramater operator[](Integer i) const`**  
