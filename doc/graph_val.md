@@ -50,6 +50,9 @@ Returns `true` iff the graph has no cycles and is connected i.e. forms a tree.
 **`bool isBipartite() const`**  
 Returns `true` iff the graph is bipartite.
 
+**`bool areConnected(Integer a, Integer b) const`**  
+Returns `true` iff `a` and `b` are connected by a path.
+
 
 ## class DiGraph
 Represents a directed graph.

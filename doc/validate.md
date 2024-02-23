@@ -70,8 +70,49 @@ If `caseSensitive` is not provided the global setting `caseSensitive` gets used 
 If the strings are not equal the position of the first mismatch is returned as a whitness.
 
 
+## namespace AnswerValidator
+Use this namespace if you want to write an answer validator which gets called as `./validator input [arguments] < ans`.
+
+#### Member
+**`OutputStream juryOut`**  
+**`OutputStream juryErr`**  
+**`CommandParser arguments`**  
+**`Setting<Real> floatAbsTol`**  
+**`Setting<Real> floatRelTol`**  
+**`Setting<bool> spaceSensitive`**  
+**`Setting<bool> caseSensitive`**  
+
+**`InputStream testIn`**  
+**`InputStream teamAns`**  
+
+#### Methods
+**`void init(int argc, char** argv)`**  
+Parses the program arguments and stores them in `arguments`.
+Further, initializes all streams and settings.
+Both `spaceSensitive` and `caseSensitive` will be set to true and the `juryAns` is initialized accordingly.
+
+**`bool floatEqual(Real given, Real expected)`**  
+**`bool floatEqual(Real given, Real expected, Real floatAbsTol)`**  
+**`bool floatEqual(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
+**`bool floatLess(Real given, Real expected)`**  
+**`bool floatLess(Real given, Real expected, Real floatAbsTol)`**  
+**`bool floatLess(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
+**`bool floatGreaterEqual(Real given, Real expected)`**  
+**`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol)`**  
+**`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
+Checks if two floating point numbers `given` and `expected` obey the relation `given`==`expected`, `given`<=`expected` or`given`>=`expected` allowing an absolute and relative error of the given tolerance.
+For relative errors the `expected` value is used as refference value.
+If no tolerance is given the global setting `floatAbsTol` respectively `floatRelTol` get used as fallback.
+
+**`boolean<Integer> stringEqual(std::string_view a, std::string_view b)`**  
+**`boolean<Integer> stringEqual(std::string_view a, std::string_view b, bool caseSensitive)`**  
+Checks if two strings are equal but may ignore the case of letters if `caseSensitive` is false.
+If `caseSensitive` is not provided the global setting `caseSensitive` gets used as fallback.
+If the strings are not equal the position of the first mismatch is returned as a whitness.
+
+
 ## namespace OutputValidator
-Use this namespace if you want to write an output validator which gets called as `./validator input judgeanswer feedbackdir [arguments < teamoutput`.
+Use this namespace if you want to write an output validator which gets called as `./validator input judgeanswer feedbackdir [arguments] < teamoutput`.
 
 #### Member
 **`OutputStream juryOut`**  
@@ -340,6 +381,9 @@ Returns a uniformally distributed integer in [-2^63, 2^63), [0, upper) or [lower
 **`Real real(Real lower, Real upper)`**  
 Returns a uniformally distributed real in [0, 1), [0, upper) or [lower, upper).
 
+**`Integer discrete<w_1,...,w_k>()`**  
+Return an integer in [0,k), where i is choosen with probability w_i/(sum over w).
+
 **`Real normal(Real mean, Real stddev)`**  
 **`Real normal(Real lower, Real upper, Real mean, Real stddev)`**  
 **`Real exponential(Real lambda)`**  
@@ -372,9 +416,14 @@ Generates a permutation of the numbers [0, count) respectively [offset, offset+c
 Each possible output has the same probability to get generated.
 
 **`std::vector<Integer> perm(std::vector<Integer> cycles)`**  
-**`std::vector<Integer> perm(std::vector<Integer> cycles)`**  
+**`std::vector<Integer> perm(std::vector<Integer> cycles, Integer offset)`**  
 Generates a permutation of the numbers [0, sum{cycles}) respectively [offset, offset+sum{cycles}).
 The cycle lengths of the generates permutations will be the values in `cycles`.
+Each possible output has the same probability to get generated.
+
+**`std::vector<Integer> perm(Integer count, std::vector<Integer> fix)`**  
+**`std::vector<Integer> perm(Integer count, std::vector<Integer> fix, Integer offset)`**  
+Generates a permutation of the numbers [0, count) respectively [offset, offset+count) where each i in `fix` is a fixpoint.
 Each possible output has the same probability to get generated.
 
 **`std::vector<Integer> multiple(Integer count, Integer lower, Integer upper)`**  
@@ -396,6 +445,10 @@ Each possible output has the same probability to get generated.
 **`std::vector<Integer> partition(Integer n, Integer k, Integer min)`**  
 Uniformally generates an unsorted partition of `n` into `k` integers in [1, n) or [min, n).
 Note that with non positive `min` the distribution is not uniform.
+
+**`std::string string(Integer n)`**  
+**`std::string string(Integer n, string_view alphabet)`**  
+Uniformally generates a string of length n with chars from the given alphabet or a-z if no alphabet is given.
 
 **`std::string bracketSequence(Integer n)`**  
 Uniformally generates a bracket sequence of length 2n.
@@ -560,9 +613,26 @@ Converts a `char` or `std::string` to the given case.
 **`std::vector<Integer> thueMorse(Integer lower, Integer upper)`**  
 Generates the Thue-Morse sequence [0, upper) respectively [lower, upper).
 
+
+**`std::vector<Integer> range(Integer to)`**  
+**`std::vector<Integer> range(Integer from, Integer to)`**  
+**`std::vector<Integer> range(Integer from, Integer to, Integer step)`**  
+Generates the integers `res[i]=from+i*step` for all non negative `i` where `res[i]<to` (or `res[i]>to` if `step<0`).
+
+**`std::vector<Integer> range(Integer to)`**  
+**`std::vector<Integer> range(Integer from, Integer to)`**  
+**`std::vector<Integer> range(Integer from, Integer to, Integer step)`**  
+Generates the integers `res[i]=from+i*step` for all non negative `i` where `res[i]<to` (or `res[i]>to` if `step<0`).
+
+**`boolean<Integer> isInteger(std::string s)`**  
+Checks if the given string can be parsed as Integer. If yes that Integer is also provided.
+
+**`boolean<Real> isReal(std::string s)`**  
+Checks if the given string can be parsed as Real. If yes that Real is also provided.
+
 ## class ConstraintsLogger 
 An instance of this class is provided for input and output validators as `constraint` after calling `init(argc, argv).
 #### Methods
-**`Constraint& operator[](const std::string& name)`**  
+**`Constraint& operator[](std::string name)`**  
 Returns a `constraint` which can be given to an input stream to automatically log informations about the parsed input.
 See [BAPCtools](https://github.com/RagnarGrootKoerkamp/BAPCtools/blob/master/doc/implementation_notes.md#constraints-checking).

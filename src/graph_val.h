@@ -3,7 +3,7 @@
 //============================================================================//
 // This header can be used to validate graph problems.                        //
 //============================================================================//
-//version 1.0.0                                                               //
+//version 1.1.1                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -138,6 +138,7 @@ public:
 	bool isForest() const {return forest;}
 	bool isTree() const {return components <= 1 and forest;}
 	bool isBipartite() const {return bipartite;}
+	bool areConnected(Integer a, Integer b) {return uf.connected(a - offset, b - offset);}
 };
 
 class DiGraph final : private details::BaseGraph  {

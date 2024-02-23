@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
 	Integer n = arguments["--n"].asInteger(100'000);
 	Integer min = arguments["--min"].asInteger(1);
 
-	HackedSort hs(n);
+	HackedSort hs(n, min);
 	testOut << n << std::endl;
 	testOut << join(hs.data) << std::endl;
 }

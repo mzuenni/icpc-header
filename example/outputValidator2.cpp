@@ -31,17 +31,18 @@ int main(int argc, char **argv) {
 		Integer n = juryAns.integer();					// read the solution
 		teamAns.newline();								// maybe check whitespaces
 		if (!verify(n)) {								// and verify it (could be wrong)
-			juryOut << "team solution is invalid!" << WA;
+			teamOut << "team solution is invalid!" << WA;
 		}
 	}
 	teamAns.eof();										// check for garbage
 
 	if (stringEqual(j, t)) {							// check if the answers are equal
-		juryOut << "OK same answer" << AC;
+		teamOut << "OK same answer" << AC;
 	} else if (stringEqual(t, "Yes")) {					// and check that team is not better than jury
 		juryOut << "team found solution but jury not!" << FAIL;
 	} else if (stringEqual(j, "Yes")) {
-		juryOut << "jury found solution but team not!" << WA;
+		juryOut << "team did not print 6?!" << std::endl
+		teamOut << "jury found solution but team not!" << WA;
 	} else {
 		juryOut << "how did this happen?!" << FAIL;
 	}
