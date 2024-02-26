@@ -11,7 +11,7 @@
 // This header requires validate.h zo to generate random graphs in a          //
 // deterministic and reproducable fashion.                                    //
 //============================================================================//
-//version 1.0.8                                                               //
+//version 1.0.9                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -52,13 +52,13 @@ namespace GraphDetail {
 
 		friend std::ostream& operator<<(std::ostream& os, const EdgeWrapper<E>& e) {
 			os << e.from << " " << e.to;
-			if constexpr (!std::is_same_v<std::remove_cv_t<std::remove_reference_t<E>>, NoData>) os << " " << *e;
+			os << " " << *e;
 			return os;
 		}
 
 		friend OutputStream& operator<<(OutputStream& os, const EdgeWrapper<E>& e) {
 			os << e.from << " " << e.to;
-			if constexpr (!std::is_same_v<std::remove_cv_t<std::remove_reference_t<E>>, NoData>) os << " " << *e;
+			os << " " << *e;
 			return os;
 		}
 	};
@@ -69,6 +69,16 @@ namespace GraphDetail {
 		EdgeWrapper(Integer from_, Integer to_, NoData& /**/) : EdgeWrapper(from_, to_) {}
 
 		void operator*() const {}
+
+		friend std::ostream& operator<<(std::ostream& os, const EdgeWrapper<NoData>& e) {
+			os << e.from << " " << e.to;
+			return os;
+		}
+
+		friend OutputStream& operator<<(OutputStream& os, const EdgeWrapper<NoData>& e) {
+			os << e.from << " " << e.to;
+			return os;
+		}
 	};
 
 	// EdgeType is the internel representation of an edge that should never get exposed!

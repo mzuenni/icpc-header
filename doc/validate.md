@@ -70,8 +70,50 @@ If `caseSensitive` is not provided the global setting `caseSensitive` gets used 
 If the strings are not equal the position of the first mismatch is returned as a whitness.
 
 
+## namespace AnswerValidator
+Use this namespace if you want to write an answer validator which gets called as `./validator input [arguments] < ans`.
+
+#### Member
+**`OutputStream juryOut`**  
+**`OutputStream juryErr`**  
+**`OutputStream teamOut`**  
+**`CommandParser arguments`**  
+**`Setting<Real> floatAbsTol`**  
+**`Setting<Real> floatRelTol`**  
+**`Setting<bool> spaceSensitive`**  
+**`Setting<bool> caseSensitive`**  
+
+**`InputStream testIn`**  
+**`InputStream teamAns`**  
+
+#### Methods
+**`void init(int argc, char** argv)`**  
+Parses the program arguments and stores them in `arguments`.
+Further, initializes all streams and settings.
+Both `spaceSensitive` and `caseSensitive` will be set to true and the `juryAns` is initialized accordingly.
+
+**`bool floatEqual(Real given, Real expected)`**  
+**`bool floatEqual(Real given, Real expected, Real floatAbsTol)`**  
+**`bool floatEqual(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
+**`bool floatLess(Real given, Real expected)`**  
+**`bool floatLess(Real given, Real expected, Real floatAbsTol)`**  
+**`bool floatLess(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
+**`bool floatGreaterEqual(Real given, Real expected)`**  
+**`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol)`**  
+**`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
+Checks if two floating point numbers `given` and `expected` obey the relation `given`==`expected`, `given`<=`expected` or`given`>=`expected` allowing an absolute and relative error of the given tolerance.
+For relative errors the `expected` value is used as refference value.
+If no tolerance is given the global setting `floatAbsTol` respectively `floatRelTol` get used as fallback.
+
+**`boolean<Integer> stringEqual(std::string_view a, std::string_view b)`**  
+**`boolean<Integer> stringEqual(std::string_view a, std::string_view b, bool caseSensitive)`**  
+Checks if two strings are equal but may ignore the case of letters if `caseSensitive` is false.
+If `caseSensitive` is not provided the global setting `caseSensitive` gets used as fallback.
+If the strings are not equal the position of the first mismatch is returned as a whitness.
+
+
 ## namespace OutputValidator
-Use this namespace if you want to write an output validator which gets called as `./validator input judgeanswer feedbackdir [arguments < teamoutput`.
+Use this namespace if you want to write an output validator which gets called as `./validator input judgeanswer feedbackdir [arguments] < teamoutput`.
 
 #### Member
 **`OutputStream juryOut`**  

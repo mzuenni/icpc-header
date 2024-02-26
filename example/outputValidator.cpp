@@ -15,13 +15,16 @@ int main(int argc, char **argv) {
 		teamAns.expectString("impossible");				// check if the participant found no answer either
 		teamAns.newline();								// only relevant when validating the jury answer
 		teamAns.eof();									// check for garbage
-		juryOut << "OK impossible" << AC;
+		teamOut << "OK impossible" << AC;
 	} else {
 		Integer n = testIn.integer();					// get the testdata
 		Integer ans = teamAns.integer();				// get team answer
 		teamAns.newline();								// only relevant when validating the jury answer
-		if (2*ans != n) juryOut << "wrong answer" << WA;
+		if (2*ans != n) {
+			juryOut << "should be 2*n" << std::endl;	// a message only the jury can see 
+			teamOut << "wrong answer" << WA;			// a message that the team (if enabled for samples) and jury can see
+		}
 		teamAns.eof();									// check for garbage
-		juryOut << "OK possible" << AC;
+		teamOut << "OK possible" << AC;
 	}
 }

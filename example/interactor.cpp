@@ -15,12 +15,15 @@ int main(int argc, char **argv) {
 		fromTeam.expectString("impossible");		// check that participant did not find an answer either
 		fromTeam.newline();							// typically this does nothing since output checking is not space sensitive
 		fromTeam.eof();								// check for garbage
-		juryOut << "OK" << AC;
+		teamOut << "OK" << AC;
 	} else {
 		Integer ans = fromTeam.integer();			// get team answer
 		fromTeam.newline();
-		if (2*ans != n) juryOut << "wrong answer" << WA;
+		if (2*ans != n) {
+			juryOut << "should be 2*n" << std::endl;// a message only the jury can see 
+			teamOut << "wrong answer" << WA;		// a message that the team (if enabled for samples) and jury can see
+		}
 		fromTeam.eof();
-		juryOut << "OK" << AC;
+		teamOut << "OK" << AC;
 	}
 }

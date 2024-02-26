@@ -3,7 +3,7 @@
 //============================================================================//
 // This header can be used to validate graph problems.                        //
 //============================================================================//
-//version 1.0.0                                                               //
+//version 1.1.1                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -63,8 +63,8 @@ namespace details {
 		void addEdge_(Integer a, Integer b) {
 			if (a == b) selfloop = a;
 
-			if (adj[a - offset].count(b - offset) > 0) multiedge = {a, b};
-			adj[a - offset].insert(b - offset);
+			if (adj[a - offset].count(b) > 0) multiedge = {a, b};
+			adj[a - offset].insert(b);
 
 			edges++;
 		}
@@ -93,7 +93,7 @@ namespace details {
 		}
 
 		bool hasEdge(Integer a, Integer b) const {
-			return adj[a - offset].count(b - offset) > 0;
+			return adj[a - offset].count(b) > 0;
 		}
 	};
 }
@@ -117,9 +117,9 @@ public:
 
 	void addEdge(Integer a, Integer b) {
 		addEdge_(a, b);
-		a -= offset;
 		b -= offset;
 		adj[b].insert(a);
+		a -= offset;
 
 		if (uf.unionSets(a, b)) components--;
 		else forest = false;
@@ -138,6 +138,7 @@ public:
 	bool isForest() const {return forest;}
 	bool isTree() const {return components <= 1 and forest;}
 	bool isBipartite() const {return bipartite;}
+	bool areConnected(Integer a, Integer b) {return uf.connected(a - offset, b - offset);}
 };
 
 class DiGraph final : private details::BaseGraph  {
@@ -158,20 +159,20 @@ public:
 
 	void addEdge(Integer a, Integer b) {
 		addEdge_(a, b);
-		a -= offset;
 		b -= offset;
 		if (rev[b].empty()) rootCount--;
 		rev[b].insert(a);
+		a -= offset;
 		if (!uf.unionSets(a, b)) root = nodeCount();
 		while (root < nodeCount() and !rev[root].empty()) root++;
 	}
 
 	const std::set<Integer>& inEdges(Integer id) const & {
-		return rev[id];
+		return rev[id - offset];
 	}
 
 	const std::set<Integer>&& inEdges(Integer id) const && {
-		return std::move(rev[id]);
+		return std::move(rev[id - offset]);
 	}
 
 	Integer outDegree(Integer id) const {
@@ -183,7 +184,7 @@ public:
 	}
 
 	bool hasReverse(Integer a, Integer b) const {
-		return rev[a - offset].count(b - offset) > 0;
+		return rev[a - offset].count(b) > 0;
 	}
 
 	std::optional<std::vector<Integer>> isDAG() const {
@@ -197,6 +198,7 @@ public:
 			order.push_back(todo.back());
 			todo.pop_back();
 			for (Integer y : adj[order.back()]) {
+				y -= offset;
 				deg[y]--;
 				if (deg[y] == 0) todo.push_back(y);
 			}

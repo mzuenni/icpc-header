@@ -292,6 +292,24 @@ void checkUniform(const F& f, Integer iterations, Integer different, const std::
 
 void checkRandom() {
 	for (Integer i = 0; i < 100000; i++) {
+		Integer x = Random::integer(-5, 15);
+		assert(x >= -5 && x < 15);
+	}
+	{
+		Real min = 0.5;
+		Real max = 0.5;
+		Real sum = 0;
+		for (Integer i = 0; i < 2000000; i++) {
+			Real x = Random::real();
+			min = std::min(min, x);
+			max = std::max(max, x);
+			sum += x;
+		}
+		assert(min >= 0.0l);
+		assert(max < 1.0l);
+		assert(std::abs(0.5l - sum / 2000000.0l) < 0.0001l);
+	}
+	for (Integer i = 0; i < 100000; i++) {
 		std::string tmp(LOWER);
 		Random::shuffle(tmp);
 		assert(isPerm(LOWER, tmp));
@@ -331,7 +349,7 @@ void checkRandom() {
 	std::string test = "test";
 	checkUniform<std::string>([&](){return Random::shuffle(test), test;}, 1'000'000, 12);
 	checkUniform<std::vector<Integer>>([](){return Random::perm(4);}, 1'000'000, 24);
-	checkUniform<std::vector<Integer>>([](){return Random::perm({4});}, 1'000'000, 6);
+	checkUniform<std::vector<Integer>>([](){return Random::perm(std::vector<Integer>{4});}, 1'000'000, 6);
 	checkUniform<std::vector<Integer>>([](){return Random::perm({3,1});}, 1'000'000, 8);
 	checkUniform<std::vector<Integer>>([](){return Random::perm({2,2});}, 1'000'000, 3);
 	checkUniform<std::vector<Integer>>([](){return Random::perm({2,1,1});}, 1'000'000, 6);
@@ -342,7 +360,7 @@ void checkRandom() {
 
 	Random::seed(123456789u);
 	//this sequence may change but all compilers should generate the same sequence!
-	std::vector<Integer> expected = {26331273, 13851376, 28760602, 68400187, 48500008, 15205832, 32867368};
+	std::vector<Integer> expected = {43070660, 32948942, 16870018, 3525658, 107275727, 43315498, 8778520};
 	assert(expected == Random::multiple(expected.size(), 123, 123456789));
 }
 
@@ -382,7 +400,7 @@ void checkCommandParser() {
 void checkInputStream() {
 	assertNoException([](){
 		std::istringstream rawIn("Das   ist 1 test\n");
-		InputStream in(rawIn, true, true, FAIL);
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, FAIL);
 
 		in.expectString("Das");
 		in.space();
@@ -398,7 +416,7 @@ void checkInputStream() {
 	});
 	assertNoException([](){
 		std::istringstream rawIn("Das   ist 1 test\n");
-		InputStream in(rawIn, false, true, FAIL);
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, FAIL);
 
 		in.expectString("Das");
 		in.space();
@@ -414,43 +432,43 @@ void checkInputStream() {
 	});
 	assertNoException([](){
 		std::istringstream rawIn("123");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.expectInt(123);
 	});
 	assertNoException([](){
 		std::istringstream rawIn("Das");
-		InputStream in(rawIn, true, false, Verdict(23));
+		InputStream in(rawIn, true, false, ValidateBase::juryOut, Verdict(23));
 		in.expectString("das");
 	});
 	assertNoException([](){
 		std::istringstream rawIn("Das  das");
-		InputStream in(rawIn, false, true, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
 		in.expectString("Das");
 		in.space();
 		in.expectString("das");
 	});
 	assertNoException([](){
 		std::istringstream rawIn("Das\ndas");
-		InputStream in(rawIn, false, true, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
 		in.expectString("Das");
 		in.space();
 		in.expectString("das");
 	});
 	assertNoException([](){
 		std::istringstream rawIn("Das das");
-		InputStream in(rawIn, false, true, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
 		in.expectString("Das");
 		in.expectString("das");
 	});
 	assertNoException([](){
 		std::istringstream rawIn("Das  das");
-		InputStream in(rawIn, false, true, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
 		in.expectString("Das");
 		in.expectString("das");
 	});
 	assertNoException([](){
 		std::istringstream rawIn("Das das");
-		InputStream in(rawIn, false, true, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
 		in.expectString("Das");
 		in.space();
 		in.space();
@@ -458,90 +476,90 @@ void checkInputStream() {
 	});
 	assertNoException([](){
 		std::istringstream rawIn("\n");
-		InputStream in(rawIn, false, true, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
 		in.eof();
 	});
 	assertNoException([](){
 		std::istringstream rawIn("das");
-		InputStream in(rawIn, false, true, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
 		in.space();
 		in.expectString("das");
 	});
 	assertNoException([](){
 		std::istringstream rawIn("1.5");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.real();
 	});
 	assertNoException([](){
 		std::istringstream rawIn("0.00000000000000000000001");
-		InputStream in(rawIn, false, true, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
 		in.real();
 	});
 	assertNoException([](){
 		std::istringstream rawIn("9223372036854775807");
-		InputStream in(rawIn, false, true, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
 		in.integer();
 	});
 
 	assertExit([](){
 		std::istringstream rawIn("Das");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.expectString("das");
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn;
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.expectString("das");
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("das\n");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.expectString("das");
 		in.eof();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("0123");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.integer();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("0x123");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.integer();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("1.0");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.integer();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("1.5");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.integer();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("1-1");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.integer();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("+123");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.expectInt(123);
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("123");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.integer(0, 123);
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("9223372036854775808");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.integer();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("Das  ist");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 
 		in.string();
 		in.space();
@@ -549,7 +567,7 @@ void checkInputStream() {
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("Das ist");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 
 		in.string();
 		in.space();
@@ -558,32 +576,32 @@ void checkInputStream() {
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("\n");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.eof();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn(" ");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.eof();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("x");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.eof();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("0.123456");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.realStrict(-10, 10, 0, 3);
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("00.1");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.real();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("+0.1");
-		InputStream in(rawIn, true, true, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
 		in.real();
 	}, 23);
 }
