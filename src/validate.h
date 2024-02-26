@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-// version 2.3.2                                                              //
+// version 2.4.1                                                              //
 // https://github.com/mzuenni/icpc-header                                     //
 //============================================================================//
 
@@ -129,11 +129,13 @@ constexpr std::string_view FLOAT_ABSOLUTE_TOLERANCE     = "float_absolute_tolera
 constexpr std::string_view FLOAT_RELATIVE_TOLERANCE     = "float_relative_tolerance";
 constexpr std::string_view FLOAT_TOLERANCE              = "float_tolerance";
 constexpr std::string_view JUDGE_MESSAGE                = "judgemessage.txt";
+constexpr std::string_view TEAM_MESSAGE                 = "teammessage.txt";
 constexpr char DEFAULT_SEPARATOR                        = SPACE;
 constexpr std::string_view EMPTY_COMMAND                = "";
 constexpr std::string_view COMMAND_PREFIX               = "--";
 constexpr std::string_view CONSTRAINT_COMMAND           = "--constraints_file";
 constexpr std::string_view SEED_COMMAND                 = "--seed";
+constexpr std::string_view TEXT_ELLIPSIS                = "[...]";
 constexpr auto REGEX_OPTIONS                            = std::regex::nosubs | std::regex::optimize;
 inline const std::regex INTEGER_REGEX("0|-?[1-9][0-9]*", REGEX_OPTIONS);
 inline const std::regex REAL_REGEX("-?(0|([1-9][0-9]*))(\\.[0-9]*)?([eE][+-]?(0|([1-9][0-9]*)))?", REGEX_OPTIONS);
@@ -462,6 +464,21 @@ void append(C1& c1, const typename C1::value_type(&c2)[N]) {
 	for (auto&& e : c2) c1.emplace(c1.end(), e);
 }
 
+template<typename CR>
+auto asFunction(CR&& c) {
+	if constexpr(std::is_rvalue_reference_v<CR&&>) {
+		return [c](auto&& x){return c[std::forward<decltype(x)>(x)];};
+	} else {
+		return [&c](auto&& x){return c[std::forward<decltype(x)>(x)];};
+	}
+}
+
+template<typename T>
+auto asFunction(std::initializer_list<T> c_) {
+	std::vector<T> c(c_);
+	return [c](auto&& x){return c[std::forward<decltype(x)>(x)];};
+}
+
 struct shorter {
 	template<typename U, typename V>
 	bool operator()(const U& a, const V& b) const {
@@ -756,15 +773,33 @@ constexpr boolean<char> isConsonant(std::string_view s) {
 
 std::vector<Integer> thueMorse(Integer lower, Integer upper) {
 	judgeAssert<std::invalid_argument>(lower < upper, "thueMorse(): Lower must be less than upper!");
+	judgeAssert<std::invalid_argument>(lower >= 0, "thueMorse(): Lower must be non negative!");
 	std::vector<Integer> res(upper - lower);
-	for (Integer i = lower; i < upper; i++) {
-		res[i] = std::bitset<64>(i).count() % 2;
+	for (std::size_t i = 0; i < res.size(); i++) {
+		res[i] = std::bitset<std::numeric_limits<UInteger>::digits>(i + static_cast<UInteger>(lower)).count() % 2;
 	}
 	return res;
 }
 
 std::vector<Integer> thueMorse(Integer upper) {
 	return thueMorse(0, upper);
+}
+
+std::vector<Integer> range(Integer from, Integer to, Integer step = 1) {
+	judgeAssert<std::domain_error>(step != 0, "range(): step must not be zero!");
+	if (step > 0 and to <= from) return {};
+	if (step < 0 and from <= to) return {};
+	UInteger n = static_cast<UInteger>(to) - static_cast<UInteger>(from);
+	if (step < 0) n = -n;
+	std::vector<Integer> res(1 + (n - 1) / std::abs(step), from);
+	for (std::size_t i = 1; i < res.size(); i++) {
+		res[i] = res[i - 1] + step;
+	}
+	return res;
+}
+
+std::vector<Integer> range(Integer upper) {
+	return range(0, upper);
 }
 
 // allow using std::pair and std::complex similiar
@@ -868,6 +903,7 @@ namespace details {
 	}
 
 	constexpr bool isToken(std::string_view a) {
+		if (a.empty()) return false;
 		for (char c : a) {
 			if (c == ' ') return false;
 			if (c == '\n') return false;
@@ -898,9 +934,27 @@ namespace details {
 		}
 	}
 	#endif
+	template<>
+	bool parse(std::string_view s, std::string& res) {
+		res = s;
+		return true;
+	}
 
 }
 
+boolean<Integer> isInteger(const std::string& s) {
+	if (!std::regex_match(s, INTEGER_REGEX)) return boolean<Integer>(false);
+	Integer value = 0;
+	if (!details::parse<Integer>(s, value)) return boolean<Integer>(false);
+	return boolean<Integer>(true, value);
+}
+
+boolean<Real> isReal(const std::string& s) {
+	if (!std::regex_match(s, REAL_REGEX)) return boolean<Real>(false);
+	Real value = 0;
+	if (!details::parse<Real>(s, value)) return boolean<Real>(false);
+	return boolean<Real>(true, value);
+}
 
 //============================================================================//
 // Math                                                                       //
@@ -995,10 +1049,11 @@ constexpr bool isPrime(Integer n) {
 			return n == p;
 		}
 	}
-	if (details::powMod(details::TRIAL_PRIMES.back() + 1, n - 1, n) != 1) {
+	UInteger un = static_cast<UInteger>(n);
+	static_assert(details::TRIAL_PRIMES.size() > 0);
+	if (details::powMod(details::TRIAL_PRIMES.back() + 1, un - 1, un) != 1) {
 		return false;
 	}
-	UInteger un = static_cast<UInteger>(n);
 	UInteger d = un - 1;
 	UInteger j = 0;
 	while (d % 2 == 0) {
@@ -1091,7 +1146,7 @@ namespace details {
 
 template<typename RandomIt>
 constexpr bool areConvex(RandomIt first, RandomIt last) {
-	std::size_t n = 0;
+	Integer n = 0;
 	for (auto it = first; it != last; it++) {
 		n++;
 		judgeAssert(std::abs(getX(*it)) <= 0x3FFF'FFFF, "areConvex(): coordinates too large!");
@@ -1099,7 +1154,7 @@ constexpr bool areConvex(RandomIt first, RandomIt last) {
 	}
 	if (n < 3) return false;
 	bool hasArea = false;
-	for (std::size_t i = 0; i < n; i++) {
+	for (Integer i = 0; i < n; i++) {
 		if (first[i] == first[(i+1) % n]) return false;
 		if (details::cross(first[0], first[i], first[(i+1) % n]) < 0) return false;
 		if (details::cross(first[i], first[(i+1) % n], first[(i+2) % n]) < 0) return false;
@@ -1115,8 +1170,8 @@ constexpr bool areConvex(const C& c) {
 template<typename RandomIt>
 constexpr bool areStrictlyConvex(RandomIt first, RandomIt last) {
 	if (!areConvex(first, last)) return false;
-	std::size_t n = std::distance(first, last);
-	for (std::size_t i = 0; i < n; i++) {
+	Integer n = std::distance(first, last);
+	for (Integer i = 0; i < n; i++) {
 		if (details::cross(first[i], first[(i+1) % n], first[(i+2) % n]) == 0) return false;
 	}
 	return true;
@@ -1150,6 +1205,15 @@ namespace Random {
 			x |= x >> 16;
 			x |= x >> 32;
 			return x;
+		}
+
+		template<Integer... Is>
+		constexpr std::array<Integer, sizeof...(Is)> prefixSum() {
+			std::array<Integer, sizeof...(Is)> res{Is...};
+			//std::partial_sum(res.begin(), res.end(), res.begin());
+			Integer sum = 0;
+			for (Integer& x : res) sum = x += sum;
+			return res;
 		}
 	}
 
@@ -1206,6 +1270,13 @@ namespace Random {
 			Real res = lower * (1.0_real - x) + upper * x;
 			if (lower <= res and res < upper) return res;
 		}
+	}
+
+	template<Integer I, Integer... Is>
+	Integer discrete() {
+		static_assert(((I >= 0) && ... && (Is >= 0)));
+		static constexpr std::array<Integer, 1 + sizeof...(Is)> is = details::prefixSum<I, Is...>();
+		return std::distance(is.begin(), std::upper_bound(is.begin(), is.end(), Random::integer(is.back())));
 	}
 
 	Real normal(Real mean, Real stddev) {// theoretically in (-inf, inf)
@@ -1388,7 +1459,7 @@ namespace Random {
 	}
 
 	template<typename C>
-	typename C::reference select(C& c) {
+	typename std::iterator_traits<typename C::iterator>::reference select(C& c) {
 		return select(std::begin(c), std::end(c));
 	}
 
@@ -1454,7 +1525,7 @@ namespace Random {
 	// sequences                                                              //
 	//========================================================================//
 	std::vector<Integer> distinct(Integer count, Integer lower, Integer upper) {
-		judgeAssert<std::invalid_argument>(count >= 0, "Random::distinct(): Count must be non negative!");
+		judgeAssert<std::invalid_argument>(count >= 0, "Random::distinct(): count must be non negative!");
 		judgeAssert<std::invalid_argument>(lower + count <= upper, "Random::distinct(): upper - lower must be at least count!");
 		std::map<Integer, Integer> used;
 		std::vector<Integer> res;
@@ -1474,7 +1545,10 @@ namespace Random {
 	}
 
 	std::vector<Integer> perm(Integer count, Integer offset = 0) {
-		return distinct(count, offset, offset+count);
+		judgeAssert<std::invalid_argument>(count >= 0, "Random::perm(): count must be non negative!");
+		std::vector<Integer> res = range(offset, offset + count);
+		shuffle(res);
+		return res;
 	}
 
 	std::vector<Integer> perm(const std::vector<Integer>& cycles, Integer offset = 0) {
@@ -1491,8 +1565,21 @@ namespace Random {
 		return res;
 	}
 
-	std::vector<Integer> perm(std::initializer_list<Integer> cycles, Integer offset = 0) {
-		return perm(std::vector<Integer>(cycles), offset);
+	std::vector<Integer> perm(Integer count, const std::vector<Integer>& fix, Integer offset = 0) {
+		judgeAssert<std::invalid_argument>(count >= 0, "Random::perm(): count must be non negative!");
+		std::vector<Integer> tmp = range(count);
+		std::vector<Integer> res(count, -1);
+		for (Integer x : fix) {
+			judgeAssert<std::invalid_argument>(offset <= x and x < offset + count, "Random::perm(): fix point outside of permutation!");
+			std::swap(tmp[x - offset], res[x - offset]);
+		}
+		shuffle(tmp);
+		std::size_t i = 0;
+		for (Integer& x : res) {
+			for (; x < 0; i++) x = tmp[i];
+			x += offset;
+		}
+		return res;
 	}
 
 	std::vector<Integer> multiple(Integer count, Integer lower, Integer upper) {
@@ -1555,6 +1642,14 @@ namespace Random {
 		return res;
 	}
 
+	std::string string(Integer n, std::string_view alphabet = LOWER) {
+		judgeAssert<std::invalid_argument>(0 <= n and n <= 0xFFFF'FFFF, "Random::string(): n out of range!");
+		judgeAssert<std::invalid_argument>(!alphabet.empty(), "Random::string(): alphabet must not be empty!");
+		std::string res(n, '*');
+		for (char& c : res) c = select(alphabet);
+		return res;
+	}
+
 	std::string bracketSequence(Integer n, char open = '(', char close = ')') {//proper bracket sequence of length 2*n
 		judgeAssert<std::invalid_argument>(0 <= n and n <= 0x7FFF'FFFF, "Random::bracketSequence(): n out of range!");
 		std::string res(2 * n, open);
@@ -1596,7 +1691,7 @@ namespace Random {
 			if (itX != x.begin()) shuffle(y.begin(), itY);
 
 			std::vector<Point> dirs(n);
-			for (Integer i = 0; i < n; i++) {
+			for (std::size_t i = 0; i < dirs.size(); i++) {
 				dirs[i] = {x[i], y[i]};
 			}
 			::details::cyclicSort(dirs);
@@ -1629,7 +1724,7 @@ namespace Random {
 		Integer p = prime(dim - 1, 2*dim + 2);
 		Integer rotA = 0;
 		Integer rotB = 0;
-		while (rotA == 0 && rotB == 0) {
+		while (rotA == 0 and rotB == 0) {
 			rotA = integer(0, p);
 			rotB = integer(0, p);
 		}
@@ -1726,6 +1821,27 @@ class Command final : private ParamaterBase {
 	const std::vector<std::string>& raw;
 	const Integer first, count;
 	const bool found;
+
+	template<typename T, std::size_t... IS >
+	auto asTuple(std::index_sequence<IS...> /**/) const {
+		return std::make_tuple(parse<T>(raw[first + IS])...);
+	}
+
+	template<typename T, Integer N>
+	auto as() const {
+		if constexpr (N < 0) {
+			std::vector<T> res;
+			std::transform(raw.begin() + first,
+			               raw.begin() + first + count,
+			               std::back_inserter(res), [this](const std::string& value) {
+				return parse<T>(value);
+			});
+			return res;
+		} else {
+			judgeAssert<std::invalid_argument>(N <= count, "Command: Could not parse args (too few args)");
+			return asTuple<T>(std::make_index_sequence<static_cast<UInteger>(N)>{});
+		}
+	}
 public:
 	explicit Command(const std::vector<std::string>& raw_) : raw(raw_), first(0), count(0), found(false) {}
 	explicit Command(const std::vector<std::string>& raw_, Integer first_, Integer count_)
@@ -1755,34 +1871,19 @@ public:
 	using ParamaterBase::asInteger;
 	using ParamaterBase::asReal;
 
-	std::vector<std::string> asStrings() const {
-		std::vector<std::string> res;
-		std::transform(raw.begin() + first,
-		               raw.begin() + first + count,
-		               std::back_inserter(res), [](const std::string& value) {
-			return std::string(value);
-		});
-		return res;
+	template<Integer N = -1>
+	auto asStrings() const {
+		return as<std::string, N>();
 	}
 
-	std::vector<Integer> asIntegers() const {
-		std::vector<Integer> res;
-		std::transform(raw.begin() + first,
-		               raw.begin() + first + count,
-		               std::back_inserter(res), [this](const std::string& value) {
-			return parse<Integer>(value);
-		});
-		return res;
+	template<Integer N = -1>
+	auto asIntegers() const {
+		return as<Integer, N>();
 	}
 
-	std::vector<Real> asReals() const {
-		std::vector<Real> res;
-		std::transform(raw.begin() + first,
-		               raw.begin() + first + count,
-		               std::back_inserter(res), [this](const std::string& value) {
-			return parse<Real>(value);
-		});
-		return res;
+	template<Integer N = -1>
+	auto asReals() const {
+		return as<Real, N>();
 	}
 
 };
@@ -1971,10 +2072,12 @@ public:
 		os << std::noboolalpha;
 		os << std::fixed;
 		os << std::setprecision(DEFAULT_PRECISION);
-		for (const auto& [name, id] : byName) {
-			const Constraint& c = *(constraints[id]);
+		std::vector<std::string_view> names(byName.size());
+		for (const auto& [name, id] : byName) names[id] = name;
+		for (std::size_t i = 0; i < names.size(); i++) {
+			const Constraint& c = *(constraints[i]);
 			if (c.type) {
-				os << "LocationNotSupported:" << name << " " << name << " ";
+				os << "LocationNotSupported:" << names[i] << " " << names[i] << " ";
 				if (c.bound.index() == 1) os << std::get<1>(c.bound);
 				if (c.bound.index() == 2) os << std::get<2>(c.bound);
 				os << std::endl;
@@ -2165,9 +2268,9 @@ public:
 	std::vector<std::string> strings(Args... args, Integer count, char separator) {
 		auto sepCall = checkSeparator(separator);
 		std::vector<std::string> res(count);
-		for (Integer i = 0; i < count; i++) {
+		for (std::size_t i = 0; i < res.size(); i++) {
 			res[i] = string(args...);
-			if (i + 1 < count) sepCall();
+			if (i + 1 < res.size()) sepCall();
 		}
 		return res;
 	}
@@ -2224,9 +2327,9 @@ public:
 	std::vector<Integer> integers(Args... args, Integer count, char separator) {
 		auto sepCall = checkSeparator(separator);
 		std::vector<Integer> res(count);
-		for (Integer i = 0; i < count; i++) {
+		for (std::size_t i = 0; i < res.size(); i++) {
 			res[i] = integer(args...);
-			if (i + 1 < count) sepCall();
+			if (i + 1 < res.size()) sepCall();
 		}
 		return res;
 	}
@@ -2272,9 +2375,9 @@ public:
 	std::vector<Real> reals(Args... args, Integer count, char separator) {
 		auto sepCall = checkSeparator(separator);
 		std::vector<Real> res(count);
-		for (Integer i = 0; i < count; i++) {
+		for (std::size_t i = 0; i < res.size(); i++) {
 			res[i] = real(args...);
-			if (i + 1 < count) sepCall();
+			if (i + 1 < res.size()) sepCall();
 		}
 		return res;
 	}
@@ -2326,9 +2429,9 @@ public:
 	std::vector<Real> realsStrict(Args... args, Integer count, char separator) {
 		auto sepCall = checkSeparator(separator);
 		std::vector<Real> res(count);
-		for (Integer i = 0; i < count; i++) {
+		for (std::size_t i = 0; i < res.size(); i++) {
 			res[i] = realStrict(args...);
-			if (i + 1 < count) sepCall();
+			if (i + 1 < res.size()) sepCall();
 		}
 		return res;
 	}
@@ -2348,10 +2451,24 @@ public:
 		std::string seen = string();
 		auto [eq, pos] = details::stringEqual(seen, expected, caseSensitive);
 		if (!eq) {
-			if (seen.size() > 80) {
-				seen = seen.substr(0, 75) + "[...]";
-			}
-			ValidateBase::juryOut << "Expected \"" << expected << "\" but got \"" << seen << "\"!";
+			auto format = [&pos](std::string_view s){
+				Integer PREFIX = 10;
+				Integer WINDOW = 5;
+				if (s.size() <= PREFIX + WINDOW + TEXT_ELLIPSIS.size() * 2) {
+					ValidateBase::juryOut << s;
+				} else if (*pos <= PREFIX + TEXT_ELLIPSIS.size() + WINDOW / 2 or *pos >= s.size()) {
+					ValidateBase::juryOut << s.substr(0, PREFIX + TEXT_ELLIPSIS.size() + WINDOW) << TEXT_ELLIPSIS;
+				} else if (*pos + TEXT_ELLIPSIS.size() + WINDOW / 2 > s.size()) {
+					ValidateBase::juryOut << s.substr(0, PREFIX) << TEXT_ELLIPSIS << s.substr(*pos - WINDOW / 2);
+				} else {
+					ValidateBase::juryOut << s.substr(0, PREFIX) << TEXT_ELLIPSIS << s.substr(*pos - WINDOW / 2, WINDOW) << TEXT_ELLIPSIS;
+				}
+			};
+			ValidateBase::juryOut << "Expected \"";
+			format(expected);
+			ValidateBase::juryOut << "\" but got \"";
+			format(seen);
+			ValidateBase::juryOut << "\"!";
 			if (pos and *pos > 5) {
 				ValidateBase::juryOut << " (different at position: " << *pos+1 << ")";
 			}
@@ -2421,14 +2538,14 @@ private:
 					}
 				}
 				if (r > 60 and l > 20) {
-					Integer offset = std::min(l - 20, r - 60);
+					std::size_t offset = std::min(l - 20, r - 60);
 					l -= offset;
 					r -= offset;
-					buffer = "[...]" + buffer.substr(offset + 5);
+					buffer = std::string(TEXT_ELLIPSIS) + buffer.substr(offset + TEXT_ELLIPSIS.size());
 				}
 				if (buffer.size() > 80) {
-					buffer = buffer.substr(0, 75);
-					buffer += "[...]";
+					buffer = buffer.substr(0, 80 - TEXT_ELLIPSIS.size());
+					buffer += TEXT_ELLIPSIS;
 					r = std::min(r, buffer.size());
 				}
 				ValidateBase::juryOut << buffer << '\n';
@@ -2492,14 +2609,14 @@ public:
 template<typename T>
 class Setting final : public SettingBase<T> {
 public:
-	Setting(T value) : SettingBase<T>(value) {}
+	Setting(T value_) : SettingBase<T>(value_) {}
 	using SettingBase<T>::operator T;
 	using SettingBase<T>::operator=;
 };
 
 class SettingCaseSensitive final : public SettingBase<bool> {
 public:
-	SettingCaseSensitive(bool value) : SettingBase<bool>(value) {}
+	SettingCaseSensitive(bool value_) : SettingBase<bool>(value_) {}
 	using SettingBase<bool>::operator bool;
 	using SettingBase<bool>::operator=;
 
@@ -2557,7 +2674,7 @@ namespace ValidateBase {
 			//cin.tie(nullptr);
 
 			arguments = CommandParser(argc, argv);
-			if (auto seed = arguments[SEED_COMMAND]) Random::seed(seed.asInteger());
+			if (auto seed = arguments[SEED_COMMAND]) Random::seed(static_cast<UInteger>(seed.asInteger()));
 			// parse default flags manually, since they dont use '--' prefix
 			auto eps = arguments.getRaw(FLOAT_TOLERANCE);
 			floatAbsTol = eps.asReal(floatAbsTol);
@@ -2613,10 +2730,12 @@ namespace OutputValidator {
 	InputStream testIn;
 	InputStream juryAns;
 	InputStream teamAns;
+	OutputStream teamOut;
 
 	void init(int argc, char** argv) {
 		ValidateBase::details::init(argc, argv);
 		juryOut = OutputStream(std::filesystem::path(arguments[3]) / JUDGE_MESSAGE);
+		teamOut = OutputStream(std::filesystem::path(arguments[3]) / TEAM_MESSAGE);
 
 		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, FAIL);
 		juryAns = InputStream(std::filesystem::path(arguments[2]), false, caseSensitive, FAIL);
@@ -2633,10 +2752,12 @@ namespace Interactor {
 	OutputStream toTeam;
 	InputStream testIn;
 	InputStream fromTeam;
+	OutputStream teamOut;
 
 	void init(int argc, char** argv) {
 		ValidateBase::details::init(argc, argv);
 		juryOut = OutputStream(std::filesystem::path(arguments[3]) / JUDGE_MESSAGE);
+		teamOut = OutputStream(std::filesystem::path(arguments[3]) / TEAM_MESSAGE);
 		toTeam = OutputStream(std::cout);
 
 		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, FAIL);

@@ -203,6 +203,16 @@ void checkUtility() {
 	assert(areNonDecreasing(DIGITS));
 	assert(areIncreasing(DIGITS));
 	assert(areDistinct(DIGITS));
+	assert(range(5) == std::vector<Integer>{0, 1, 2, 3, 4});
+	assert(range(0, 1) == std::vector<Integer>{0});
+	assert(range(-3, -3) == std::vector<Integer>{});
+	assert(range(0, -1) == std::vector<Integer>{});
+	assert(range(1, 3, 2) == std::vector<Integer>{1});
+	assert(range(1, 4, 2) == std::vector<Integer>{1, 3});
+	assert(range(1, -1, -2) == std::vector<Integer>{1});
+	assert(range(1, -2, -2) == std::vector<Integer>{1, -1});
+	assert(range(0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFF_int, 5) == std::vector<Integer>{0x7FFF'FFFF'FFFF'FFFE_int});
+	assert(range(-0x7FFF'FFFF'FFFF'FFFE_int, -0x7FFF'FFFF'FFFF'FFFF_int, -5) == std::vector<Integer>{-0x7FFF'FFFF'FFFF'FFFE_int});
 }
 
 void checkFloat() {
@@ -307,6 +317,8 @@ void checkRandom() {
 	}
 
 	for (Integer i = 0; i < 10000; i++) assert(isPerm(Random::perm(13)));
+	for (Integer i = 0; i < 10000; i++) assert(isPerm(Random::perm(Random::partition(13, 3))));
+	for (Integer i = 0; i < 10000; i++) assert(isPerm(Random::perm(13, Random::distinct(3, 13))));
 	for (Integer i = 0; i < 10000; i++) assert(areIncreasing(Random::increasing(13, 100)));
 	for (Integer i = 0; i < 10000; i++) assert(areDecreasing(Random::decreasing(13, 100)));
 	for (Integer i = 0; i < 10000; i++) assert(areNonDecreasing(Random::nonDecreasing(13, 100)));

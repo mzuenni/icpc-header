@@ -76,6 +76,7 @@ Use this namespace if you want to write an output validator which gets called as
 #### Member
 **`OutputStream juryOut`**  
 **`OutputStream juryErr`**  
+**`OutputStream teamOut`**  
 **`CommandParser arguments`**  
 **`Setting<Real> floatAbsTol`**  
 **`Setting<Real> floatRelTol`**  
@@ -119,6 +120,7 @@ Use this namespace if you want to write an output validator for interactive prob
 #### Member
 **`OutputStream juryOut`**  
 **`OutputStream juryErr`**  
+**`OutputStream teamOut`**  
 **`CommandParser arguments`**  
 **`Setting<Real> floatAbsTol`**  
 **`Setting<Real> floatRelTol`**  
@@ -214,8 +216,11 @@ If the command does not exists or has no parameter it will instead return the `d
 >Note: If `defaultValue` should be returned but was not provided an error will be thrown.
 
 **`std::vector<std::string> asStrings() const`**  
+**`std::tuple<std::string...> asStrings<N>() const`**  
 **`std::vector<Integer> asIntegers() const`**  
+**`std::tuple<Integer...> asIntegers<N>() const`**  
 **`std::vector<Real> asReals() const`**  
+**`std::tuple<Real...> asReals<N>() const`**  
 Return all parameters of this command.
 
 **`Paramater operator[](Integer i) const`**  
@@ -335,6 +340,9 @@ Returns a uniformally distributed integer in [-2^63, 2^63), [0, upper) or [lower
 **`Real real(Real lower, Real upper)`**  
 Returns a uniformally distributed real in [0, 1), [0, upper) or [lower, upper).
 
+**`Integer discrete<w_1,...,w_k>()`**  
+Return an integer in [0,k), where i is choosen with probability w_i/(sum over w).
+
 **`Real normal(Real mean, Real stddev)`**  
 **`Real normal(Real lower, Real upper, Real mean, Real stddev)`**  
 **`Real exponential(Real lambda)`**  
@@ -367,9 +375,14 @@ Generates a permutation of the numbers [0, count) respectively [offset, offset+c
 Each possible output has the same probability to get generated.
 
 **`std::vector<Integer> perm(std::vector<Integer> cycles)`**  
-**`std::vector<Integer> perm(std::vector<Integer> cycles)`**  
+**`std::vector<Integer> perm(std::vector<Integer> cycles, Integer offset)`**  
 Generates a permutation of the numbers [0, sum{cycles}) respectively [offset, offset+sum{cycles}).
 The cycle lengths of the generates permutations will be the values in `cycles`.
+Each possible output has the same probability to get generated.
+
+**`std::vector<Integer> perm(Integer count, std::vector<Integer> fix)`**  
+**`std::vector<Integer> perm(Integer count, std::vector<Integer> fix, Integer offset)`**  
+Generates a permutation of the numbers [0, count) respectively [offset, offset+count) where each i in `fix` is a fixpoint.
 Each possible output has the same probability to get generated.
 
 **`std::vector<Integer> multiple(Integer count, Integer lower, Integer upper)`**  
@@ -391,6 +404,10 @@ Each possible output has the same probability to get generated.
 **`std::vector<Integer> partition(Integer n, Integer k, Integer min)`**  
 Uniformally generates an unsorted partition of `n` into `k` integers in [1, n) or [min, n).
 Note that with non positive `min` the distribution is not uniform.
+
+**`std::string string(Integer n)`**  
+**`std::string string(Integer n, string_view alphabet)`**  
+Uniformally generates a string of length n with chars from the given alphabet or a-z if no alphabet is given.
 
 **`std::string bracketSequence(Integer n)`**  
 Uniformally generates a bracket sequence of length 2n.
@@ -555,9 +572,26 @@ Converts a `char` or `std::string` to the given case.
 **`std::vector<Integer> thueMorse(Integer lower, Integer upper)`**  
 Generates the Thue-Morse sequence [0, upper) respectively [lower, upper).
 
+
+**`std::vector<Integer> range(Integer to)`**  
+**`std::vector<Integer> range(Integer from, Integer to)`**  
+**`std::vector<Integer> range(Integer from, Integer to, Integer step)`**  
+Generates the integers `res[i]=from+i*step` for all non negative `i` where `res[i]<to` (or `res[i]>to` if `step<0`).
+
+**`std::vector<Integer> range(Integer to)`**  
+**`std::vector<Integer> range(Integer from, Integer to)`**  
+**`std::vector<Integer> range(Integer from, Integer to, Integer step)`**  
+Generates the integers `res[i]=from+i*step` for all non negative `i` where `res[i]<to` (or `res[i]>to` if `step<0`).
+
+**`boolean<Integer> isInteger(std::string s)`**  
+Checks if the given string can be parsed as Integer. If yes that Integer is also provided.
+
+**`boolean<Real> isReal(std::string s)`**  
+Checks if the given string can be parsed as Real. If yes that Real is also provided.
+
 ## class ConstraintsLogger 
 An instance of this class is provided for input and output validators as `constraint` after calling `init(argc, argv).
 #### Methods
-**`Constraint& operator[](const std::string& name)`**  
+**`Constraint& operator[](std::string name)`**  
 Returns a `constraint` which can be given to an input stream to automatically log informations about the parsed input.
 See [BAPCtools](https://github.com/RagnarGrootKoerkamp/BAPCtools/blob/master/doc/implementation_notes.md#constraints-checking).
