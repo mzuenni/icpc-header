@@ -1266,7 +1266,7 @@ namespace Random {
 		do {
 			x = details::randomNumberGenerator();
 			//count trailing (or leading) zeroes in x
-			exponent -= std::bitset<64>(~x & (x-1)).count();
+			exponent -= static_cast<int>(std::bitset<64>(~x & (x-1)).count());
 		} while (x == 0);
 		return std::ldexp(mantissa, exponent);
 	}
@@ -1427,7 +1427,7 @@ namespace Random {
 		} else {// such large n seem unlikely
 			UInteger ul = static_cast<UInteger>(lower);
 			UInteger uu = static_cast<UInteger>(upper);
-			UInteger res = (uu - ul) * std::exp2(std::log2(real()) / n);
+			UInteger res = static_cast<UInteger>((uu - ul) * std::exp2(std::log2(real()) / n));
 			return std::min(upper - 1, static_cast<Integer>(res + ul));
 		}
 	}
