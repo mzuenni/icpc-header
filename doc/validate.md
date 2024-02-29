@@ -401,6 +401,10 @@ Generates a number according to some distribution. The generated integer will al
 **`Integer minimum(Integer lower, Integer upper, Integer n)`** 
 Random variable distributed like the maximum/minimum of `n` uniform integers in [0, upper) or [lower, upper).
 
+**`Integer minmax(Integer upper, Integer n)`**  
+**`Integer minmax(Integer lower, Integer upper, Integer n)`** 
+If `n` > 0 this calls maximum, for `n` < 0 this calls minimum, `n` == 0 is undefined.
+
 **`Integer prime(Integer upper)`**  
 **`Integer prime(Integer lower, Integer upper)`** 
 Generates a unirformally choosen prime in the [0, upper) or [lower, upper).

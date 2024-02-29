@@ -1442,6 +1442,18 @@ namespace Random {
 		return minimum(0, upper, n);
 	}
 
+	Integer minmax(Integer lower, Integer upper, Integer n) {// in [lower, upper)
+		judgeAssert<std::invalid_argument>(n != 0, "Random::minmax(): n musst not be zero!");
+		if (n > 0) {
+			return minimum(lower, upper, n);
+		} else {
+			return minimum(lower, upper, -n);
+		}
+	}
+	Integer minmax(Integer upper, Integer n) {
+		return minmax(0, upper, n);
+	}
+
 	Integer prime(Integer lower, Integer upper) {// in [lower, upper)
 		judgeAssert<std::invalid_argument>(lower < upper, "Random::prime(): Lower must be less than upper!");
 		Integer sampleL = lower <= 2 ? 0 : (lower / 2);
