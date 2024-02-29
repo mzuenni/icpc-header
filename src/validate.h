@@ -1424,7 +1424,7 @@ namespace Random {
 			Integer res = lower;
 			for (Integer i = 0; i < n; i++) res = std::max(res, integer(lower, upper));
 			return res;
-		} else {// such large n seem unlikely
+		} else {
 			UInteger ul = static_cast<UInteger>(lower);
 			UInteger uu = static_cast<UInteger>(upper);
 			UInteger res = static_cast<UInteger>((uu - ul) * std::exp2(std::log2(real()) / n));
