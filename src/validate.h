@@ -136,6 +136,7 @@ constexpr std::string_view COMMAND_PREFIX               = "--";
 constexpr std::string_view CONSTRAINT_COMMAND           = "--constraints_file";
 constexpr std::string_view SEED_COMMAND                 = "--seed";
 constexpr std::string_view TEXT_ELLIPSIS                = "[...]";
+constexpr auto OUT_MODE                                 = std::ios::out | std::ios::ate;
 constexpr auto REGEX_OPTIONS                            = std::regex::nosubs | std::regex::optimize;
 inline const std::regex INTEGER_REGEX("0|-?[1-9][0-9]*", REGEX_OPTIONS);
 inline const std::regex REAL_REGEX("-?(0|([1-9][0-9]*))(\\.[0-9]*)?([eE][+-]?(0|([1-9][0-9]*)))?", REGEX_OPTIONS);
@@ -251,7 +252,7 @@ class OutputStream final {
 public:
 	OutputStream() : os(&details::nullStream) {}
 	OutputStream(std::ostream& os_) : os(&os_) {init();}
-	explicit OutputStream(const std::filesystem::path& path) : managed(std::make_unique<std::ofstream>(path)), os(managed.get()) {
+	explicit OutputStream(const std::filesystem::path& path) : managed(std::make_unique<std::ofstream>(path, OUT_MODE)), os(managed.get()) {
 		judgeAssert<std::runtime_error>(os->good(), "OutputStream(): Could not open File: " + path.string());
 		init();
 	}
