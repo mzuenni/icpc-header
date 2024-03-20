@@ -1,5 +1,5 @@
 # validate.h
-A simple library to validate team input, and generate random data.
+A simple library to validate team input, team output, and generate random data.
 
 
 ## Global Constants
@@ -7,7 +7,7 @@ A simple library to validate team input, and generate random data.
 **`UInteger = std::uint64_t`**  
 **`Real = long double`**  
 
-> Note: The header defines the literal `_int` and `_real`.
+> Note: The header defines the literal suffix `_int` and `_real`.
 
 **`constexpr Verdict AC(42)`**  
 **`constexpr Verdict WA(43)`**  
@@ -20,7 +20,7 @@ A simple library to validate team input, and generate random data.
 **`constexpr std::string_view VOWEL("aeiouAEIOU")`**  
 **`constexpr std::string_view LOWER_VOWELS("aeiou")`**  
 **`constexpr std::string_view UPPER_VOWELS("AEIOU")`**  
-**`constexpr std::string_view CONSONANT("b..zB..z")`**  
+**`constexpr std::string_view CONSONANT("b..zB..Z")`**  
 **`constexpr std::string_view LOWER_CONSONANT("b..z")`**  
 **`constexpr std::string_view UPPER_CONSONANT("B..Z")`**  
 **`constexpr std::string_view ALPHA_NUMERIC("0..9a..zA..Z")`**  
