@@ -130,13 +130,13 @@ constexpr std::string_view FLOAT_RELATIVE_TOLERANCE     = "float_relative_tolera
 constexpr std::string_view FLOAT_TOLERANCE              = "float_tolerance";
 constexpr std::string_view JUDGE_MESSAGE                = "judgemessage.txt";
 constexpr std::string_view TEAM_MESSAGE                 = "teammessage.txt";
+constexpr std::ios_base::openmode MESSAGE_MODE          = std::ios::out | std::ios::ate;
 constexpr char DEFAULT_SEPARATOR                        = SPACE;
 constexpr std::string_view EMPTY_COMMAND                = "";
 constexpr std::string_view COMMAND_PREFIX               = "--";
 constexpr std::string_view CONSTRAINT_COMMAND           = "--constraints_file";
 constexpr std::string_view SEED_COMMAND                 = "--seed";
 constexpr std::string_view TEXT_ELLIPSIS                = "[...]";
-constexpr auto OUT_MODE                                 = std::ios::out | std::ios::ate;
 constexpr auto REGEX_OPTIONS                            = std::regex::nosubs | std::regex::optimize;
 inline const std::regex INTEGER_REGEX("0|-?[1-9][0-9]*", REGEX_OPTIONS);
 inline const std::regex REAL_REGEX("-?(0|([1-9][0-9]*))(\\.[0-9]*)?([eE][+-]?(0|([1-9][0-9]*)))?", REGEX_OPTIONS);
@@ -252,7 +252,7 @@ class OutputStream final {
 public:
 	OutputStream() : os(&details::nullStream) {}
 	OutputStream(std::ostream& os_) : os(&os_) {init();}
-	explicit OutputStream(const std::filesystem::path& path) : managed(std::make_unique<std::ofstream>(path, OUT_MODE)), os(managed.get()) {
+	explicit OutputStream(const std::filesystem::path& path, std::ios_base::openmode mode) : managed(std::make_unique<std::ofstream>(path, mode)), os(managed.get()) {
 		judgeAssert<std::runtime_error>(os->good(), "OutputStream(): Could not open File: " + path.string());
 		init();
 	}
@@ -2791,8 +2791,8 @@ namespace OutputValidator {
 
 	void init(int argc, char** argv) {
 		ValidateBase::details::init(argc, argv);
-		juryOut = OutputStream(std::filesystem::path(arguments[3]) / JUDGE_MESSAGE);
-		teamOut = OutputStream(std::filesystem::path(arguments[3]) / TEAM_MESSAGE);
+		juryOut = OutputStream(std::filesystem::path(arguments[3]) / JUDGE_MESSAGE, MESSAGE_MODE);
+		teamOut = OutputStream(std::filesystem::path(arguments[3]) / TEAM_MESSAGE, MESSAGE_MODE);
 
 		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, juryOut, FAIL);
 		juryAns = InputStream(std::filesystem::path(arguments[2]), false, caseSensitive, juryOut, FAIL);
@@ -2813,8 +2813,8 @@ namespace Interactor {
 
 	void init(int argc, char** argv) {
 		ValidateBase::details::init(argc, argv);
-		juryOut = OutputStream(std::filesystem::path(arguments[3]) / JUDGE_MESSAGE);
-		teamOut = OutputStream(std::filesystem::path(arguments[3]) / TEAM_MESSAGE);
+		juryOut = OutputStream(std::filesystem::path(arguments[3]) / JUDGE_MESSAGE, MESSAGE_MODE);
+		teamOut = OutputStream(std::filesystem::path(arguments[3]) / TEAM_MESSAGE, MESSAGE_MODE);
 		toTeam = OutputStream(std::cout);
 
 		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, juryOut, FAIL);
@@ -2822,6 +2822,11 @@ namespace Interactor {
 	}
 
 } // namespace Interactor
+
+//reserved
+namespace Multipass {
+
+} // namespace
 
 //called as ./generator [arguments]
 namespace Generator {
