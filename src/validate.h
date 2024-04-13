@@ -2823,10 +2823,55 @@ namespace Interactor {
 
 } // namespace Interactor
 
-//reserved
+//for called see OutputValidator or Interactor respectively
 namespace Multipass {
+	using namespace ValidateBase;
 
-} // namespace
+	namespace details {
+		std::ostringstream nextpassBuffer;
+	}
+	Integer pass;
+	InputStream prevstate;
+	OutputStream nextstate;
+	OutputStream nextpass;
+
+	void init(int argc, char** argv) {
+		judgeAssert(false, "Multipass problems are not specified yet!");
+		auto path = std::filesystem::path(arguments[3]) / ".pass";
+		std::string nextfile = ".state0";
+		std::string prevfile = ".state1";
+		if (std::filesystem::exists(path)) {
+			std::ifstream in(path);
+			in >> pass;
+			pass++;
+			if ((pass & 1) != 0) {
+				std::swap(nextfile, prevfile);
+			}
+			prevstate = InputStream(std::filesystem::path(arguments[3]) / prevfile, false, false, juryOut, FAIL);
+		} else {
+			pass = 0;
+		}
+		std::filesystem::remove(std::filesystem::path(arguments[3]) / nextfile);
+		nextstate = OutputStream(std::filesystem::path(arguments[3]) / nextfile, std::ios::out);
+		nextpass = OutputStream(details::nextpassBuffer);
+		std::ofstream out(path);
+		out << pass;
+	}
+
+	[[noreturn]] void NEXT() {
+		{
+			std::ofstream file("nextpass.in");
+			judgeAssert<std::runtime_error>(file.good(), "NEXT(): Could not open file: nextpass.in");
+			file << details::nextpassBuffer.rdbuf();
+		}
+		exitVerdict(AC);
+	}
+	[[noreturn]] std::ostream& NEXT(std::ostream& os) {
+		os << std::endl;
+		NEXT();
+	}
+
+} // namespace Multipass
 
 //called as ./generator [arguments]
 namespace Generator {

@@ -200,6 +200,22 @@ If `caseSensitive` is not provided the global setting `caseSensitive` gets used 
 If the strings are not equal the position of the first mismatch is returned as a whitness.
 
 
+## namespace Multipass
+Additionally use this namespace if you want to write a Multipass output validator (for interactive problems).
+The namespace already provides functionallity to get the id of the current pass and save state between passes.
+
+#### Member
+**`Integer pass`**  
+**`InputStream prevstate`**  
+**`OutputStream nextstate`**  
+**`OutputStream nextpass`**  
+
+#### Methods
+**`void NEXT()`**  
+**`std::ostream& NEXT(std::ostream& os)`**  
+Use this like a verdict to write the `nextpass.in` and end the current run
+
+
 ## namespace Generator
 Use this namespace if you want to write an generator for testcases which gets called as `./generator [arguments]`.
 
