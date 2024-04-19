@@ -2836,7 +2836,6 @@ namespace Multipass {
 	OutputStream nextpass;
 
 	void init(int argc, char** argv) {
-		judgeAssert(false, "Multipass problems are not specified yet!");
 		auto path = std::filesystem::path(arguments[3]) / ".pass";
 		std::string nextfile = ".state0";
 		std::string prevfile = ".state1";
@@ -2860,9 +2859,9 @@ namespace Multipass {
 
 	[[noreturn]] void NEXT() {
 		{
-			std::ofstream file("nextpass.in");
+			std::ofstream file(std::filesystem::path(arguments[3]) / "nextpass.in");
 			judgeAssert<std::runtime_error>(file.good(), "NEXT(): Could not open file: nextpass.in");
-			file << details::nextpassBuffer.rdbuf();
+			file << details::nextpassBuffer.str();
 		}
 		exitVerdict(AC);
 	}
