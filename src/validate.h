@@ -2835,7 +2835,9 @@ namespace Multipass {
 	OutputStream nextstate;
 	OutputStream nextpass;
 
-	void init(int argc, char** argv) {
+	void init() {
+		judgeAssert<std::logic_error>(::details::initialized(), "validate.h: Multipass::init() was called before init(argc, argv)!");
+
 		auto path = std::filesystem::path(arguments[3]) / ".pass";
 		std::string nextfile = ".state0";
 		std::string prevfile = ".state1";

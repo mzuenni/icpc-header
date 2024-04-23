@@ -6,7 +6,7 @@
 
 int main(int argc, char **argv) {
 	Interactor::init(argc, argv);					// initialize streams, rng and parse arguments
-	Multipass::init(argc, argv);
+	Multipass::init();
 	using namespace Interactor;
 	using namespace Multipass;
 
