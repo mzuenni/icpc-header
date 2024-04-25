@@ -1446,7 +1446,7 @@ namespace Random {
 	Integer minmax(Integer lower, Integer upper, Integer n) {// in [lower, upper)
 		judgeAssert<std::invalid_argument>(n != 0, "Random::minmax(): n musst not be zero!");
 		if (n > 0) {
-			return minimum(lower, upper, n);
+			return maximum(lower, upper, n);
 		} else {
 			return minimum(lower, upper, -n);
 		}
