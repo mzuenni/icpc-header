@@ -11,7 +11,7 @@
 // This header requires validate.h zo to generate random graphs in a          //
 // deterministic and reproducable fashion.                                    //
 //============================================================================//
-//version 1.0.9                                                               //
+//version 1.0.10                                                              //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -838,7 +838,7 @@ GraphDetail::GraphType<E, DIR> randomTree(Integer n) {
 		for (Integer& x : code) x = Random::integer(n);
 		return pruefer<E>(code);
 	} else {
-		Graph<E> tmp = randomTree<NoData, false>(n);
+		Graph<NoData> tmp = randomTree<NoData, false>(n);
 		DiGraph<E> res(n);
 		auto dfs = [&tmp, &res](auto&& self, Integer cur, Integer pref) -> void {
 			for (auto edge : tmp[cur]) {
