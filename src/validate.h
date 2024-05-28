@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-// version 2.5.0                                                              //
+// version 2.6.0                                                              //
 // https://github.com/mzuenni/icpc-header                                     //
 //============================================================================//
 
@@ -192,30 +192,32 @@ namespace details {
 //============================================================================//
 // Verdicts                                                                   //
 //============================================================================//
-struct Verdict final {
-	int exitCode;
+namespace Verdicts {
+	struct Verdict final {
+		int exitCode;
 
-	constexpr explicit Verdict(int exitCode_ = 1) : exitCode(exitCode_) {}
+		constexpr explicit Verdict(int exitCode_ = 1) : exitCode(exitCode_) {}
 
-	constexpr operator int() const {
-		return exitCode;
-	}
+		constexpr operator int() const {
+			return exitCode;
+		}
 
-	[[noreturn]] void exit() const {
-		exitVerdict(exitCode);
-	}
+		[[noreturn]] void exit() const {
+			exitVerdict(exitCode);
+		}
 
-	friend void operator<<(std::ostream& os, const Verdict& v) {
-		os << std::endl;
-		v.exit();
-	}
-};
+		friend void operator<<(std::ostream& os, const Verdict& v) {
+			os << std::endl;
+			v.exit();
+		}
+	};
 
-// default verdicts (we do not support scoring)
-constexpr Verdict AC(42);
-constexpr Verdict WA(43);
-constexpr Verdict PE = WA;
-constexpr Verdict FAIL(1);
+	// default verdicts (we do not support scoring)
+	constexpr Verdict AC(42);
+	constexpr Verdict WA(43);
+	constexpr Verdict PE = WA;
+	constexpr Verdict FAIL(1);
+}
 
 
 //============================================================================//
@@ -1125,6 +1127,18 @@ constexpr Integer sign(T x) {
 //============================================================================//
 namespace details {
 	template<typename Point>
+	constexpr Integer dot(Point a, Point b) {
+		return getX(a) * getX(b) + getY(a) * getY(b);
+	}
+	template<typename Point>
+	constexpr Integer dot(Point p, Point a, Point b) {
+		getX(a) -= getX(p);
+		getY(a) -= getY(p);
+		getX(b) -= getX(p);
+		getY(b) -= getY(p);
+		return dot(a, b);
+	}
+	template<typename Point>
 	constexpr Integer cross(Point a, Point b) {
 		return getX(a) * getY(b) - getY(a) * getX(b);
 	}
@@ -1152,7 +1166,7 @@ namespace details {
 
 template<typename RandomIt>
 constexpr bool areConvex(RandomIt first, RandomIt last) {
-	Integer n = 0;
+	std::size_t n = 0;
 	for (auto it = first; it != last; it++) {
 		n++;
 		judgeAssert(std::abs(getX(*it)) <= 0x3FFF'FFFF, "areConvex(): coordinates too large!");
@@ -1160,7 +1174,7 @@ constexpr bool areConvex(RandomIt first, RandomIt last) {
 	}
 	if (n < 3) return false;
 	bool hasArea = false;
-	for (Integer i = 0; i < n; i++) {
+	for (std::size_t i = 0; i < n; i++) {
 		if (first[i] == first[(i+1) % n]) return false;
 		if (details::cross(first[0], first[i], first[(i+1) % n]) < 0) return false;
 		if (details::cross(first[i], first[(i+1) % n], first[(i+2) % n]) < 0) return false;
@@ -2128,7 +2142,7 @@ class InputStream final {
 	std::istream* in;
 	bool spaceSensitive, caseSensitive;
 	OutputStream* out;
-	Verdict onFail;
+	Verdicts::Verdict onFail;
 	Real floatAbsTol;
 	Real floatRelTol;
 
@@ -2147,7 +2161,7 @@ public:
 	                     bool spaceSensitive_,
 	                     bool caseSensitive_,
 	                     OutputStream& out_,
-	                     Verdict onFail_,
+	                     Verdicts::Verdict onFail_,
 	                     Real floatAbsTol_ = DEFAULT_EPS,
 	                     Real floatRelTol_ = DEFAULT_EPS) :
 	                     managed(std::make_unique<std::ifstream>(path)),
@@ -2165,7 +2179,7 @@ public:
 	                     bool spaceSensitive_,
 	                     bool caseSensitive_,
 	                     OutputStream& out_,
-	                     Verdict onFail_,
+	                     Verdicts::Verdict onFail_,
 	                     Real floatAbsTol_ = DEFAULT_EPS,
 	                     Real floatRelTol_ = DEFAULT_EPS) :
 	                     managed(),
@@ -2741,6 +2755,7 @@ namespace ConstraintsBase {
 namespace InputValidator {
 	using namespace ValidateBase;
 	using namespace ConstraintsBase;
+	using namespace Verdicts;
 
 	InputStream testIn;
 
@@ -2751,7 +2766,7 @@ namespace InputValidator {
 		ValidateBase::details::init(argc, argv);
 		juryOut = OutputStream(std::cout);
 
-		testIn = InputStream(std::cin, spaceSensitive, caseSensitive, juryOut, WA, floatAbsTol, floatRelTol);
+		testIn = InputStream(std::cin, spaceSensitive, caseSensitive, juryOut, Verdicts::WA, floatAbsTol, floatRelTol);
 		initConstraints();
 	}
 
@@ -2761,6 +2776,7 @@ namespace InputValidator {
 namespace AnswerValidator {
 	using namespace ValidateBase;
 	using namespace ConstraintsBase;
+	using namespace Verdicts;
 
 	InputStream testIn;
 	InputStream ans;
@@ -2772,8 +2788,8 @@ namespace AnswerValidator {
 		ValidateBase::details::init(argc, argv);
 		juryOut = OutputStream(std::cout);
 
-		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, juryOut, FAIL);
-		ans = InputStream(std::cin, spaceSensitive, caseSensitive, juryOut, WA);
+		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, juryOut, Verdicts::FAIL);
+		ans = InputStream(std::cin, spaceSensitive, caseSensitive, juryOut, Verdicts::WA);
 		initConstraints();
 	}
 
@@ -2783,6 +2799,7 @@ namespace AnswerValidator {
 namespace OutputValidator {
 	using namespace ValidateBase;
 	using namespace ConstraintsBase;
+	using namespace Verdicts;
 
 	InputStream testIn;
 	InputStream juryAns;
@@ -2794,9 +2811,9 @@ namespace OutputValidator {
 		juryOut = OutputStream(std::filesystem::path(arguments[3]) / JUDGE_MESSAGE, MESSAGE_MODE);
 		teamOut = OutputStream(std::filesystem::path(arguments[3]) / TEAM_MESSAGE, MESSAGE_MODE);
 
-		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, juryOut, FAIL);
-		juryAns = InputStream(std::filesystem::path(arguments[2]), false, caseSensitive, juryOut, FAIL);
-		teamAns = InputStream(std::cin, spaceSensitive, caseSensitive, teamOut, WA);
+		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, juryOut, Verdicts::FAIL);
+		juryAns = InputStream(std::filesystem::path(arguments[2]), false, caseSensitive, juryOut, Verdicts::FAIL);
+		teamAns = InputStream(std::cin, spaceSensitive, caseSensitive, teamOut, Verdicts::WA);
 		initConstraints();
 	}
 
@@ -2805,6 +2822,7 @@ namespace OutputValidator {
 //called as ./interactor input judgeanswer feedbackdir <> teamoutput
 namespace Interactor {
 	using namespace ValidateBase;
+	using namespace Verdicts;
 
 	OutputStream toTeam;
 	InputStream testIn;
@@ -2817,8 +2835,8 @@ namespace Interactor {
 		teamOut = OutputStream(std::filesystem::path(arguments[3]) / TEAM_MESSAGE, MESSAGE_MODE);
 		toTeam = OutputStream(std::cout);
 
-		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, juryOut, FAIL);
-		fromTeam = InputStream(std::cin, spaceSensitive, caseSensitive, teamOut, WA);
+		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, juryOut, Verdicts::FAIL);
+		fromTeam = InputStream(std::cin, spaceSensitive, caseSensitive, teamOut, Verdicts::WA);
 	}
 
 } // namespace Interactor
@@ -2848,7 +2866,7 @@ namespace Multipass {
 			if ((pass & 1) != 0) {
 				std::swap(nextfile, prevfile);
 			}
-			prevstate = InputStream(std::filesystem::path(arguments[3]) / prevfile, false, false, juryOut, FAIL);
+			prevstate = InputStream(std::filesystem::path(arguments[3]) / prevfile, false, false, juryOut, Verdicts::FAIL);
 		} else {
 			pass = 0;
 		}
@@ -2865,7 +2883,7 @@ namespace Multipass {
 			judgeAssert<std::runtime_error>(file.good(), "NEXT(): Could not open file: nextpass.in");
 			file << details::nextpassBuffer.str();
 		}
-		exitVerdict(AC);
+		exitVerdict(Verdicts::AC);
 	}
 	[[noreturn]] std::ostream& NEXT(std::ostream& os) {
 		os << std::endl;

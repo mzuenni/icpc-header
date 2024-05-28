@@ -2,17 +2,20 @@
 A simple library to validate team input, team output, and generate random data.
 
 
-## Global Constants
+## Global Types
 **`Integer = std::int64_t`**  
 **`UInteger = std::uint64_t`**  
 **`Real = long double`**  
 
 > Note: The header defines the literal suffix `_int` and `_real`.
 
+## Global Constants
 **`constexpr Verdict AC(42)`**  
 **`constexpr Verdict WA(43)`**  
 **`constexpr Verdict PE(43)`**  
 **`constexpr Verdict FAIL(1)`**  
+
+> Note: The Verdicts are only included for validators not for generators.
 
 **`constexpr std::string_view LETTER("a..zA..Z")`**  
 **`constexpr std::string_view LOWER("a..z")`**  

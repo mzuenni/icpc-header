@@ -175,6 +175,7 @@ void checkStrings() {
 }
 
 void checkVerdict() {
+	using namespace Verdicts;
 	assert(WA.exitCode != AC.exitCode);
 	assert(PE.exitCode != AC.exitCode);
 	assert(FAIL.exitCode != AC.exitCode);
@@ -400,7 +401,7 @@ void checkCommandParser() {
 void checkInputStream() {
 	assertNoException([](){
 		std::istringstream rawIn("Das   ist 1 test\n");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, FAIL);
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::FAIL);
 
 		in.expectString("Das");
 		in.space();
@@ -416,7 +417,7 @@ void checkInputStream() {
 	});
 	assertNoException([](){
 		std::istringstream rawIn("Das   ist 1 test\n");
-		InputStream in(rawIn, false, true, ValidateBase::juryOut, FAIL);
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdicts::FAIL);
 
 		in.expectString("Das");
 		in.space();
@@ -432,43 +433,43 @@ void checkInputStream() {
 	});
 	assertNoException([](){
 		std::istringstream rawIn("123");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.expectInt(123);
 	});
 	assertNoException([](){
 		std::istringstream rawIn("Das");
-		InputStream in(rawIn, true, false, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, false, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.expectString("das");
 	});
 	assertNoException([](){
 		std::istringstream rawIn("Das  das");
-		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.expectString("Das");
 		in.space();
 		in.expectString("das");
 	});
 	assertNoException([](){
 		std::istringstream rawIn("Das\ndas");
-		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.expectString("Das");
 		in.space();
 		in.expectString("das");
 	});
 	assertNoException([](){
 		std::istringstream rawIn("Das das");
-		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.expectString("Das");
 		in.expectString("das");
 	});
 	assertNoException([](){
 		std::istringstream rawIn("Das  das");
-		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.expectString("Das");
 		in.expectString("das");
 	});
 	assertNoException([](){
 		std::istringstream rawIn("Das das");
-		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.expectString("Das");
 		in.space();
 		in.space();
@@ -476,90 +477,90 @@ void checkInputStream() {
 	});
 	assertNoException([](){
 		std::istringstream rawIn("\n");
-		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.eof();
 	});
 	assertNoException([](){
 		std::istringstream rawIn("das");
-		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.space();
 		in.expectString("das");
 	});
 	assertNoException([](){
 		std::istringstream rawIn("1.5");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.real();
 	});
 	assertNoException([](){
 		std::istringstream rawIn("0.00000000000000000000001");
-		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.real();
 	});
 	assertNoException([](){
 		std::istringstream rawIn("9223372036854775807");
-		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.integer();
 	});
 
 	assertExit([](){
 		std::istringstream rawIn("Das");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.expectString("das");
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn;
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.expectString("das");
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("das\n");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.expectString("das");
 		in.eof();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("0123");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.integer();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("0x123");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.integer();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("1.0");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.integer();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("1.5");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.integer();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("1-1");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.integer();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("+123");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.expectInt(123);
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("123");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.integer(0, 123);
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("9223372036854775808");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.integer();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("Das  ist");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 
 		in.string();
 		in.space();
@@ -567,7 +568,7 @@ void checkInputStream() {
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("Das ist");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 
 		in.string();
 		in.space();
@@ -576,32 +577,32 @@ void checkInputStream() {
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("\n");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.eof();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn(" ");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.eof();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("x");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.eof();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("0.123456");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.realStrict(-10, 10, 0, 3);
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("00.1");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.real();
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("+0.1");
-		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdict(23));
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.real();
 	}, 23);
 }
