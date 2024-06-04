@@ -11,7 +11,7 @@
 // This header requires validate.h zo to generate random graphs in a          //
 // deterministic and reproducable fashion.                                    //
 //============================================================================//
-//version 1.0.10                                                              //
+//version 1.0.11                                                              //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -903,7 +903,11 @@ Graph<E> randomGraph(const std::vector<Integer>& degree, Integer averageFlips = 
 	Graph<E> res(std::ssize(degree));
 	// havel hakimi in O(m*log(n))
 	std::priority_queue<std::pair<Integer, Integer>> pq;
-	for (Integer i = 0; i < std::ssize(degree); i++) pq.emplace(degree[i], i);
+	for (Integer i = 0; i < std::ssize(degree); i++) {
+		if (degree[i] > 0) {
+			pq.emplace(degree[i], i);
+		}
+	}
 	while (!pq.empty()) {
 		auto [d, c] = pq.top();
 		pq.pop();
