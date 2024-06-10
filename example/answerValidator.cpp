@@ -3,10 +3,10 @@
 //============================================================================//
 
 #include "../src/validate.h"
+using namespace AnswerValidator;						// we are writing an answer validator
 
 int main(int argc, char **argv) {
 	AnswerValidator::init(argc, argv);					// initialize streams, rng and parse arguments
-	using namespace AnswerValidator;
 
 	Integer t = testIn.integer();						// read the number of testcases
 

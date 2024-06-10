@@ -654,6 +654,24 @@ Checks if the given string can be parsed as Integer. If yes that Integer is also
 **`boolean<Real> isReal(std::string s)`**  
 Checks if the given string can be parsed as Real. If yes that Real is also provided.
 
+## Geometry functions
+**`constexpr bool isConvex(RandomIt first, RandomIt last)`**  
+**`constexpr bool isConvex(const C& c)`**  
+Checks if the points form a convex polygon.
+
+**`constexpr bool isStrictlyConvex(RandomIt first, RandomIt last)`**  
+**`constexpr bool isStrictlyConvex(const C& c)`**  
+Checks if the points form a convex polygon without 3 collinear points.
+
+**`constexpr bool isSimple(RandomIt first, RandomIt last)`**  
+**`constexpr bool isSimple(const C& c)`**  
+Checks if the points form a simple polygon.
+
+**`constexpr bool isCCW(RandomIt first, RandomIt last)`**  
+**`constexpr bool isCCW(const C& c)`**  
+Checks if the points are orientatet counterclockwise (this is only well defined for simple polygons).
+
+
 ## class ConstraintsLogger 
 An instance of this class is provided for input and output validators as `constraint` after calling `init(argc, argv).
 #### Methods

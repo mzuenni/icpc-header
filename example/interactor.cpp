@@ -3,10 +3,10 @@
 //============================================================================//
 
 #include "../src/validate.h"
+using namespace Interactor;							// we are writing an interactor
 
 int main(int argc, char **argv) {
 	Interactor::init(argc, argv);					// initialize streams, rng and parse arguments
-	using namespace Interactor;
 
 	Integer n = testIn.integer();					// get the testdata
 	toTeam << n << std::endl;						// print to team

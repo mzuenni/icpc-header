@@ -6,10 +6,10 @@
 // need to correctly validate the whitespaces!
 
 #include "../src/validate.h"
+using namespace OutputValidator;						// we are writing an output validator
 
 int main(int argc, char **argv) {
 	OutputValidator::init(argc, argv);					// initialize streams, rng and parse arguments
-	using namespace OutputValidator;
 
 	if (stringEqual(juryAns.string(), "impossible")) {	// check if the test has an answer
 		teamAns.expectString("impossible");				// check if the participant found no answer either

@@ -6,6 +6,7 @@
 // need to correctly validate the whitespaces!
 
 #include "../src/validate.h"
+using namespace OutputValidator;						// we are writing an output validator
 
 bool verify(Integer n) {
 	return n == 6;
@@ -13,7 +14,6 @@ bool verify(Integer n) {
 
 int main(int argc, char **argv) {
 	OutputValidator::init(argc, argv);					// initialize streams, rng and parse arguments
-	using namespace OutputValidator;
 
 	std::regex options = caseSensitive.regex("Yes|No");	// regex to check possible answers
 	std::string j = juryAns.string(options);			// read jury answer

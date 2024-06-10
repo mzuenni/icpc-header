@@ -7,10 +7,10 @@
 //#define DOUBLE_FALLBACK
 
 #include "../src/validate.h"
+using namespace InputValidator;					// we are writing an input validator
 
 int main(int argc, char **argv) {
 	InputValidator::init(argc, argv);			// initialize streams, rng and parse arguments
-	using namespace InputValidator;
 
 	std::string token;
 

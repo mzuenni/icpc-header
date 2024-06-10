@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-// version 2.6.0                                                              //
+// version 2.6.1                                                              //
 // https://github.com/mzuenni/icpc-header                                     //
 //============================================================================//
 
@@ -344,7 +344,7 @@ namespace details {
 			writer.callable(os);
 			return os;
 		}
-		
+
 		friend std::ostream& operator<<(std::ostream& os, const TempWriter<C>& writer) = delete; //use OutputStream
 	};
 
@@ -808,31 +808,34 @@ std::vector<Integer> range(Integer upper) {
 
 // allow using std::pair and std::complex similiar
 // (may be useful for geometric problem)
-template<typename T>
+
+// for std::pair, std::tuple, std::array, ...
+template<typename T, typename std::enable_if_t<details::IsTupleLike<T>{}, bool> = true>
 constexpr auto& getX(T& point) {
 	return std::get<0>(point);
 }
-template<typename T>
+template<typename T, typename std::enable_if_t<details::IsTupleLike<T>{}, bool> = true>
 constexpr auto& getY(T& point) {
 	return std::get<1>(point);
 }
-template<typename T>
+template<typename T, typename std::enable_if_t<details::IsTupleLike<T>{}, bool> = true>
 constexpr auto& getZ(T& point) {
 	return std::get<2>(point);
 }
-template<typename T>
+template<typename T, typename std::enable_if_t<details::IsTupleLike<T>{}, bool> = true>
 constexpr auto getX(const T& point) {
 	return std::get<0>(point);
 }
-template<typename T>
+template<typename T, typename std::enable_if_t<details::IsTupleLike<T>{}, bool> = true>
 constexpr auto getY(const T& point) {
 	return std::get<1>(point);
 }
-template<typename T>
+template<typename T, typename std::enable_if_t<details::IsTupleLike<T>{}, bool> = true>
 constexpr auto getZ(const T& point) {
 	return std::get<2>(point);
 }
 
+// for std::complex
 template<typename T>
 constexpr auto& getX(std::complex<T>& point) {
 	return reinterpret_cast<T(&)[2]>(point)[0];
@@ -850,6 +853,33 @@ constexpr auto getY(const std::complex<T>& point) {
 	return reinterpret_cast<const T(&)[2]>(point)[1];
 }
 
+// fallback
+template<typename T, typename std::enable_if_t<!details::IsTupleLike<T>{}, bool> = true>
+constexpr auto& getX(T& point) {
+	return point.x;
+}
+template<typename T, typename std::enable_if_t<!details::IsTupleLike<T>{}, bool> = true>
+constexpr auto& getY(T& point) {
+	return point.y;
+}
+template<typename T, typename std::enable_if_t<!details::IsTupleLike<T>{}, bool> = true>
+constexpr auto& getZ(T& point) {
+	return point.z;
+}
+template<typename T, typename std::enable_if_t<!details::IsTupleLike<T>{}, bool> = true>
+constexpr auto getX(const T& point) {
+	return point.x;
+}
+template<typename T, typename std::enable_if_t<!details::IsTupleLike<T>{}, bool> = true>
+constexpr auto getY(const T& point) {
+	return point.y;
+}
+template<typename T, typename std::enable_if_t<!details::IsTupleLike<T>{}, bool> = true>
+constexpr auto getZ(const T& point) {
+	return point.z;
+}
+
+// convert std::complex and std::pair
 template<typename T>
 constexpr std::pair<T,T> convert(const std::complex<T>& t) {
 	return {getX(t), getY(t)};
@@ -1125,34 +1155,27 @@ constexpr Integer sign(T x) {
 //============================================================================//
 // Geometry (this is just for utility stuff...)                               //
 //============================================================================//
+template<typename Point>
+constexpr auto dot(const Point& a, const Point& b) {
+	return getX(a) * getX(b) + getY(a) * getY(b);
+}
+
+template<typename Point>
+constexpr auto cross(const Point& a, const Point& b) {
+	return getX(a) * getY(b) - getY(a) * getX(b);
+}
+template<typename Point>
+constexpr auto cross(const Point& p, Point a, Point b) {
+	getX(a) -= getX(p);
+	getY(a) -= getY(p);
+	getX(b) -= getX(p);
+	getY(b) -= getY(p);
+	return cross(a, b);
+}
+
 namespace details {
 	template<typename Point>
-	constexpr Integer dot(Point a, Point b) {
-		return getX(a) * getX(b) + getY(a) * getY(b);
-	}
-	template<typename Point>
-	constexpr Integer dot(Point p, Point a, Point b) {
-		getX(a) -= getX(p);
-		getY(a) -= getY(p);
-		getX(b) -= getX(p);
-		getY(b) -= getY(p);
-		return dot(a, b);
-	}
-	template<typename Point>
-	constexpr Integer cross(Point a, Point b) {
-		return getX(a) * getY(b) - getY(a) * getX(b);
-	}
-	template<typename Point>
-	constexpr Integer cross(Point p, Point a, Point b) {
-		getX(a) -= getX(p);
-		getY(a) -= getY(p);
-		getX(b) -= getX(p);
-		getY(b) -= getY(p);
-		return cross(a, b);
-	}
-
-	template<typename Point>
-	constexpr bool left(Point p) {
+	constexpr bool left(const Point& p) {
 		return getX(p) == 0 ? getY(p) < 0 : getX(p) < 0;
 	}
 
@@ -1162,44 +1185,131 @@ namespace details {
 			return left(a) != left(b) ? left(a) > left(b) : cross(a, b) > 0;
 		});
 	}
+
+	template<typename RandomIt>
+	constexpr std::size_t assertBounds(RandomIt first, RandomIt last) {
+		std::size_t n = 0;
+		for (auto it = first; it != last; it++, n++) {
+			judgeAssert(std::abs(getX(*it)) <= 0x3FFF'FFFF, "assertBounds(): coordinates too large!");
+			judgeAssert(std::abs(getY(*it)) <= 0x3FFF'FFFF, "assertBounds(): coordinates too large!");
+		}
+		return n;
+	}
 }
 
 template<typename RandomIt>
-constexpr bool areConvex(RandomIt first, RandomIt last) {
-	std::size_t n = 0;
-	for (auto it = first; it != last; it++) {
-		n++;
-		judgeAssert(std::abs(getX(*it)) <= 0x3FFF'FFFF, "areConvex(): coordinates too large!");
-		judgeAssert(std::abs(getY(*it)) <= 0x3FFF'FFFF, "areConvex(): coordinates too large!");
-	}
+constexpr bool isConvex(RandomIt first, RandomIt last) {
+	std::size_t n = details::assertBounds(first, last);
 	if (n < 3) return false;
 	bool hasArea = false;
 	for (std::size_t i = 0; i < n; i++) {
 		if (first[i] == first[(i+1) % n]) return false;
-		if (details::cross(first[0], first[i], first[(i+1) % n]) < 0) return false;
-		if (details::cross(first[i], first[(i+1) % n], first[(i+2) % n]) < 0) return false;
-		hasArea |= details::cross(first[i], first[(i+1) % n], first[(i+2) % n]) != 0;
+		if (cross(first[0], first[i], first[(i+1) % n]) < 0) return false;
+		if (cross(first[i], first[(i+1) % n], first[(i+2) % n]) < 0) return false;
+		hasArea |= cross(first[i], first[(i+1) % n], first[(i+2) % n]) != 0;
 	}
 	return hasArea;
 }
 template<typename C>
-constexpr bool areConvex(const C& c) {
-	return areConvex(std::begin(c), std::end(c));
+constexpr bool isConvex(const C& c) {
+	return isConvex(std::begin(c), std::end(c));
 }
 
 template<typename RandomIt>
-constexpr bool areStrictlyConvex(RandomIt first, RandomIt last) {
-	if (!areConvex(first, last)) return false;
-	Integer n = std::distance(first, last);
-	for (Integer i = 0; i < n; i++) {
-		if (details::cross(first[i], first[(i+1) % n], first[(i+2) % n]) == 0) return false;
+constexpr bool isStrictlyConvex(RandomIt first, RandomIt last) {
+	if (!isConvex(first, last)) return false;
+	std::size_t n = std::distance(first, last);
+	for (std::size_t i = 0; i < n; i++) {
+		if (cross(first[i], first[(i+1) % n], first[(i+2) % n]) == 0) return false;
 	}
 	return true;
 }
 template<typename C>
-constexpr bool areStrictlyConvex(const C& c) {
-	return areStrictlyConvex(std::begin(c), std::end(c));
+constexpr bool isStrictlyConvex(const C& c) {
+	return isStrictlyConvex(std::begin(c), std::end(c));
 }
+
+template<typename RandomIt>
+constexpr bool isSimple(RandomIt first, RandomIt last) {
+	using Point = typename std::iterator_traits<RandomIt>::value_type;
+	struct Segment {
+		Point l, r;
+		std::size_t id;
+
+		Segment(Point l_, Point r_, std::size_t id_) : l(l_), r(r_), id(id_) {}
+
+		bool operator<(const Segment& other) const {
+			if (getX(l) > getX(other.l)) return !(other < *this);
+			Integer s = cross(l, r, other.l);
+			if (s != 0) return s > 0;
+			s = cross(l, r, other.r) > 0;
+			if (s != 0) return s > 0;
+			return getY(l) < getY(other.l);
+		}
+
+		bool intersect(const Segment& other, Integer n) const {
+			if (abs(id - other.id) == 1 or abs(id - other.id) == n-1) return false;
+			// no collinear special case needed!
+			return sign(cross(l, r, other.l)) * cross(l, r, other.r) <= 0 and
+			       sign(cross(other.l, other.r, l)) * cross(other.l, other.r, r) <= 0;
+		}
+	};
+
+	std::size_t n = details::assertBounds(first, last);
+	if (n < 3) return false;
+
+	std::vector<std::tuple<Integer, Integer, bool, bool, std::size_t>> events;
+	for (std::size_t i = 0; i < n; i++) {
+		bool swap = false;
+		Point a = first[i];
+		Point b = first[(i+1) % n];
+		if (getX(a) > getX(b)) swap = true;
+		if (getX(a) == getX(b) and getY(a) > getY(b)) swap = true;
+		if (swap) std::swap(a, b);
+		events.emplace_back(getX(a), getY(a), false, swap, i);
+		events.emplace_back(getX(b), getY(b), true, swap, i);
+	}
+	std::sort(events.begin(), events.end());
+
+	std::set<Segment> sweepline;
+	std::vector<typename std::set<Segment>::iterator> where(n);
+	for (auto [x, y, remove, swap, i] : events) {
+		if (remove) {
+			auto it = sweepline.erase(where[i]);
+			if (it != sweepline.begin() and it != sweepline.end() and it->intersect(*std::prev(it), n)) {
+				return false;
+			}
+		} else {
+			Point a = first[i];
+			Point b = first[(i+1) % n];
+			if (swap) std::swap(a, b);
+			auto [it, inserted] = sweepline.emplace(a, b, i);
+			if (!inserted) return false;
+			if (it != sweepline.begin() and it->intersect(*prev(it), n)) return false;
+			if (next(it) != sweepline.end() and it->intersect(*next(it), n)) return false;
+			where[i] = it;
+		}
+	}
+	return true;
+}
+template<typename C>
+constexpr bool isSimple(const C& c) {
+	return isSimple(std::begin(c), std::end(c));
+}
+
+template<typename RandomIt>
+constexpr bool isCCW(RandomIt first, RandomIt last) {
+	std::size_t n = details::assertBounds(first, last);
+	if (n < 2) return false;
+	Integer area = cross(first[n-1], first[0]); // can't overflow
+	for (std::size_t i = 1; i < n; i++) area += cross(first[i-1], first[i]);
+	return area > 0;
+}
+template<typename C>
+constexpr bool isCCW(const C& c) {
+	return isCCW(std::begin(c), std::end(c));
+}
+
 
 //============================================================================//
 // Random                                                                     //

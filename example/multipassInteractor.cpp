@@ -3,12 +3,12 @@
 //============================================================================//
 
 #include "../src/validate.h"
+using namespace Interactor;							// we are writing a           interactor
+using namespace Multipass;							//                  multipass
 
 int main(int argc, char **argv) {
 	Interactor::init(argc, argv);					// initialize streams, rng and parse arguments
 	Multipass::init();
-	using namespace Interactor;
-	using namespace Multipass;
 
 	if (pass == 0) {								// check pass
 		Integer n = testIn.integer();				// get the testdata

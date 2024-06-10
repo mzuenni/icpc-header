@@ -4,10 +4,10 @@
 
 #include "../src/validate.h"
 #include "../src/graph_gen.h"
+using namespace Generator;
 
 int main(int argc, char **argv) {
 	Generator::init(argc, argv);			// initialize streams, rng and parse arguments
-	using namespace Generator;
 
 	//needs c++20
 	// generate a hypercube on vertices [0, 8) append a second one with vertices [8, 16) and a cycle on vertices [16,19)

@@ -1,9 +1,9 @@
 #include <bits/stdc++.h>
 #include "../src/visualizer_png.h"
+using namespace Visualizer;												// we are writing a visulaizer
 
 int main(int argc, char** argv) {
 	Visualizer::init(argc, argv);										// open files
-	using namespace Visualizer;
 
 	Integer n, w, h;
 	testIn >> n >> w >> h;
