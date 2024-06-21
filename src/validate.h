@@ -1031,6 +1031,7 @@ constexpr Integer mulMod(Integer lhs, Integer rhs, Integer mod) {
 	UInteger ul = static_cast<UInteger>(applyMod(lhs, mod));
 	UInteger ur = static_cast<UInteger>(applyMod(rhs, mod));
 	UInteger um = static_cast<UInteger>(mod);
+	std::cout << ul << " " << ur << " " << um << " " << details::mulMod(ul, ur, um) << std::endl;
 	return static_cast<Integer>(details::mulMod(ul, ur, um));
 }
 
