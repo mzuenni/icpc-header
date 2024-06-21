@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
       - run: ./validate
-ubuntu2004-gpp:
+  ubuntu2004-gpp:
     strategy:
       matrix:
         os: [ubuntu-22.04]
