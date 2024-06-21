@@ -41,6 +41,9 @@ jobs:
       - run: ./validate
   windows-msvc:
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
       - uses: actions/checkout@v4
       - uses: msys2/setup-msys2@v2
@@ -49,8 +52,5 @@ jobs:
           msystem: ucrt64
           install: mingw-w64-ucrt-x86_64-gcc
       - uses: ilammy/msvc-dev-cmd@v1
-      - run: cl test/validate.cpp /std:c++17 /Wall /WX /O2 /nologo /Fe:validate
-        env:
-          CPP: msys2 -c \"exec cpp $*\" cpp
-          MSYSTEM: UCRT64
+      - run: cl test/validate.cpp /Fe:validate /std:c++17 /Wall /WX /O2 /nologo
       - run: ./validate
