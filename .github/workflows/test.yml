@@ -50,7 +50,4 @@ jobs:
           install: mingw-w64-ucrt-x86_64-gcc
       - uses: ilammy/msvc-dev-cmd@v1
       - run: cl test/validate.cpp /std:c++17 /Wall /WX /O2 /nologo /Fe:validate
-        env:
-          CPP: msys2 -c "exec cpp $*" cpp
-          MSYSTEM: UCRT64
       - run: ./validate
