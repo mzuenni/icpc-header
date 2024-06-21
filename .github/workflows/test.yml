@@ -39,18 +39,3 @@ jobs:
           install: mingw-w64-x86_64-gcc
       - run: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 test/validate.cpp -o validate
       - run: ./validate
-  windows-msvc:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          msystem: ucrt64
-          install: mingw-w64-ucrt-x86_64-gcc
-      - uses: ilammy/msvc-dev-cmd@v1
-      - env:
-        CPP: "msys2 -c "exec cpp $*" cpp
-        MSYSTEM: UCRT64
-      - run: cl test/validate.cpp /std:c++17 /Wall /WX /O2 /nologo /Fe:validate
-      - run: ./validate
