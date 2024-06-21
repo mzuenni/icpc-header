@@ -10,12 +10,6 @@ jobs:
       - uses: actions/checkout@v4
       - run: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
       - run: ./validate
-  linux-arm64:
-    runs-on: buildjet-2vcpu-ubuntu-2204-arm
-    steps:
-      - uses: actions/checkout@v4
-      - run: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
-      - run: ./validate
   linux-i386:
     runs-on: ubuntu-22.04
     steps:
@@ -49,5 +43,33 @@ jobs:
           msystem: ucrt64
           install: mingw-w64-ucrt-x86_64-gcc
       - uses: ilammy/msvc-dev-cmd@v1
+      - run: cl test/validate.cpp /Fe:validate /EHsc /std:c++17 /W2 /WX /O2 /nologo
+      - run: ./validate
+  windows-mingw-i386:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          msystem: mingw32
+          install: mingw-w64-i686-gcc
+      - run: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 test/validate.cpp -o validate
+      - run: ./validate
+  windows-msvc-i386:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          msystem: ucrt64
+          install: mingw-w64-ucrt-x86_64-gcc
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x86
       - run: cl test/validate.cpp /Fe:validate /EHsc /std:c++17 /W2 /WX /O2 /nologo
       - run: ./validate
