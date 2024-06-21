@@ -253,7 +253,7 @@ void checkMath() {
 	assert(applyMod(1, 3) == 1);
 	assert(applyMod(-1, 3) == 2);
 	#ifdef __SIZEOF_INT128__
-		std::cout << __SIZEOF_INT128__ << szd::endl;
+		std::cout << __SIZEOF_INT128__ << std::endl;
 		auto test = static_cast<UInteger>((static_cast<__uint128_t>(0x7FFF'FFFF'FFFF'FFFE_int) * static_cast<__uint128_t>(0x7FFF'FFFF'FFFF'FFFE_int)) % static_cast<UInteger>(0x7FFF'FFFF'FFFF'FFFF_int));
 		std::cout << std::hex << test << std::endl;
 		test = static_cast<UInteger>((static_cast<__uint128_t>(0x7FFF'FFFF'FFFF'FFFE_int) * static_cast<__uint128_t>(0x7FFF'FFFF'FFFF'FFFE_int)) % static_cast<__uint128_t>(0x7FFF'FFFF'FFFF'FFFF_int));
