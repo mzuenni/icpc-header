@@ -1086,7 +1086,7 @@ std::vector<Integer> primes(Integer lower, Integer upper) {
 	judgeAssert<std::invalid_argument>(lower < upper, "primes(): Lower must be less than upper!");
 	lower = std::max<Integer>(2, lower);
 	upper = std::max<Integer>(2, upper);
-	Integer count = min<Integer>(0x3FFF'FFFF, upper - lower);
+	Integer count = std::min<Integer>(0x3FFF'FFFF, upper - lower);
 	Integer cache = (count + 1) / 2;
 
 	std::vector<bool> notPrime(cache), notPrimeSegment(cache);
