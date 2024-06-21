@@ -1026,7 +1026,7 @@ constexpr Integer applyMod(Integer x, Integer mod) {
 	return x;
 }
 
-constexpr Integer mulMod(Integer lhs, Integer rhs, Integer mod) {
+Integer mulMod(Integer lhs, Integer rhs, Integer mod) {
 	judgeAssert<std::domain_error>(mod > 0, "mulMod(): mod must be positive!");
 	UInteger ul = static_cast<UInteger>(applyMod(lhs, mod));
 	UInteger ur = static_cast<UInteger>(applyMod(rhs, mod));
