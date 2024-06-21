@@ -1,5 +1,5 @@
 //only gcc currently supports from_chars?
-#if !defined(__GNUG__) || defined(__clang__) || defined(__INTEL_COMPILER)
+#if !defined(__GNUG__) || defined(__clang__) || defined(__INTEL_COMPILER) || __GNUG__ < 11
 	#define DOUBLE_FALLBACK
 #endif
 

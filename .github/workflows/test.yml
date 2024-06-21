@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - run: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
+      - run: g++-${{ matrix.version }} -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
       - run: ./validate
   ubuntu2004-gpp:
     strategy:
@@ -23,5 +23,5 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
-      - run: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
+      - run: g++-${{ matrix.version }} -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
       - run: ./validate
