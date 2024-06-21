@@ -971,7 +971,7 @@ namespace details {
 	constexpr std::array<UInteger, 7> MILLER_RABIN_WITNESS = {2, 325, 9375, 28178, 450775, 9780504, 1795265022};
 
 	// these operations are safe as long as the value would fit in Integer
-	constexpr UInteger mulMod(UInteger lhs, UInteger rhs, UInteger mod) {
+	UInteger mulMod(UInteger lhs, UInteger rhs, UInteger mod) {
 	#ifdef __SIZEOF_INT128__
 		return static_cast<UInteger>((static_cast<__uint128_t>(lhs) *
 		                              static_cast<__uint128_t>(rhs)) % mod);
@@ -981,12 +981,13 @@ namespace details {
 			if (rhs & 1) res = (lhs + res) % mod;
 			lhs = (lhs + lhs) % mod;
 			rhs /= 2;
+			std::cout << std::hex << lhs << " " << rhs << " " << mod << " " << res << std::endl;
 		}
 		return res;
 	#endif
 	}
 
-	constexpr UInteger powMod(UInteger base, UInteger exp, UInteger mod) {
+	UInteger powMod(UInteger base, UInteger exp, UInteger mod) {
 		UInteger res = 1;
 		if (mod <= 0x1'0000'0000) {
 			while (exp > 0) {
@@ -1026,7 +1027,7 @@ constexpr Integer applyMod(Integer x, Integer mod) {
 	return x;
 }
 
-constexpr Integer mulMod(Integer lhs, Integer rhs, Integer mod) {
+Integer mulMod(Integer lhs, Integer rhs, Integer mod) {
 	judgeAssert<std::domain_error>(mod > 0, "mulMod(): mod must be positive!");
 	UInteger ul = static_cast<UInteger>(applyMod(lhs, mod));
 	UInteger ur = static_cast<UInteger>(applyMod(rhs, mod));
@@ -1034,7 +1035,7 @@ constexpr Integer mulMod(Integer lhs, Integer rhs, Integer mod) {
 	return static_cast<Integer>(details::mulMod(ul, ur, um));
 }
 
-constexpr Integer powMod(Integer base, Integer exp, Integer mod) {
+Integer powMod(Integer base, Integer exp, Integer mod) {
 	judgeAssert<std::domain_error>(mod > 0, "powMod(): mod must be positive!");
 	judgeAssert<std::domain_error>(exp >= 0, "powMod(): exp must be non negative!");
 	UInteger ub = static_cast<UInteger>(applyMod(base, mod));
