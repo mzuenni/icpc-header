@@ -1026,23 +1026,11 @@ constexpr Integer applyMod(Integer x, Integer mod) {
 	return x;
 }
 
-Integer mulMod(Integer lhs, Integer rhs, Integer mod) {
+constexpr Integer mulMod(Integer lhs, Integer rhs, Integer mod) {
 	judgeAssert<std::domain_error>(mod > 0, "mulMod(): mod must be positive!");
 	UInteger ul = static_cast<UInteger>(applyMod(lhs, mod));
 	UInteger ur = static_cast<UInteger>(applyMod(rhs, mod));
 	UInteger um = static_cast<UInteger>(mod);
-	{
-		UInteger ulhs = ul;
-		UInteger urhs = ur;
-		UInteger umod = um;
-		UInteger ures = 0;
-		while (urhs > 0) {
-			if (urhs & 1) ures = (ulhs + ures) % umod;
-			ulhs = (ulhs + ulhs) % umod;
-			urhs /= 2;
-			std::cout << std::hex << ulhs << " " << urhs << " " << umod << " " << ures << std::endl;
-		}
-	}
 	return static_cast<Integer>(details::mulMod(ul, ur, um));
 }
 

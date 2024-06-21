@@ -252,7 +252,8 @@ void checkFloat() {
 void checkMath() {
 	assert(applyMod(1, 3) == 1);
 	assert(applyMod(-1, 3) == 2);
-
+	std::cout << std::hex << mulMod(0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFF_int) << " " << std::boolalpha << (mulMod(0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFF_int) == 1) << std::endl;
+	std::cout << std::hex << mulMod(0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFF_int) << " " << std::boolalpha << (mulMod(0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFF_int) == 1_int) << std::endl;
 	assert(mulMod(0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFF_int) == 1);
 	assert(mulMod(0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFD_int, 0x7FFF'FFFF'FFFF'FFFF_int) == 2);
 	assert(mulMod(0x7FFF'FFFF'FFFF'FFFD_int, 0x7FFF'FFFF'FFFF'FFFD_int, 0x7FFF'FFFF'FFFF'FFFF_int) == 4);
