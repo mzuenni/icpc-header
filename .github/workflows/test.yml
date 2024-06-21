@@ -10,3 +10,19 @@ jobs:
       - uses: actions/checkout@v4
       - run: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
       - run: ./validate
+  linux-arm64:
+    runs-on: buildjet-2vcpu-ubuntu-2204-arm
+    steps:
+      - uses: actions/checkout@v4
+      - run: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
+      - run: ./validate
+  linux-i386:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install g++-i386-linux-gnu libasan6:i386 libubsan1:i386
+      - run: i386-linux-gnu-g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
+      - run: ./validate
