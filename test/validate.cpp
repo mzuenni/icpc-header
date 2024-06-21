@@ -10,7 +10,7 @@ namespace Settings {
 }
 #include "../src/validate.h"
 
-#if __cplusplus > 202000L
+#if __cpp_lib_source_location >= 201907L
 #include <source_location>
 #else
 namespace std {
@@ -21,7 +21,8 @@ namespace std {
 		constexpr const char* file_name() const noexcept {return "";}
 		constexpr const char* function_name() const noexcept {return "";}
 	};
-
+#endif
+#if __cpp_lib_ssize < 201902L
 	template <class C>
 	constexpr auto ssize(const C& c) -> std::common_type_t<std::ptrdiff_t, std::make_signed_t<decltype(c.size())>> {
 		using R = std::common_type_t<std::ptrdiff_t, std::make_signed_t<decltype(c.size())>>;
