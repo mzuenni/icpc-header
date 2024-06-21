@@ -345,7 +345,7 @@ namespace details {
 			return os;
 		}
 		
-		friend OutputStream& operator<<(std::ostream& os, const TempWriter<C>& writer) = delete; //news OutputStream
+		friend std::ostream& operator<<(std::ostream& os, const TempWriter<C>& writer) = delete; //use OutputStream
 	};
 
 	struct JoinListCapture {
