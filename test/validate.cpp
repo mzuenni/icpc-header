@@ -253,11 +253,12 @@ void checkMath() {
 	assert(applyMod(1, 3) == 1);
 	assert(applyMod(-1, 3) == 2);
 	#ifdef __SIZEOF_INT128__
+		std::cout << __SIZEOF_INT128__ << szd::endl;
 		auto test = static_cast<UInteger>((static_cast<__uint128_t>(0x7FFF'FFFF'FFFF'FFFE_int) * static_cast<__uint128_t>(0x7FFF'FFFF'FFFF'FFFE_int)) % static_cast<UInteger>(0x7FFF'FFFF'FFFF'FFFF_int));
 		std::cout << std::hex << test << std::endl;
 		test = static_cast<UInteger>((static_cast<__uint128_t>(0x7FFF'FFFF'FFFF'FFFE_int) * static_cast<__uint128_t>(0x7FFF'FFFF'FFFF'FFFE_int)) % static_cast<__uint128_t>(0x7FFF'FFFF'FFFF'FFFF_int));
 		std::cout << std::hex << test << std::endl;
-	#else
+	#endif
 	std::cout << std::hex << mulMod(0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFF_int) << " " << std::boolalpha << (mulMod(0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFF_int) == 1) << std::endl;
 	std::cout << std::hex << mulMod(0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFF_int) << " " << std::boolalpha << (mulMod(0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFF_int) == 1_int) << std::endl;
 	assert(mulMod(0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFF_int) == 1);
