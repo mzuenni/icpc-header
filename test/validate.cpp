@@ -1,3 +1,8 @@
+//only gcc currently supports from_chars?
+#if !defined(__GNUG__) || defined(__clang__) || defined(__INTEL_COMPILER)
+	#define DOUBLE_FALLBACK
+#endif
+
 namespace Settings {
 	[[noreturn]] void exitVerdict(int exit_code) {
 		throw exit_code;
