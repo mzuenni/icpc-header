@@ -16,7 +16,7 @@ jobs:
   ubuntu2004-gpp:
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-20.04]
         compiler: [g++]
         version: [9, 10]
     name: Use ${{ matrix.compiler }}-${{ matrix.version }} on ${{ matrix.os }}
