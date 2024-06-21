@@ -344,8 +344,8 @@ namespace details {
 			writer.callable(os);
 			return os;
 		}
-
-		friend OutputStream& operator<<(std::ostream& os, const TempWriter<C>& writer) = delete; //news OutputStream
+		
+		friend std::ostream& operator<<(std::ostream& os, const TempWriter<C>& writer) = delete; //use OutputStream
 	};
 
 	struct JoinListCapture {
@@ -794,7 +794,7 @@ std::vector<Integer> range(Integer from, Integer to, Integer step = 1) {
 	if (step > 0 and to <= from) return {};
 	if (step < 0 and from <= to) return {};
 	UInteger n = static_cast<UInteger>(to) - static_cast<UInteger>(from);
-	if (step < 0) n = -n;
+	if (step < 0) n = 0 - n;
 	std::vector<Integer> res(1 + (n - 1) / std::abs(step), from);
 	for (std::size_t i = 1; i < res.size(); i++) {
 		res[i] = res[i - 1] + step;
@@ -1086,7 +1086,7 @@ std::vector<Integer> primes(Integer lower, Integer upper) {
 	judgeAssert<std::invalid_argument>(lower < upper, "primes(): Lower must be less than upper!");
 	lower = std::max<Integer>(2, lower);
 	upper = std::max<Integer>(2, upper);
-	Integer count = upper - lower;
+	Integer count = std::min<Integer>(0x3FFF'FFFF, upper - lower);
 	Integer cache = (count + 1) / 2;
 
 	std::vector<bool> notPrime(cache), notPrimeSegment(cache);
@@ -1248,7 +1248,7 @@ namespace Random {
 		UInteger s = uu - ul;
 		UInteger x = Random::details::randomNumberGenerator();
 		if (x * s < s) {
-			UInteger t = -s % s;
+			UInteger t = (0 - s) % s;
 			while (x * s < t) x = Random::details::randomNumberGenerator();
 		}
 	#ifdef __SIZEOF_INT128__
@@ -1413,7 +1413,7 @@ namespace Random {
 				if (!initialized) {
 					alpha = (2.83_real + 5.1_real / b) * spq;
 					lpq = std::log(p / q);
-					m = std::llround(std::floor((n + 1) * p));
+					m = std::round(std::floor((n + 1) * p));
 					h = std::lgamma(m + 1) + std::lgamma(n - m + 1);
 					initialized = true;
 				}
