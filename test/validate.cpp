@@ -253,16 +253,16 @@ void checkMath() {
 	assert(applyMod(1, 3) == 1);
 	assert(applyMod(-1, 3) == 2);
 
-	assert(mulMod(0x7FFF'FFFF'FFFF'FFFE, 0x7FFF'FFFF'FFFF'FFFE, 0x7FFF'FFFF'FFFF'FFFF) == 1);
-	assert(mulMod(0x7FFF'FFFF'FFFF'FFFE, 0x7FFF'FFFF'FFFF'FFFD, 0x7FFF'FFFF'FFFF'FFFF) == 2);
-	assert(mulMod(0x7FFF'FFFF'FFFF'FFFD, 0x7FFF'FFFF'FFFF'FFFD, 0x7FFF'FFFF'FFFF'FFFF) == 4);
+	assert(mulMod(0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFF_int) == 1);
+	assert(mulMod(0x7FFF'FFFF'FFFF'FFFE_int, 0x7FFF'FFFF'FFFF'FFFD_int, 0x7FFF'FFFF'FFFF'FFFF_int) == 2);
+	assert(mulMod(0x7FFF'FFFF'FFFF'FFFD_int, 0x7FFF'FFFF'FFFF'FFFD_int, 0x7FFF'FFFF'FFFF'FFFF_int) == 4);
 
-	assert(powMod(0xFFFF'FFFF, 2, 0x1'0000'0000) == 1);
-	assert(powMod(0xFFFF'FFFD, 31, 0xFFFF'FFFF) == 0x7FFF'FFFF);
-	assert(powMod(0xFFFF'FFFD, 63, 0xFFFF'FFFF) == 0x7FFF'FFFF);
-	assert(powMod(0x7FFF'FFFF'FFFF'FFFE, 2, 0x7FFF'FFFF'FFFF'FFFF) == 1);
-	assert(powMod(0x7FFF'FFFF'FFFF'FFFE, 3, 0x7FFF'FFFF'FFFF'FFFF) == 0x7FFF'FFFF'FFFF'FFFE);
-	assert(powMod(0x7FFF'FFFF'FFFF'FFFD, 63, 0x7FFF'FFFF'FFFF'FFFF) == 0x7FFF'FFFF'FFFF'FFFE);
+	assert(powMod(0xFFFF'FFFF_int, 2, 0x1'0000'0000_int) == 1);
+	assert(powMod(0xFFFF'FFFD_int, 31, 0xFFFF'FFFF_int) == 0x7FFF'FFFF_int);
+	assert(powMod(0xFFFF'FFFD_int, 63, 0xFFFF'FFFF_int) == 0x7FFF'FFFF_int);
+	assert(powMod(0x7FFF'FFFF'FFFF'FFFE_int, 2, 0x7FFF'FFFF'FFFF'FFFF_int) == 1);
+	assert(powMod(0x7FFF'FFFF'FFFF'FFFE_int, 3, 0x7FFF'FFFF'FFFF'FFFF_int) == 0x7FFF'FFFF'FFFF'FFFE_int);
+	assert(powMod(0x7FFF'FFFF'FFFF'FFFD_int, 63, 0x7FFF'FFFF'FFFF'FFFF_int) == 0x7FFF'FFFF'FFFF'FFFE_int);
 
 	assert(multInv(5, 17) == powMod(5, 15, 17));
 	assert(multInv(5, 10) == -1);
@@ -275,12 +275,12 @@ void checkMath() {
 	assert(isPrime(3));
 	assert(!isPrime(4));
 	assert(!isPrime(512461));
-	assert(isPrime(0x7FFF'FFFF'FFFF'FFFF-164));
-	assert(!isPrime(0x7FFF'FFFF'FFFF'FFFF-25));
-	assert(isPrime(0x7FFF'FFFF'FFFF'FFFF-24));
-	assert(!isPrime(0x7FFF'FFFF'FFFF'FFFF-23));
+	assert(isPrime(0x7FFF'FFFF'FFFF'FFFF_int-164));
+	assert(!isPrime(0x7FFF'FFFF'FFFF'FFFF_int-25));
+	assert(isPrime(0x7FFF'FFFF'FFFF'FFFF_int-24));
+	assert(!isPrime(0x7FFF'FFFF'FFFF'FFFF_int-23));
 	assert(!isPrime(0x7FFF'FFFF'FFFF'FFFF));
-	assert(!isPrime(2147483647 * 4294967291));
+	assert(!isPrime(2147483647_int * 4294967291_int));
 }
 
 template<typename T, typename F>
