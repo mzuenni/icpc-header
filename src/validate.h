@@ -1413,7 +1413,7 @@ namespace Random {
 				if (!initialized) {
 					alpha = (2.83_real + 5.1_real / b) * spq;
 					lpq = std::log(p / q);
-					m = std::llround(std::floor((n + 1) * p));
+					m = std::round(std::floor((n + 1) * p));
 					h = std::lgamma(m + 1) + std::lgamma(n - m + 1);
 					initialized = true;
 				}
