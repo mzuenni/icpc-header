@@ -1031,7 +1031,18 @@ Integer mulMod(Integer lhs, Integer rhs, Integer mod) {
 	UInteger ul = static_cast<UInteger>(applyMod(lhs, mod));
 	UInteger ur = static_cast<UInteger>(applyMod(rhs, mod));
 	UInteger um = static_cast<UInteger>(mod);
-	std::cout << ul << " " << ur << " " << um << " " << details::mulMod(ul, ur, um) << std::endl;
+	{
+		UInteger ulhs = ul;
+		UInteger urhs = ur;
+		UInteger umod = um;
+		UInteger ures = 0;
+		while (urhs > 0) {
+			if (urhs & 1) ures = (ulhs + ures) % umod;
+			ulhs = (ulhs + ulhs) % umod;
+			urhs /= 2;
+			std::cout << std::hex << ulhs << " " << urhs << " " << umod << " " << urhs << std::endl;
+		}
+	}
 	return static_cast<Integer>(details::mulMod(ul, ur, um));
 }
 
