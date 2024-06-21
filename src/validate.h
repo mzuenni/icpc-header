@@ -1040,7 +1040,7 @@ Integer mulMod(Integer lhs, Integer rhs, Integer mod) {
 			if (urhs & 1) ures = (ulhs + ures) % umod;
 			ulhs = (ulhs + ulhs) % umod;
 			urhs /= 2;
-			std::cout << std::hex << ulhs << " " << urhs << " " << umod << " " << urhs << std::endl;
+			std::cout << std::hex << ulhs << " " << urhs << " " << umod << " " << ures << std::endl;
 		}
 	}
 	return static_cast<Integer>(details::mulMod(ul, ur, um));
