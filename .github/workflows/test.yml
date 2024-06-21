@@ -49,5 +49,5 @@ jobs:
           msystem: ucrt64
           install: mingw-w64-ucrt-x86_64-gcc
       - uses: ilammy/msvc-dev-cmd@v1
-      - run: cl test/validate.cpp /Fe:validate /EHsc /std:c++17 /Wall /WX /O2 /nologo
+      - run: cl test/validate.cpp /Fe:validate /EHsc /std:c++17 /W2 /WX /O2 /nologo
       - run: ./validate
