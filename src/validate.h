@@ -794,7 +794,7 @@ std::vector<Integer> range(Integer from, Integer to, Integer step = 1) {
 	if (step > 0 and to <= from) return {};
 	if (step < 0 and from <= to) return {};
 	UInteger n = static_cast<UInteger>(to) - static_cast<UInteger>(from);
-	if (step < 0) n = -n;
+	if (step < 0) n = 0 - n;
 	std::vector<Integer> res(1 + (n - 1) / std::abs(step), from);
 	for (std::size_t i = 1; i < res.size(); i++) {
 		res[i] = res[i - 1] + step;
@@ -1248,7 +1248,7 @@ namespace Random {
 		UInteger s = uu - ul;
 		UInteger x = Random::details::randomNumberGenerator();
 		if (x * s < s) {
-			UInteger t = -s % s;
+			UInteger t = (0 - s) % s;
 			while (x * s < t) x = Random::details::randomNumberGenerator();
 		}
 	#ifdef __SIZEOF_INT128__
