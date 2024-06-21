@@ -8,6 +8,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+      - run: g++ -std=c++20 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
+      - run: ./validate
       - run: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
       - run: ./validate
   linux-i386:
@@ -20,6 +22,8 @@ jobs:
           sudo apt-get install g++-i686-linux-gnu libasan6:i386 libubsan1:i386
       - run: i686-linux-gnu-g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
       - run: ./validate
+      - run: i686-linux-gnu-g++ -std=c++20 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
+      - run: ./validate
   windows-mingw:
     runs-on: windows-latest
     defaults:
@@ -31,6 +35,8 @@ jobs:
         with:
           update: true
           install: mingw-w64-x86_64-gcc
+      - run: g++ -std=c++20 -Wall -Wextra -Wpedantic -Werror -O2 test/validate.cpp -o validate
+      - run: ./validate
       - run: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 test/validate.cpp -o validate
       - run: ./validate
   windows-msvc:
@@ -43,6 +49,8 @@ jobs:
           msystem: ucrt64
           install: mingw-w64-ucrt-x86_64-gcc
       - uses: ilammy/msvc-dev-cmd@v1
+      - run: cl test/validate.cpp /Fe:validate /EHsc /std:c++20 /W2 /WX /O2 /nologo /permissive-
+      - run: ./validate
       - run: cl test/validate.cpp /Fe:validate /EHsc /std:c++17 /W2 /WX /O2 /nologo /permissive-
       - run: ./validate
   windows-mingw-i386:
@@ -57,6 +65,8 @@ jobs:
           update: true
           msystem: mingw32
           install: mingw-w64-i686-gcc
+      - run: g++ -std=c++20 -Wall -Wextra -Wpedantic -Werror -O2 test/validate.cpp -o validate
+      - run: ./validate
       - run: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 test/validate.cpp -o validate
       - run: ./validate
   windows-msvc-i386:
@@ -71,5 +81,7 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x86
+      - run: cl test/validate.cpp /Fe:validate /EHsc /std:c++20 /W2 /WX /O2 /nologo /permissive-
+      - run: ./validate
       - run: cl test/validate.cpp /Fe:validate /EHsc /std:c++17 /W2 /WX /O2 /nologo /permissive-
       - run: ./validate
