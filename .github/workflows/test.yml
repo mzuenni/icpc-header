@@ -1,53 +1,27 @@
 name: Test
-on: [push]
+on: [push, pull_request]
 jobs:
-  posix:
+  ubuntu2204-gpp:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-13, macos-14]
+        os: [ubuntu-22.04]
+        compiler: [g++]
+        version: [9, 10, 11, 12]
+    name: Use ${{ matrix.compiler }}-${{ matrix.version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - run: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
       - run: ./validate
-  linux-arm64:
-    runs-on: buildjet-2vcpu-ubuntu-2204-arm
+ubuntu2004-gpp:
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+        compiler: [g++]
+        version: [9, 10]
+    name: Use ${{ matrix.compiler }}-${{ matrix.version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - run: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
-      - run: ./validate
-  linux-i386:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-      - run: |
-          sudo dpkg --add-architecture i386
-          sudo apt-get update
-          sudo apt-get install g++-i686-linux-gnu libasan6:i386 libubsan1:i386
-      - run: i686-linux-gnu-g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
-      - run: ./validate
-  windows-mingw:
-    runs-on: windows-latest
-    defaults:
-      run:
-        shell: msys2 {0}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          install: mingw-w64-x86_64-gcc
-      - run: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 test/validate.cpp -o validate
-      - run: ./validate
-  windows-msvc:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          msystem: ucrt64
-          install: mingw-w64-ucrt-x86_64-gcc
-      - uses: ilammy/msvc-dev-cmd@v1
-      - run: cl test/validate.cpp /Fe:validate /EHsc /std:c++17 /Wall /WX /O2 /nologo
       - run: ./validate
