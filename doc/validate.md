@@ -525,8 +525,11 @@ Checks if a given number `n` is prime.
 **`std::vector<Integer> primes(Integer lower, Integer upper)`**  
 Returns all primes in [0, upper) or [lower, upper).
 
-**`constexpr Integer sign(Integer x)`**  
+**`constexpr T sign(T x)`**  
 Determines the sign of `x` as {-1,0,1}.
+
+**`constexpr T dist(T a, T b)`**  
+returns the absolute difference between a and b.
 
 
 ## class boolean

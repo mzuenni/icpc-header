@@ -1147,8 +1147,13 @@ std::vector<Integer> primes(Integer upper) {
 }
 
 template<typename T>
-constexpr Integer sign(T x) {
+constexpr T sign(T x) {
 	return (T(0) < x) - (x < T(0));
+}
+
+template<typename T>
+constexpr T dist(T a, T b) {
+	return a > b ? a - b : b - a;
 }
 
 
@@ -1248,7 +1253,7 @@ constexpr bool isSimple(RandomIt first, RandomIt last) {
 		}
 
 		bool intersect(const Segment& other, Integer n) const {
-			if (std::abs(id - other.id) == 1 or std::abs(id - other.id) == n-1) return false;
+			if (dist(id, other.id) == 1 or dist(id, other.id) == n-1) return false;
 			// no collinear special case needed!
 			return sign(cross(l, r, other.l)) * cross(l, r, other.r) <= 0 and
 			       sign(cross(other.l, other.r, l)) * cross(other.l, other.r, r) <= 0;
