@@ -675,26 +675,48 @@ static_assert(!CompileJoin<int>{}, "join(int) should be invalid!");
 
 void checkGeomatry() {
 	using pts = std::vector<std::pair<Integer, Integer>>;
-	assert(!areConvex(pts{}));
-	assert(!areConvex(pts{{1,1}}));
-	assert(!areConvex(pts{{0,0}, {1,1}}));
-	assert(!areConvex(pts{{0,0}, {1,1}, {-1,-1}}));
-	assert(!areConvex(pts{{0,0}, {1,1}, {0,0}, {1,1}}));
-	assert(!areConvex(pts{{0,0}, {2,0}, {2,2}, {1,2}, {1,1}, {3,1}, {3,3}, {0,3}}));
-	assert(areConvex(pts{{0,0}, {1,0}, {2,0}, {2,2}, {0,2}, {0,1}}));
-	assert(areConvex(pts{{0,0}, {2,0}, {2,2}}));
+	assert(!isConvex(pts{}));
+	assert(!isConvex(pts{{1,1}}));
+	assert(!isConvex(pts{{0,0}, {1,1}}));
+	assert(!isConvex(pts{{0,0}, {1,1}, {-1,-1}}));
+	assert(!isConvex(pts{{0,0}, {1,1}, {0,0}, {1,1}}));
+	assert(!isConvex(pts{{0,0}, {2,0}, {2,2}, {1,2}, {1,1}, {3,1}, {3,3}, {0,3}}));
+	assert(isConvex(pts{{0,0}, {1,0}, {2,0}, {2,2}, {0,2}, {0,1}}));
+	assert(isConvex(pts{{0,0}, {2,0}, {2,2}}));
 
-	assert(!areStrictlyConvex(pts{}));
-	assert(!areStrictlyConvex(pts{{1,1}}));
-	assert(!areStrictlyConvex(pts{{0,0}, {1,1}}));
-	assert(!areStrictlyConvex(pts{{0,0}, {1,1}, {-1,-1}}));
-	assert(!areStrictlyConvex(pts{{0,0}, {1,1}, {0,0}, {1,1}}));
-	assert(!areStrictlyConvex(pts{{0,0}, {2,0}, {2,2}, {1,2}, {1,1}, {3,1}, {3,3}, {0,3}}));
-	assert(!areStrictlyConvex(pts{{0,0}, {1,0}, {2,0}, {2,2}, {0,2}, {0,1}}));
-	assert(areStrictlyConvex(pts{{0,0}, {2,0}, {2,2}}));
+	assert(!isStrictlyConvex(pts{}));
+	assert(!isStrictlyConvex(pts{{1,1}}));
+	assert(!isStrictlyConvex(pts{{0,0}, {1,1}}));
+	assert(!isStrictlyConvex(pts{{0,0}, {1,1}, {-1,-1}}));
+	assert(!isStrictlyConvex(pts{{0,0}, {1,1}, {0,0}, {1,1}}));
+	assert(!isStrictlyConvex(pts{{0,0}, {2,0}, {2,2}, {1,2}, {1,1}, {3,1}, {3,3}, {0,3}}));
+	assert(!isStrictlyConvex(pts{{0,0}, {1,0}, {2,0}, {2,2}, {0,2}, {0,1}}));
+	assert(isStrictlyConvex(pts{{0,0}, {2,0}, {2,2}}));
 
-	assert(areConvex(Random::convex(100, 1000'000'000)));//this is always true
-	assert(areStrictlyConvex(Random::convex(100, 1000'000'000)));//this is likely true
+	assert(isConvex(Random::convex(100, 1000'000'000)));//this is always true
+	assert(isStrictlyConvex(Random::convex(100, 1000'000'000)));//this is likely true
+
+	// implementation was also checked against https://open.kattis.com/problems/polygon
+	assert(isSimple(pts{{0, 0}, {1, 0}, {0, 1}}));
+	assert(isSimple(pts{{2, 0}, {1, 1}, {0, 2}, {1, 3}, {2, 4}, {3, 3}, {4, 2}, {3, 1}}));
+	assert(isSimple(pts{{0, 0}, {1, 0}, {2, 0}, {2, 1}, {2, 2}, {1, 2}, {0, 2}, {0, 1}}));
+	assert(isSimple(pts{{1, 6}, {5, 7}, {9, 4}, {4, 3}, {7, 4}, {4, 6}, {3, 1}}));
+
+	assert(!isSimple(pts{{0, 0}, {0, 1}, {0, 0}, {0, 1}}));
+	assert(!isSimple(pts{{0, 0}, {1, 0}, {0, 0}, {1, 0}}));
+	assert(!isSimple(pts{{0, 0}, {2, 0}, {1, 0}}));
+	assert(!isSimple(pts{{2, 0}, {1, 0}, {0, 0}}));
+	assert(!isSimple(pts{{1, 0}, {0, 0}, {2, 0}}));
+	assert(!isSimple(pts{{0, 0}, {1, 0}, {2, 0}}));
+	assert(!isSimple(pts{{1, 0}, {2, 0}, {0, 0}}));
+	assert(!isSimple(pts{{2, 0}, {0, 0}, {1, 0}}));
+	assert(!isSimple(pts{{0, 0}, {1, 0}, {0, 1}, {1, 1}}));
+	assert(!isSimple(pts{{0, 0}, {2, 0}, {0, 2}, {2, 2}, {1, 1}}));
+	assert(!isSimple(pts{{0, 0}, {2, 0}, {1, 1}, {0, 2}, {2, 2}}));
+	assert(!isSimple(pts{{0 ,0}, {2, 0}, {1, 1}, {0, 2}, {2, 2}, {1, 1}}));
+	assert(!isSimple(pts{{0, 0}, {2, 0}, {2, 1}, {1, 0}, {0, 1}}));
+	assert(!isSimple(pts{{1, 0}, {1, 1}, {0, 1}, {2, 1}, {1, 1}, {1, 2}, {3, 2}, {3, 0}}));
+	assert(!isSimple(pts{{0, 1}, {1, 1}, {1, 0}, {1, 2}, {1, 1}, {2, 1}, {2, 3}, {0, 3}}));
 }
 
 int main() {
