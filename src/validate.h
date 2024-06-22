@@ -1252,7 +1252,7 @@ constexpr bool isSimple(RandomIt first, RandomIt last) {
 			return getY(l) < getY(other.l);
 		}
 
-		bool intersect(const Segment& other, Integer n) const {
+		bool intersect(const Segment& other, std::size_t n) const {
 			if (dist(id, other.id) == 1 or dist(id, other.id) == n-1) return false;
 			// no collinear special case needed!
 			return sign(cross(l, r, other.l)) * cross(l, r, other.r) <= 0 and
