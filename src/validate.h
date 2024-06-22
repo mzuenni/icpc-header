@@ -1235,7 +1235,7 @@ constexpr bool isStrictlyConvex(const C& c) {
 }
 
 template<typename RandomIt>
-constexpr bool isSimple(RandomIt first, RandomIt last) {
+bool isSimple(RandomIt first, RandomIt last) {
 	using Point = typename std::iterator_traits<RandomIt>::value_type;
 	struct Segment {
 		Point l, r;
@@ -1298,7 +1298,7 @@ constexpr bool isSimple(RandomIt first, RandomIt last) {
 	return true;
 }
 template<typename C>
-constexpr bool isSimple(const C& c) {
+bool isSimple(const C& c) {
 	return isSimple(std::begin(c), std::end(c));
 }
 

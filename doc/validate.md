@@ -666,8 +666,8 @@ Checks if the points form a convex polygon.
 **`constexpr bool isStrictlyConvex(const C& c)`**  
 Checks if the points form a convex polygon without 3 collinear points.
 
-**`constexpr bool isSimple(RandomIt first, RandomIt last)`**  
-**`constexpr bool isSimple(const C& c)`**  
+**`bool isSimple(RandomIt first, RandomIt last)`**  
+**`bool isSimple(const C& c)`**  
 Checks if the points form a simple polygon.
 
 **`constexpr bool isCCW(RandomIt first, RandomIt last)`**  
