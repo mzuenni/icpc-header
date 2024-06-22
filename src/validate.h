@@ -1248,7 +1248,7 @@ constexpr bool isSimple(RandomIt first, RandomIt last) {
 		}
 
 		bool intersect(const Segment& other, Integer n) const {
-			if (abs(id - other.id) == 1 or abs(id - other.id) == n-1) return false;
+			if (std::abs(id - other.id) == 1 or std::abs(id - other.id) == n-1) return false;
 			// no collinear special case needed!
 			return sign(cross(l, r, other.l)) * cross(l, r, other.r) <= 0 and
 			       sign(cross(other.l, other.r, l)) * cross(other.l, other.r, r) <= 0;
