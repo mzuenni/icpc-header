@@ -147,13 +147,13 @@ The degree distribution will be linear.
 Generates a `Graph` with a given degree sequence.
 First a fixed graph with the given degree sequence gets generated and than n\*flips edges get randomly flipped.
 
-**`Graph<Integer> ffWorstcase(Integer n)`**  
+**`DiGraph<Integer> ffWorstcase(Integer n)`**  
 Generates a worstcase instance for Ford Fulkerson with dfs.
 The graph contains 2\*n vertices and has 2^n flow from 0 to 2\*n-1.
 See figure 2 in https://people.computing.clemson.edu/~bcdean/iterm.pdf.
 Note that the specific order of edghes is required
 
-**`Graph<std::pair<Integer, Integer>> mcmfWorstcase(Integer n)`**  
+**`DiGraph<std::pair<Integer, Integer>> mcmfWorstcase(Integer n)`**  
 Generates a worstcase instance for various min cost max flow algorithms.
 The graph contains 2\*n+2 vertices and has flow from 0 to 2\*n+1.
 See Figure 4 in https://link.springer.com/article/10.1007/BF01580132.

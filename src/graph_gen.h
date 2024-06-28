@@ -942,9 +942,9 @@ Graph<E> randomGraph(const std::vector<Integer>& degree, Integer averageFlips = 
 // The graph contains 2*n vertices and has 2^n flow from 0 to 2*n-1.
 // Figure 2: https://people.computing.clemson.edu/~bcdean/iterm.pdf
 // Note that the specific order of edghes is required
-Graph<Integer> ffWorstcase(Integer n) {
+DiGraph<Integer> ffWorstcase(Integer n) {
 	judgeAssert(0 < n && n <= 63, "ffWorstcase(): n out of bounds");
-	Graph<Integer> res(2 * n);
+	DiGraph<Integer> res(2 * n);
 	res.addEdge(n-1, n, 1);
 	for (Integer i = n - 2, j = n+1, c = 1; j < 2 * n; i--, j++, c *= 2) {
 		res.addEdge(i, i+1, c);
@@ -958,9 +958,9 @@ Graph<Integer> ffWorstcase(Integer n) {
 // generates a worstcase instance for various min cost max flow algorithms.
 // The graph contains 2*n+2 vertices and has flow from 0 to 2*n+1.
 // Figure 4: https://link.springer.com/article/10.1007/BF01580132
-Graph<std::pair<Integer, Integer>> mcmfWorstcase(Integer n) {
+DiGraph<std::pair<Integer, Integer>> mcmfWorstcase(Integer n) {
 	judgeAssert(0 < n && n <= 60, "mcmfWorstcase(): n out of bounds");
-	Graph<std::pair<Integer, Integer>> res(2 * n + 2);
+	DiGraph<std::pair<Integer, Integer>> res(2 * n + 2);
 	Integer inf = 5 * (1ll << n) / 4;
 	for (Integer i = 0; i < n; i++) {
 		res.addEdge(0, i + 1, {i < 2 ? 2 * i + 1 : 5ll << (i - 2), 0});
