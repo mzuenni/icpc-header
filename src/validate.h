@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-// version 2.6.1                                                              //
+// version 2.6.2                                                              //
 // https://github.com/mzuenni/icpc-header                                     //
 //============================================================================//
 
@@ -139,7 +139,7 @@ constexpr std::string_view SEED_COMMAND                 = "--seed";
 constexpr std::string_view TEXT_ELLIPSIS                = "[...]";
 constexpr auto REGEX_OPTIONS                            = std::regex::nosubs | std::regex::optimize;
 inline const std::regex INTEGER_REGEX("0|-?[1-9][0-9]*", REGEX_OPTIONS);
-inline const std::regex REAL_REGEX("-?(0|([1-9][0-9]*))(\\.[0-9]*)?([eE][+-]?(0|([1-9][0-9]*)))?", REGEX_OPTIONS);
+inline const std::regex REAL_REGEX("[+-]?(([0-9]*\\.[0-9]+)|([0-9]+\\.)|([0-9]+))([eE][+-]?[0-9]+)?", REGEX_OPTIONS);
 inline const std::regex STRICT_REAL_REGEX("-?(0|([1-9][0-9]*))\\.?[0-9]*", REGEX_OPTIONS);
 
 static_assert(2'000'000'000'000'000'000_int < LARGE / 2, "LARGE too small");
@@ -953,6 +953,7 @@ namespace details {
 	bool parse(std::string_view s, T& res) {
 		const char* begin = s.data();
 		const char* end = s.data() + s.size();
+		if (!s.empty() && s[0] == '+') begin++;
 		auto [ptr, ec] = std::from_chars(begin, end, res);
 		return ptr == end and ec == std::errc();
 	}

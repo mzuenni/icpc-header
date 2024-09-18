@@ -419,6 +419,16 @@ void checkInputStream() {
 		InputStream in(rawIn, false, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.integer();
 	});
+	assertNoException([](){
+		std::istringstream rawIn("00.1");
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
+		in.real();
+	});
+	assertNoException([](){
+		std::istringstream rawIn("+0.1");
+		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
+		in.real();
+	});
 
 	assertExit([](){
 		std::istringstream rawIn("Das");
@@ -516,12 +526,12 @@ void checkInputStream() {
 	assertExit([](){
 		std::istringstream rawIn("00.1");
 		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
-		in.real();
+		in.realStrict(-10, 10, 0, 3);
 	}, 23);
 	assertExit([](){
 		std::istringstream rawIn("+0.1");
 		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
-		in.real();
+		in.realStrict(-10, 10, 0, 3);
 	}, 23);
 }
 
