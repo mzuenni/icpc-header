@@ -63,14 +63,14 @@ Both `spaceSensitive` and `caseSensitive` will be set to true and the `testIn` i
 **`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol)`**  
 **`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
 Checks if two floating point numbers `given` and `expected` obey the relation `given`==`expected`, `given`<=`expected` or`given`>=`expected` allowing an absolute and relative error of the given tolerance.
-For relative errors the `expected` value is used as refference value.
-If no tolerance is given the global setting `floatAbsTol` respectively `floatRelTol` get used as fallback.
+For relative errors the `expected` value is used as reference value.
+If no tolerance is given the global setting `floatAbsTol` respectively `floatRelTol` is used as fallback.
 
 **`boolean<Integer> stringEqual(std::string_view a, std::string_view b)`**  
 **`boolean<Integer> stringEqual(std::string_view a, std::string_view b, bool caseSensitive)`**  
 Checks if two strings are equal but may ignore the case of letters if `caseSensitive` is false.
 If `caseSensitive` is not provided the global setting `caseSensitive` gets used as fallback.
-If the strings are not equal the position of the first mismatch is returned as a whitness.
+If the strings are not equal the position of the first mismatch is returned as a witness.
 
 
 ## namespace AnswerValidator
@@ -105,14 +105,14 @@ Both `spaceSensitive` and `caseSensitive` will be set to true and the `juryAns` 
 **`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol)`**  
 **`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
 Checks if two floating point numbers `given` and `expected` obey the relation `given`==`expected`, `given`<=`expected` or`given`>=`expected` allowing an absolute and relative error of the given tolerance.
-For relative errors the `expected` value is used as refference value.
-If no tolerance is given the global setting `floatAbsTol` respectively `floatRelTol` get used as fallback.
+For relative errors the `expected` value is used as reference value.
+If no tolerance is given the global setting `floatAbsTol` respectively `floatRelTol` is used as fallback.
 
 **`boolean<Integer> stringEqual(std::string_view a, std::string_view b)`**  
 **`boolean<Integer> stringEqual(std::string_view a, std::string_view b, bool caseSensitive)`**  
 Checks if two strings are equal but may ignore the case of letters if `caseSensitive` is false.
 If `caseSensitive` is not provided the global setting `caseSensitive` gets used as fallback.
-If the strings are not equal the position of the first mismatch is returned as a whitness.
+If the strings are not equal the position of the first mismatch is returned as a witness.
 
 
 ## namespace OutputValidator
@@ -149,14 +149,14 @@ After this call all streams will be initialized with `caseSensitive` and the `te
 **`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol)`**  
 **`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
 Checks if two floating point numbers `given` and `expected` obey the relation `given`==`expected`, `given`<=`expected` or`given`>=`expected` allowing an absolute and relative error of the given tolerance.
-For relative errors the `expected` value is used as refference value.
-If no tolerance is given the global setting `floatAbsTol` respectively `floatRelTol` get used as fallback.
+For relative errors the `expected` value is used as reference value.
+If no tolerance is given the global setting `floatAbsTol` respectively `floatRelTol` is used as fallback.
 
 **`boolean<Integer> stringEqual(std::string_view a, std::string_view b)`**  
 **`boolean<Integer> stringEqual(std::string_view a, std::string_view b, bool caseSensitive)`**  
 Checks if two strings are equal but may ignore the case of letters if `caseSensitive` is false.
 If `caseSensitive` is not provided the global setting `caseSensitive` gets used as fallback.
-If the strings are not equal the position of the first mismatch is returned as a whitness.
+If the strings are not equal the position of the first mismatch is returned as a witness.
 
 
 ## namespace Interactor
@@ -193,19 +193,19 @@ After this call all streams will be initialized with `caseSensitive` and the `fr
 **`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol)`**  
 **`bool floatGreaterEqual(Real given, Real expected, Real floatAbsTol, Real floatRelTol)`**  
 Checks if two floating point numbers `given` and `expected` obey the relation `given`==`expected`, `given`<=`expected` or`given`>=`expected` allowing an absolute and relative error of the given tolerance.
-For relative errors the `expected` value is used as refference value.
-If no tolerance is given the global setting `floatAbsTol` respectively `floatRelTol` get used as fallback.
+For relative errors the `expected` value is used as reference value.
+If no tolerance is given the global setting `floatAbsTol` respectively `floatRelTol` is used as fallback.
 
 **`boolean<Integer> stringEqual(std::string_view a, std::string_view b)`**  
 **`boolean<Integer> stringEqual(std::string_view a, std::string_view b, bool caseSensitive)`**  
 Checks if two strings are equal but may ignore the case of letters if `caseSensitive` is false.
 If `caseSensitive` is not provided the global setting `caseSensitive` gets used as fallback.
-If the strings are not equal the position of the first mismatch is returned as a whitness.
+If the strings are not equal the position of the first mismatch is returned as a witness.
 
 
 ## namespace Multipass
 Additionally use this namespace if you want to write a Multipass output validator (for interactive problems).
-The namespace already provides functionallity to get the id of the current pass and save state between passes.
+The namespace already provides functionality to get the id of the current pass and save state between passes.
 
 #### Member
 **`Integer pass`**  
@@ -245,18 +245,18 @@ An instance of this class is always provided as `arguments` after calling any `i
 
 #### Methods
 **`Command operator[](std::string_view command) const`**  
-Searches for the `command` and returns it will all its parameters (until the next command starting with `--`).
-If the `command` does not exists the list of parameters will be empty.
+Searches for the `command` and returns it with all its parameters (until the next command starting with `--`).
+If the `command` does not exist the list of parameters will be empty.
 
 **`Command getRaw(std::string_view command) const`**  
-Searches for the `command` and returns it will all following parameters.
-If the `command` does not exists the list of parameters will be empty.
+Searches for the `command` and returns it with all following parameters.
+If the `command` does not exist the list of parameters will be empty.
 
 **`Command getRaw() const`**  
-Returns alls parameters.
+Returns all parameters.
 
 ## class Command
-Gets returned by the CommandParser and corresponds to an command in `argv`.
+Gets returned by the CommandParser and corresponds to a command in `argv`.
 #### Methods
 **`bool exists() const`**  
 **`explicit operator bool() const`**  
@@ -273,7 +273,7 @@ Will be zero if the command was not found.
 **`Real asReal() const`**  
 **`Real asReal(Real defaultValue) const`**  
 Parses the first token after the command.
-If the command does not exists or has no parameter it will instead return the `defaultValue`.
+If the command does not exist or has no parameter it will instead return the `defaultValue`.
 >Note: If `defaultValue` should be returned but was not provided an error will be thrown.
 
 **`std::vector<std::string> asStrings() const`**  
@@ -284,12 +284,12 @@ If the command does not exists or has no parameter it will instead return the `d
 **`std::tuple<Real...> asReals<N>() const`**  
 Return all parameters of this command.
 
-**`Paramater operator[](Integer i) const`**  
+**`Parameter operator[](Integer i) const`**  
 Return the `i`th parameter.
 The first has index 0.
 
-## class Paramater
-Gets returned by the Command and corresponds to an parameter of an command.
+## class Parameter
+Gets returned by the Command and corresponds to an parameter of a command.
 #### Methods
 **`bool exists() const`**  
 **`explicit operator bool() const`**  
@@ -302,7 +302,7 @@ Will be true if the parameter exists.
 **`Real asReal() const`**  
 **`Real asReal(Real defaultValue) const`**  
 Parses the parameter.
-If the parameter does not exists it will instead return the `defaultValue`.
+If the parameter does not exist it will instead return the `defaultValue`.
 >Note: If `defaultValue` should be returned but was not provided an error will be thrown.
 
 
@@ -321,13 +321,13 @@ If the input does not match the requested token the program will terminate with 
 **`void space()`**  
 **`void newline()`**  
 Checks if the next char in the input is the corresponding whitespace.
-This only hase an effect for space sensitive streams i.e. input validation.
+This only has an effect for space sensitive streams i.e. input validation.
 
 **`void expectString(std::string_view expected)`**  
 **`void expectInt(Integer expected)`**  
 **`void expectReal(Real expected)`**  
 Checks if the next token matches `expected`.
-If a `Real` is expected equallity is checked with absolute and relative error.
+If a `Real` is expected equality is checked with absolute and relative error.
 This is mainly supposed to verify team output.
 
 **`std::string string()`**  
@@ -350,7 +350,7 @@ If an constraint is provided it will be updated with the value of the parsed int
 
 **`Real real()`**  
 Will extract the next token as a `Real`.
-Use this method to parse team input as `Real`!.
+Use this method to parse team input as `Real`!
 > Note: this method does not allow to read `NaN` or `Inf`.
 
 **`Real real(Real lower, Real upper)`**  
@@ -389,20 +389,20 @@ Seeds the internal random number generator.
 
 ##### Numbers
 **`bool bit()`**  
-Returns a uniformally distributed bit.
+Returns a uniformly distributed bit.
 
 **`Integer integer()`**  
 **`Integer integer(Integer upper)`**  
 **`Integer integer(Integer lower, Integer upper)`**  
-Returns a uniformally distributed integer in [-2^63, 2^63), [0, upper) or [lower, upper).
+Returns a uniformly distributed integer in [-2^63, 2^63), [0, upper) or [lower, upper).
 
 **`Real real()`**  
 **`Real real(Real upper)`**  
 **`Real real(Real lower, Real upper)`**  
-Returns a uniformally distributed real in [0, 1), [0, upper) or [lower, upper).
+Returns a uniformly distributed real in [0, 1), [0, upper) or [lower, upper).
 
 **`Integer discrete<w_1,...,w_k>()`**  
-Return an integer in [0,k), where i is choosen with probability w_i/(sum over w).
+Return an integer in [0,k), where i is chosen with probability w_i/(sum over w).
 
 **`Real normal(Real mean, Real stddev)`**  
 **`Real normal(Real lower, Real upper, Real mean, Real stddev)`**  
@@ -426,7 +426,7 @@ If `n` > 0 this calls maximum, for `n` < 0 this calls minimum, `n` == 0 is undef
 
 **`Integer prime(Integer upper)`**  
 **`Integer prime(Integer lower, Integer upper)`** 
-Generates a unirformally choosen prime in the [0, upper) or [lower, upper).
+Generates a uniformly chosen prime in the [0, upper) or [lower, upper).
 
 ##### Sequences
 **`std::vector<Integer> distinct(Integer count, Integer upper)`**  
@@ -462,30 +462,30 @@ Each possible output has the same probability to get generated.
 **`std::vector<Integer> nonIncreasing(Integer count, Integer upper)`**  
 Generates `count` different integers in [0, upper) respectively [lower, upper).
 The sequences generated by the first two methods is equal to calling `Random::integer()` `count` times.
-All other methods will generate a sequence which fits the name of the generating mehtod.
+All other methods will generate a sequence which fits the name of the generating method.
 Each possible output has the same probability to get generated.
 
 **`std::vector<Integer> partition(Integer n, Integer k)`**  
 **`std::vector<Integer> partition(Integer n, Integer k, Integer min)`**  
-Uniformally generates an unsorted partition of `n` into `k` integers in [1, n) or [min, n).
+Uniformly generates an unsorted partition of `n` into `k` integers in [1, n) or [min, n).
 Note that with non positive `min` the distribution is not uniform.
 
 **`std::string string(Integer n)`**  
 **`std::string string(Integer n, string_view alphabet)`**  
-Uniformally generates a string of length n with chars from the given alphabet or a-z if no alphabet is given.
+Uniformly generates a string of length n with chars from the given alphabet or a-z if no alphabet is given.
 
 **`std::string bracketSequence(Integer n)`**  
-Uniformally generates a bracket sequence of length 2n.
+Uniformly generates a bracket sequence of length 2n.
 
 **`std::vector<std::pair<Integer, Integer>> convex(Integer n, Integer dim)`**  
 **`std::vector<Point> convex(Integer n, Integer dim)`**  
-Generates `n` points forming a convex polygon with points in (-dim,dim)<sup>2</sup> (ther polygon will always fill the width and height).
+Generates `n` points forming a convex polygon with points in (-dim,dim)<sup>2</sup> (the polygon will always fill the width and height).
 The points will be in counter clockwise order.
 Note that points may be collinear.
 
 **`std::vector<std::pair<Integer, Integer>> nonCollinearPoints(Integer n, Integer dim)`**  
 **`std::vector<Point> nonCollinearPoints(Integer n, Integer dim)`**  
-Generates `n` points in generel position with points in (-dim,dim)<sup>2</sup>.
+Generates `n` points in general position with points in (-dim,dim)<sup>2</sup>.
 
 ##### utility
 **`const RandomIt::value_type& select(RandomIt first, RandomIt last)`**  
@@ -493,17 +493,17 @@ Generates `n` points in generel position with points in (-dim,dim)<sup>2</sup>.
 **`T select(T(c)[N])`**  
 **`T select(std::pair<T, T> t)`**  
 **`T select(std::complex<T> t)`**  
-Uniformally select a value from a range, complete container, initializer list, pair or complex.
+Uniformly select a value from a range, complete container, initializer list, pair or complex.
 
 **`void shuffle(RandomIt first, RandomIt last)`**  
 **`void shuffle(C& c)`**  
 **`void shuffle(std::pair<T, T>& t)`**  
 **`void shuffle(std::complex<T>& t)`**  
-Uniformally shuffle a range, complete container, pair or complex.
+Uniformly shuffle a range, complete container, pair or complex.
 
 **`Integer rotate(RandomIt first, RandomIt last)`**  
 **`Integer rotate(C& c)`**  
-Uniformally rotate a range, complete container and return the amount by which it was rotate left.
+Uniformly rotate a range, complete container and return the amount by which it was rotate left.
 
 
 ## Math functions
@@ -516,7 +516,7 @@ Calculate `(lhs * rhs) % mod` or `(lhs ^ rhs) % mod` without overflow.
 
 **`constexpr Integer multInv(Integer n, Integer mod)`**  
 Calculates the multiplicative inverse of `n` modulo `mod`.
-> Note: if the multiplicative inverse does not exists the method will return `-1`.
+> Note: if the multiplicative inverse does not exist the method will return `-1`.
 
 **`constexpr bool isPrime(Integer n)`**  
 Checks if a given number `n` is prime.
@@ -533,7 +533,7 @@ returns the absolute difference between a and b.
 
 
 ## class boolean
-This is a wrapper for a `bool` which may additionally hold a reason for the `bool` value in for of some kind of a whitness or an counter example.
+This is a wrapper for a `bool` which may additionally hold a reason for the `bool` value in for of some kind of a witness or an counter example.
 
 #### Member
 **`bool value`**  
@@ -548,7 +548,7 @@ Creates a new `boolean` value
 Allow implicit casting to a normal `bool`.
 
 **`constexpr bool hasReason() const`**  
-Checks if this boolean has a whitness or counter example.
+Checks if this boolean has a witness or counter example.
 
 
 ## Utility functions
@@ -557,13 +557,13 @@ Checks if this boolean has a whitness or counter example.
 **`boolean<T> isPerm(C c, C::value_type offset)`**  
 **`boolean<T> isPerm(RandomIt first, RandomIt last, RandomIt::value_type offset)`**  
 Checks if `c` respectively [first, last) is an permutation of [0, n) respectively [offset, offset+n), where n is the distance between first and last.
-If the input is not a permutation a whitness in the form of a duplicate elemnt or a value outside of the allowed range is returned.
+If the input is not a permutation a witness in the form of a duplicate element or a value outside of the allowed range is returned.
 > Note: this function is only defined for integer ranges.
 
 **`bool isPerm(C1 c1, C2, c2)`**  
 **`bool isPerm(itA firstA, itA lastA, itB firstB, itB lastB)`**  
 Checks if `c1` respectively [firstA, lastA) is an permutation of `c2` respectively [firstB, lastB).
-If the input is not a permutation but both ranges have the same number of elments a whitness in the form of an elemnt from \*[firstA, lastA) is returned.
+If the input is not a permutation but both ranges have the same number of elements a witness in the form of an element from [firstA, lastA) is returned.
 
 **`constexpr boolean<Integer> anyAdjacent(C c, BinaryPredicate p)`**  
 **`constexpr boolean<Integer> anyAdjacent(C c, BinaryPredicate p)`**  
@@ -573,7 +573,7 @@ If the input is not a permutation but both ranges have the same number of elment
 **`constexpr boolean<Integer> noneAdjacent(RandomIt first, RandomIt last, BinaryPredicate p)`**  
 **`constexpr boolean<Integer> allAdjacent(RandomIt first, RandomIt last, BinaryPredicate p)`**  
 Checks if the predicate `p` evaluates to true for any, none or all adjacent entries in the container `c` respectively the range [first, last).
-If the `boolean` is `false` the length of the prefix for which it would have been true is returned as a whitness.
+If the `boolean` is `false` the length of the prefix for which it would have been true is returned as a witness.
 
 **`constexpr boolean<Integer> areIncreasing(C c)`**  
 **`constexpr boolean<Integer> areNonDecreasing(C c)`**  
@@ -584,13 +584,13 @@ If the `boolean` is `false` the length of the prefix for which it would have bee
 **`constexpr boolean<Integer> areDecreasing(RandomIt first, RandomIt last)`**  
 **`constexpr boolean<Integer> areNonIncreasing(RandomIt first, RandomIt last)`**  
 Checks if the container `c` respectively the range [first, last) is ordered according to the name of this function.
-If the `boolean` is `false` the length of the prefix for which it would have been true is returned as a whitness.
+If the `boolean` is `false` the length of the prefix for which it would have been true is returned as a witness.
 
 
 **`constexpr boolean<T> areDistinct(C c)`**  
 **`constexpr boolean<T> areDistinct(RandomIt first, RandomIt last)`**  
 Checks if the container `c` respectively the range [first, last) only contains disjoint elements.
-If there is a duplicate element it is returned as a whitness.
+If there is a duplicate element it is returned as a witness.
 
 **`constexpr auto join(C c)`**  
 **`constexpr auto join(C c, char separator)`**  
@@ -625,7 +625,7 @@ Checks if a given char belong to the alphabet fitting the name of the function.
 **`constexpr boolean<char> isVowel(std::string_view s)`**  
 **`constexpr boolean<char> isConsonant(std::string_view s)`**  
 Checks if all chars of a given string belong to the alphabet fitting the name of the function.
-If not an invalid char from the string is given as a whitness.
+If not an invalid char from the string is given as a witness.
 
 **`constexpr char toLower(char c)`**  
 **`constexpr char toUpper(char c)`**  
@@ -672,12 +672,12 @@ Checks if the points form a simple polygon.
 
 **`constexpr bool isCCW(RandomIt first, RandomIt last)`**  
 **`constexpr bool isCCW(const C& c)`**  
-Checks if the points are orientatet counterclockwise (this is only well defined for simple polygons).
+Checks if the points are orientated counterclockwise (this is only well defined for simple polygons).
 
 
 ## class ConstraintsLogger 
 An instance of this class is provided for input and output validators as `constraint` after calling `init(argc, argv).
 #### Methods
 **`Constraint& operator[](std::string name)`**  
-Returns a `constraint` which can be given to an input stream to automatically log informations about the parsed input.
+Returns a `constraint` which can be given to an input stream to automatically log information about the parsed input.
 See [BAPCtools](https://github.com/RagnarGrootKoerkamp/BAPCtools/blob/master/doc/implementation_notes.md#constraints-checking).

@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-// version 2.6.2                                                              //
+// version 2.6.3                                                              //
 // https://github.com/mzuenni/icpc-header                                     //
 //============================================================================//
 
@@ -1920,9 +1920,9 @@ namespace Random {
 //============================================================================//
 // args parser                                                                //
 //============================================================================//
-class ParamaterBase {
+class ParameterBase {
 	friend class Command;
-	friend struct Paramater;
+	friend struct Parameter;
 
 	std::optional<std::string_view> token;
 
@@ -1933,8 +1933,8 @@ class ParamaterBase {
 		return res;
 	}
 
-	ParamaterBase() = default;
-	explicit ParamaterBase(std::string_view token_) : token(token_) {}
+	ParameterBase() = default;
+	explicit ParameterBase(std::string_view token_) : token(token_) {}
 
 public:
 	std::string asString() const {
@@ -1962,11 +1962,11 @@ public:
 	}
 };
 
-struct Paramater final : private ParamaterBase {
-	using ParamaterBase::ParamaterBase;
-	using ParamaterBase::asString;
-	using ParamaterBase::asInteger;
-	using ParamaterBase::asReal;
+struct Parameter final : private ParameterBase {
+	using ParameterBase::ParameterBase;
+	using ParameterBase::asString;
+	using ParameterBase::asInteger;
+	using ParameterBase::asReal;
 
 	bool exists() const {
 		return token.has_value();
@@ -1977,7 +1977,7 @@ struct Paramater final : private ParamaterBase {
 	}
 };
 
-class Command final : private ParamaterBase {
+class Command final : private ParameterBase {
 	const std::vector<std::string>& raw;
 	const Integer first, count;
 	const bool found;
@@ -2005,7 +2005,7 @@ class Command final : private ParamaterBase {
 public:
 	explicit Command(const std::vector<std::string>& raw_) : raw(raw_), first(0), count(0), found(false) {}
 	explicit Command(const std::vector<std::string>& raw_, Integer first_, Integer count_)
-	                 : ParamaterBase(count_ == 0 ? ParamaterBase() : ParamaterBase(raw_[first_])),
+	                 : ParameterBase(count_ == 0 ? ParameterBase() : ParameterBase(raw_[first_])),
 	                   raw(raw_), first(first_), count(count_), found(true) {
 		judgeAssert<std::invalid_argument>(count >= 0, "Command: Invalid command in args!");
 	}
@@ -2022,14 +2022,14 @@ public:
 		return count;
 	}
 
-	Paramater operator[](Integer i) const {
-		if (i >= 0 and i < count) return Paramater(raw[first + i]);
-		return Paramater();
+	Parameter operator[](Integer i) const {
+		if (i >= 0 and i < count) return Parameter(raw[first + i]);
+		return Parameter();
 	}
 
-	using ParamaterBase::asString;
-	using ParamaterBase::asInteger;
-	using ParamaterBase::asReal;
+	using ParameterBase::asString;
+	using ParameterBase::asInteger;
+	using ParameterBase::asReal;
 
 	template<Integer N = -1>
 	auto asStrings() const {
