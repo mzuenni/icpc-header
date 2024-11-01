@@ -3011,6 +3011,7 @@ namespace Multipass {
 //called as ./generator [arguments]
 namespace Generator {
 	using namespace ValidateBase;
+	using Verdicts::FAIL;
 
 	OutputStream testOut;
 
