@@ -35,9 +35,10 @@
 
 namespace GraphDetail {
 	struct NoData final {};
+	constexpr NoData NOTHING;
 
 	// EdgeWrapper may be returned by some function
-	template<typename E>
+	template<typename E, typename = void>
 	struct EdgeWrapper final {
 		const Integer from, to;
 		E& data;
@@ -50,32 +51,35 @@ namespace GraphDetail {
 			return data;
 		}
 
-		friend std::ostream& operator<<(std::ostream& os, const EdgeWrapper<E>& e) {
+		friend std::ostream& operator<<(std::ostream& os, const EdgeWrapper& e) {
 			os << e.from << " " << e.to;
 			os << " " << *e;
 			return os;
 		}
 
-		friend OutputStream& operator<<(OutputStream& os, const EdgeWrapper<E>& e) {
+		friend OutputStream& operator<<(OutputStream& os, const EdgeWrapper& e) {
 			os << e.from << " " << e.to;
 			os << " " << *e;
 			return os;
 		}
 	};
-	template<>
-	struct EdgeWrapper<NoData> final {
+	template<typename E>
+	struct EdgeWrapper<E, typename std::enable_if<
+		std::is_same<E, NoData>::value or
+		std::is_same<E, const NoData>::value
+	>::type> final {
 		const Integer from, to;
 		EdgeWrapper(Integer from_, Integer to_) : from(from_), to(to_) {}
-		EdgeWrapper(Integer from_, Integer to_, NoData& /**/) : EdgeWrapper(from_, to_) {}
+		EdgeWrapper(Integer from_, Integer to_, E& /**/) : EdgeWrapper(from_, to_) {}
 
-		void operator*() const {}
+		E& operator*() const {return NOTHING;}
 
-		friend std::ostream& operator<<(std::ostream& os, const EdgeWrapper<NoData>& e) {
+		friend std::ostream& operator<<(std::ostream& os, const EdgeWrapper& e) {
 			os << e.from << " " << e.to;
 			return os;
 		}
 
-		friend OutputStream& operator<<(OutputStream& os, const EdgeWrapper<NoData>& e) {
+		friend OutputStream& operator<<(OutputStream& os, const EdgeWrapper& e) {
 			os << e.from << " " << e.to;
 			return os;
 		}
@@ -91,6 +95,7 @@ namespace GraphDetail {
 		// from1 != from2 <=> key(from1, to) != key(from2, to)
 		Integer fromXorTo, to;
 		E data;
+		EdgeType(Integer fromXorTo_, Integer to_, E&& data_) : fromXorTo(fromXorTo_), to(to_), data(std::forward<E>(data)) {}
 	};
 
 	template<typename E>
