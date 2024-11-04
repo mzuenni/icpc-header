@@ -64,10 +64,7 @@ namespace GraphDetail {
 		}
 	};
 	template<typename E>
-	struct EdgeWrapper<E, typename std::enable_if<
-		std::is_same<E, NoData>::value or
-		std::is_same<E, const NoData>::value
-	>::type> final {
+	struct EdgeWrapper<E, typename std::enable_if_t<std::is_same_v<std::remove_cv_t<E>, NoData>>> final {
 		const Integer from, to;
 		EdgeWrapper(Integer from_, Integer to_) : from(from_), to(to_) {}
 		EdgeWrapper(Integer from_, Integer to_, E& /**/) : EdgeWrapper(from_, to_) {}
@@ -95,7 +92,8 @@ namespace GraphDetail {
 		// from1 != from2 <=> key(from1, to) != key(from2, to)
 		Integer fromXorTo, to;
 		E data;
-		EdgeType(Integer fromXorTo_, Integer to_, E&& data_) : fromXorTo(fromXorTo_), to(to_), data(std::forward<E>(data)) {}
+		EdgeType(Integer fromXorTo_, Integer to_, const E& data_) : fromXorTo(fromXorTo_), to(to_), data(data_) {}
+		EdgeType(Integer fromXorTo_, Integer to_, E&& data_) : fromXorTo(fromXorTo_), to(to_), data(std::forward<E>(data_)) {}
 	};
 
 	template<typename E>
