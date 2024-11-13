@@ -2982,7 +2982,7 @@ namespace Multipass {
 			if ((pass & 1) != 0) {
 				std::swap(nextfile, prevfile);
 			}
-			prevstate = InputStream(std::filesystem::path(arguments[3]) / prevfile, false, false, juryOut, Verdicts::FAIL);
+			prevstate = InputStream(std::filesystem::path(arguments[3]) / prevfile, false, true, juryOut, Verdicts::FAIL);
 		} else {
 			pass = 0;
 		}
