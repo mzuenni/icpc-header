@@ -2929,7 +2929,7 @@ namespace OutputValidator {
 
 		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, juryOut, Verdicts::FAIL);
 		juryAns = InputStream(std::filesystem::path(arguments[2]), false, caseSensitive, juryOut, Verdicts::FAIL);
-		teamAns = InputStream(std::cin, spaceSensitive, caseSensitive, teamOut, Verdicts::WA);
+		teamAns = InputStream(std::cin, spaceSensitive, caseSensitive, juryOut, Verdicts::WA);
 		initConstraints();
 	}
 
@@ -2952,7 +2952,7 @@ namespace Interactor {
 		toTeam = OutputStream(std::cout);
 
 		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, juryOut, Verdicts::FAIL);
-		fromTeam = InputStream(std::cin, spaceSensitive, caseSensitive, teamOut, Verdicts::WA);
+		fromTeam = InputStream(std::cin, spaceSensitive, caseSensitive, juryOut, Verdicts::WA);
 	}
 
 } // namespace Interactor
