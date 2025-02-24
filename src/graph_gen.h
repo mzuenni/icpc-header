@@ -230,7 +230,7 @@ namespace GraphDetail {
 			to = std::min(nodeCount(), to - minId);
 			for (const auto& e : getEdges()) {
 				if (e.from >= from and e.from < to and e.to >= from and e.to < to) {
-					res.addEdge(e.from, e.to, e.data);
+					res.addEdge(e.from, e.to, *e);
 				}
 			}
 			return res;
