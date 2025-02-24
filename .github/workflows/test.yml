@@ -1,10 +1,21 @@
 name: Test
 on: [push, pull_request]
 jobs:
-  posix:
+  linux:
     strategy:
       matrix:
-        os: [ubuntu-latest, ubuntu-22.04, macos-13, macos-14]
+        os: [ubuntu-latest, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: g++ -std=c++20 -Wall -Wextra -Wpedantic -Werror -Wno-maybe-uninitialized -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
+      - run: ./validate
+      - run: g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -Wno-maybe-uninitialized -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
+      - run: ./validate
+  mac:
+    strategy:
+      matrix:
+        os: [macos-13, macos-14]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
