@@ -1963,7 +1963,9 @@ public:
 };
 
 struct Parameter final : private ParameterBase {
-	using ParameterBase::ParameterBase;
+	Parameter() = default;
+	explicit Parameter(std::string_view token) : ParameterBase(token) {}
+
 	using ParameterBase::asString;
 	using ParameterBase::asInteger;
 	using ParameterBase::asReal;
@@ -2057,7 +2059,7 @@ class CommandParser final {
 		return s.size() > 2 and s.substr(0, 2) == COMMAND_PREFIX;
 	}
 	void addCommand(std::string_view command, Integer first, Integer count = 0) {
-		judgeAssert<std::invalid_argument>(commands.count(command) == 0, "Command: Duplcated command in args!");
+		judgeAssert<std::invalid_argument>(commands.count(command) == 0, "CommandParser: Duplicated command in args!");
 		commands.emplace(command, std::pair<Integer, Integer>{first, count});
 	}
 
@@ -2089,17 +2091,17 @@ public:
 	CommandParser& operator=(const CommandParser&) = delete;
 
 	std::string_view operator[](Integer t) const {
-		judgeAssert<std::out_of_range>(t >= 0 and t < static_cast<Integer>(raw.size()), "Command: Index out of args!");
+		judgeAssert<std::out_of_range>(t >= 0 and t < static_cast<Integer>(raw.size()), "CommandParser: Index out of args!");
 		return raw[t];
 	}
 	Command operator[](std::string_view command) const & {
-		judgeAssert<std::invalid_argument>(details::isToken(command), "Command: must not contain a space!");
+		judgeAssert<std::invalid_argument>(details::isToken(command), "CommandParser: command must not contain a space!");
 		auto it = commands.find(command);
 		if (it == commands.end()) return Command(raw);
 		return Command(raw, it->second.first, it->second.second);
 	}
 	Command getRaw(std::string_view command) const & {
-		judgeAssert<std::invalid_argument>(details::isToken(command), "Command: must not contain a space!");
+		judgeAssert<std::invalid_argument>(details::isToken(command), "CommandParser: command must not contain a space!");
 		auto it = tokens.find(command);
 		if (it == tokens.end()) return Command(raw);
 		return Command(raw, it->second, raw.size() - it->second);
@@ -2108,6 +2110,21 @@ public:
 		return Command(raw, 0, raw.size());
 	}
 };
+
+
+//============================================================================//
+// Constants                                                                  //
+//============================================================================//
+Parameter parseConstant(std::string_view s) {
+	if (s.size() >= 4 and 
+		s.substr(0, 2) == "{{" and 
+		s.substr(s.size() - 2) == "}}") {
+		return Parameter();
+	}
+	return Parameter(s);
+}
+
+#define constant(key) parseConstant(#key)
 
 
 //============================================================================//
