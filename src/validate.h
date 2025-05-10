@@ -130,7 +130,7 @@ constexpr std::string_view FLOAT_RELATIVE_TOLERANCE     = "float_relative_tolera
 constexpr std::string_view FLOAT_TOLERANCE              = "float_tolerance";
 constexpr std::string_view JUDGE_MESSAGE                = "judgemessage.txt";
 constexpr std::string_view TEAM_MESSAGE                 = "teammessage.txt";
-constexpr std::ios_base::openmode MESSAGE_MODE          = std::ios::out | std::ios::ate;
+constexpr std::ios_base::openmode MESSAGE_MODE          = std::ios::out;
 constexpr char DEFAULT_SEPARATOR                        = SPACE;
 constexpr std::string_view EMPTY_COMMAND                = "";
 constexpr std::string_view COMMAND_PREFIX               = "--";
@@ -2989,25 +2989,25 @@ namespace Multipass {
 	void init() {
 		judgeAssert<std::logic_error>(::details::initialized(), "validate.h: Multipass::init() was called before init(argc, argv)!");
 
-		auto path = std::filesystem::path(arguments[3]) / ".pass";
+		auto multipassdir = std::filesystem::path(arguments[3]) / "multipass";
+		auto passfile = multipassdir / ".pass";
 		std::string nextfile = ".state0";
 		std::string prevfile = ".state1";
-		if (std::filesystem::exists(path)) {
-			std::ifstream in(path);
+		if (std::filesystem::exists(passfile)) {
+			std::ifstream in(passfile);
 			in >> pass;
 			pass++;
 			if ((pass & 1) != 0) {
 				std::swap(nextfile, prevfile);
 			}
-			prevstate = InputStream(std::filesystem::path(arguments[3]) / prevfile, false, true, juryOut, Verdicts::FAIL);
+			prevstate = InputStream(multipassdir / prevfile, false, true, juryOut, Verdicts::FAIL);
 		} else {
 			pass = 0;
 		}
-		std::filesystem::remove(std::filesystem::path(arguments[3]) / nextfile);
-		nextstate = OutputStream(std::filesystem::path(arguments[3]) / nextfile, std::ios::out);
+		std::filesystem::remove(multipassdir / nextfile);
+		nextstate = OutputStream(multipassdir / nextfile, std::ios::out);
 		nextpass = OutputStream(details::nextpassBuffer);
-		std::ofstream out(path);
-		out << pass;
+		std::ofstream(passfile) << pass;
 	}
 
 	[[noreturn]] void NEXT() {
