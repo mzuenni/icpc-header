@@ -3012,7 +3012,7 @@ namespace Multipass {
 
 	[[noreturn]] void NEXT() {
 		{
-			std::ofstream file(std::filesystem::path(arguments[3]) / "nextpass.in");
+			std::ofstream file(std::filesystem::path(arguments[3]) / "nextpass.in"); // this should not be in the multipass subdirectory!
 			judgeAssert<std::runtime_error>(file.good(), "NEXT(): Could not open file: nextpass.in");
 			file << details::nextpassBuffer.str();
 		}
