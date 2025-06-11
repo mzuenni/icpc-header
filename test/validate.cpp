@@ -606,6 +606,8 @@ void checkGeomatry() {
 	assert(!isConvex(pts{{0,0}, {2,0}, {2,2}, {1,2}, {1,1}, {3,1}, {3,3}, {0,3}}));
 	assert(isConvex(pts{{0,0}, {1,0}, {2,0}, {2,2}, {0,2}, {0,1}}));
 	assert(isConvex(pts{{0,0}, {2,0}, {2,2}}));
+	assert(!isConvex(pts{{0,0}, {1,0}, {1,1}, {0,1}, {0,0}, {1,0}, {1,1}, {0,1}}));
+	assert(!isConvex(pts{{0,0}, {1,0}, {1,1}, {0,1}, {1,0}, {1,1}, {0,1}}));
 
 	assert(!isStrictlyConvex(pts{}));
 	assert(!isStrictlyConvex(pts{{1,1}}));
@@ -615,6 +617,8 @@ void checkGeomatry() {
 	assert(!isStrictlyConvex(pts{{0,0}, {2,0}, {2,2}, {1,2}, {1,1}, {3,1}, {3,3}, {0,3}}));
 	assert(!isStrictlyConvex(pts{{0,0}, {1,0}, {2,0}, {2,2}, {0,2}, {0,1}}));
 	assert(isStrictlyConvex(pts{{0,0}, {2,0}, {2,2}}));
+	assert(!isStrictlyConvex(pts{{0,0}, {1,0}, {1,1}, {0,1}, {0,0}, {1,0}, {1,1}, {0,1}}));
+	assert(!isStrictlyConvex(pts{{0,0}, {1,0}, {1,1}, {0,1}, {1,0}, {1,1}, {0,1}}));
 
 	assert(isConvex(Random::convex(100, 1000'000'000)));//this is always true
 	assert(isStrictlyConvex(Random::convex(100, 1000'000'000)));//this is likely true

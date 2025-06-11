@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-// version 2.6.3                                                              //
+// version 2.6.4                                                              //
 // https://github.com/mzuenni/icpc-header                                     //
 //============================================================================//
 
@@ -1210,6 +1210,7 @@ constexpr bool isConvex(RandomIt first, RandomIt last) {
 	bool hasArea = false;
 	for (std::size_t i = 0; i < n; i++) {
 		if (first[i] == first[(i+1) % n]) return false;
+		if (i > 0 && first[0] == first[i]) return false;
 		if (cross(first[0], first[i], first[(i+1) % n]) < 0) return false;
 		if (cross(first[i], first[(i+1) % n], first[(i+2) % n]) < 0) return false;
 		hasArea |= cross(first[i], first[(i+1) % n], first[(i+2) % n]) != 0;
