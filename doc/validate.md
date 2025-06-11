@@ -660,11 +660,11 @@ Checks if the given string can be parsed as Real. If yes that Real is also provi
 ## Geometry functions
 **`constexpr bool isConvex(RandomIt first, RandomIt last)`**  
 **`constexpr bool isConvex(const C& c)`**  
-Checks if the points form a convex polygon.
+Checks if the points form a counter clockwise oriented convex polygon.
 
 **`constexpr bool isStrictlyConvex(RandomIt first, RandomIt last)`**  
 **`constexpr bool isStrictlyConvex(const C& c)`**  
-Checks if the points form a convex polygon without 3 collinear points.
+Checks if the points form a counter clockwise oriented convex polygon without 3 collinear points.
 
 **`bool isSimple(RandomIt first, RandomIt last)`**  
 **`bool isSimple(const C& c)`**  
