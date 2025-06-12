@@ -1205,18 +1205,20 @@ namespace details {
 
 template<typename RandomIt>
 constexpr bool isConvex(RandomIt first, RandomIt last) {
-	using Point = typename std::iterator_traits<RandomIt>::value_type;
 	std::size_t n = details::assertBounds(first, last);
 	if (n < 3) return false;
 	bool hasArea = false;
-	auto corner = std::min_element(first, last, [](const Point& a, const Point& b){
-		if (getX(a) != getX(b)) return getX(a) < getX(b);
-		return getY(a) < getY(b);
-	});
+	bool increasing = true;
+	auto getDist = [&](std::size_t i) {
+		auto p = first[0];
+		getX(p) -= getX(first[i % n]);
+		getY(p) -= getY(first[i % n]);
+		return dot(p, p);
+	};
 	for (std::size_t i = 0; i < n; i++) {
 		if (first[i] == first[(i+1) % n]) return false;
-		if (corner != first + i && *corner == first[i]) return false;
-		if (cross(*corner, first[i], first[(i+1) % n]) < 0) return false;
+		if (getDist(i+1) < getDist(i)) increasing = false;
+		if (getDist(i+1) > getDist(i) && !increasing) return false;
 		if (cross(first[i], first[(i+1) % n], first[(i+2) % n]) < 0) return false;
 		hasArea |= cross(first[i], first[(i+1) % n], first[(i+2) % n]) != 0;
 	}
