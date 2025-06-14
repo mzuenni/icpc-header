@@ -1208,21 +1208,23 @@ constexpr bool isConvex(RandomIt first, RandomIt last) {
 	std::size_t n = details::assertBounds(first, last);
 	if (n < 3) return false;
 	bool hasArea = false;
-	bool increasing = true;
-	auto getDist = [&](std::size_t i) {
-		auto p = first[0];
-		getX(p) -= getX(first[i % n]);
-		getY(p) -= getY(first[i % n]);
-		return dot(p, p);
+	Real winding = 0.0_real;
+	auto dir = [&](std::size_t i){
+		auto a = first[i % n];
+		auto b = first[(i+1) % n];
+		std::complex<Real> d(getX(b) - getX(a), getY(b) - getY(a));
+		if (a == b) return d;
+		return d / std::abs(d);
 	};
 	for (std::size_t i = 0; i < n; i++) {
 		if (first[i] == first[(i+1) % n]) return false;
-		if (getDist(i+1) < getDist(i)) increasing = false;
-		if (getDist(i+1) > getDist(i) && !increasing) return false;
-		if (cross(first[i], first[(i+1) % n], first[(i+2) % n]) < 0) return false;
-		hasArea |= cross(first[i], first[(i+1) % n], first[(i+2) % n]) != 0;
+		Integer ccw = cross(first[i], first[(i+1) % n], first[(i+2) % n]);
+		hasArea |= ccw > 0;
+		if (ccw < 0) return false;
+		winding += std::acos(std::clamp(dot(dir(i), dir(i+1)), -1.0_real, 1.0_real));
 	}
-	return hasArea;
+	judgeAssert(!std::isnan(winding), "isConvex(): float error while calculating the winding number");
+	return hasArea && winding < 9;
 }
 template<typename C>
 constexpr bool isConvex(const C& c) {
@@ -1233,9 +1235,11 @@ template<typename RandomIt>
 constexpr bool isStrictlyConvex(RandomIt first, RandomIt last) {
 	if (!isConvex(first, last)) return false;
 	std::size_t n = std::distance(first, last);
-	for (std::size_t i = 0; i < n; i++) {
-		if (cross(first[i], first[(i+1) % n], first[(i+2) % n]) == 0) return false;
+	for (std::size_t i = 2; i < n; i++) {
+		if (cross(first[i-2], first[i-1], first[i]) == 0) return false;
 	}
+	if (cross(last[-2], last[-1], first[0]) == 0) return false;
+	if (cross(last[-1], first[0], first[1]) == 0) return false;
 	return true;
 }
 template<typename C>

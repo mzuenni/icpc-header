@@ -596,7 +596,7 @@ struct CompileJoin<T, std::void_t<decltype(join(std::declval<T>()))>> : std::tru
 
 static_assert(!CompileJoin<int>{}, "join(int) should be invalid!");
 
-void checkGeomatry() {
+void checkGeometry() {
 	using pts = std::vector<std::pair<Integer, Integer>>;
 	assert(!isConvex(pts{}));
 	assert(!isConvex(pts{{1,1}}));
@@ -610,6 +610,8 @@ void checkGeomatry() {
 	assert(!isConvex(pts{{0,0}, {1,0}, {1,1}, {0,1}, {1,0}, {1,1}, {0,1}}));
 	assert(!isConvex(pts{{0,0}, {0,-1}, {1,-1}, {1,1}, {0,1}, {0,-1}, {1,-1}, {1,1}, {0,1}}));
 	assert(!isConvex(pts{{0,0}, {3,0}, {3,3}, {1,1}, {2,2}, {0,2}}));
+	assert(isConvex(pts{{0,0}, {3,0}, {2,2}, {0,3}}));
+	assert(!isConvex(pts{{0,0}, {2,0}, {2,1}, {1,2}, {2,1}, {1,2}, {0,2}}));
 
 	assert(!isStrictlyConvex(pts{}));
 	assert(!isStrictlyConvex(pts{{1,1}}));
@@ -623,6 +625,8 @@ void checkGeomatry() {
 	assert(!isStrictlyConvex(pts{{0,0}, {1,0}, {1,1}, {0,1}, {1,0}, {1,1}, {0,1}}));
 	assert(!isStrictlyConvex(pts{{0,0}, {0,-1}, {1,-1}, {1,1}, {0,1}, {0,-1}, {1,-1}, {1,1}, {0,1}}));
 	assert(!isStrictlyConvex(pts{{0,0}, {3,0}, {3,3}, {1,1}, {2,2}, {0,2}}));
+	assert(isStrictlyConvex(pts{{0,0}, {3,0}, {2,2}, {0,3}}));
+	assert(!isStrictlyConvex(pts{{0,0}, {2,0}, {2,1}, {1,2}, {2,1}, {1,2}, {0,2}}));
 
 	assert(isConvex(Random::convex(100, 1000'000'000)));//this is always true
 	assert(isStrictlyConvex(Random::convex(100, 1000'000'000)));//this is likely true
@@ -665,7 +669,7 @@ int main() {
 	checkCommandParser();
 	checkInputStream();
 	checkJoin();
-	checkGeomatry();
+	checkGeometry();
 
 	std::cout << "All tests passed!" << std::endl;
 }
