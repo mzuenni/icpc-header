@@ -1212,7 +1212,10 @@ constexpr bool isConvex(RandomIt first, RandomIt last) {
 	auto dir = [&](std::size_t i){
 		auto a = first[i % n];
 		auto b = first[(i+1) % n];
-		std::complex<Real> d(getX(b) - getX(a), getY(b) - getY(a));
+		std::complex<Real> d{
+			static_cast<Real>(getX(b) - getX(a)),
+			static_cast<Real>(getY(b) - getY(a))
+		};
 		if (a == b) return d;
 		return d / std::abs(d);
 	};
