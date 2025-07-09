@@ -1238,6 +1238,7 @@ template<typename RandomIt>
 constexpr bool isStrictlyConvex(RandomIt first, RandomIt last) {
 	if (!isConvex(first, last)) return false;
 	std::size_t n = std::distance(first, last);
+	if (n < 3) return false;
 	for (std::size_t i = 2; i < n; i++) {
 		if (cross(first[i-2], first[i-1], first[i]) == 0) return false;
 	}
