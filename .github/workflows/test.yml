@@ -31,6 +31,7 @@ jobs:
           sudo dpkg --add-architecture i386
           sudo apt-get update
           sudo apt-get install g++-i686-linux-gnu libasan6:i386 libubsan1:i386
+      - run: export UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1
       - run: i686-linux-gnu-g++ -std=c++17 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
       - run: ./validate
       - run: i686-linux-gnu-g++ -std=c++20 -Wall -Wextra -Wpedantic -Werror -O2 -fsanitize=address,undefined,pointer-compare,pointer-subtract test/validate.cpp -o validate
