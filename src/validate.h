@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-// version 2.6.4                                                              //
+// version 2.6.5                                                              //
 // https://github.com/mzuenni/icpc-header                                     //
 //============================================================================//
 
@@ -1194,12 +1194,30 @@ namespace details {
 
 	template<typename RandomIt>
 	constexpr std::size_t assertBounds(RandomIt first, RandomIt last) {
+		static_assert(std::is_same<decltype(getX(*first)), Integer>::value, "assertBounds(): x coordinate must have type Integer");
+		static_assert(std::is_same<decltype(getY(*first)), Integer>::value, "assertBounds(): y coordinate must have type Integer");
 		std::size_t n = 0;
 		for (auto it = first; it != last; it++, n++) {
 			judgeAssert(std::abs(getX(*it)) <= 0x3FFF'FFFF, "assertBounds(): coordinates too large!");
 			judgeAssert(std::abs(getY(*it)) <= 0x3FFF'FFFF, "assertBounds(): coordinates too large!");
 		}
 		return n;
+	}
+
+	template<typename RandomIt>
+	constexpr bool isStrict(RandomIt first, RandomIt last) {
+		std::size_t n = std::distance(first, last);
+		if (n < 3) return false;
+		for (std::size_t i = 2; i < n; i++) {
+			if (cross(first[i-2], first[i-1], first[i]) == 0) return false;
+		}
+		if (cross(last[-2], last[-1], first[0]) == 0) return false;
+		if (cross(last[-1], first[0], first[1]) == 0) return false;
+		return true;
+	}
+	template<typename C>
+	constexpr bool isStrict(const C& c) {
+		return isStrict(std::begin(c), std::end(c));
 	}
 }
 
@@ -1237,13 +1255,7 @@ constexpr bool isConvex(const C& c) {
 template<typename RandomIt>
 constexpr bool isStrictlyConvex(RandomIt first, RandomIt last) {
 	if (!isConvex(first, last)) return false;
-	std::size_t n = std::distance(first, last);
-	if (n < 3) return false;
-	for (std::size_t i = 2; i < n; i++) {
-		if (cross(first[i-2], first[i-1], first[i]) == 0) return false;
-	}
-	if (cross(last[-2], last[-1], first[0]) == 0) return false;
-	if (cross(last[-1], first[0], first[1]) == 0) return false;
+	if (!::details::isStrict(first, last)) return false;
 	return true;
 }
 template<typename C>
@@ -1845,21 +1857,23 @@ namespace Random {
 	// geometry                                                               //
 	//========================================================================//
 	template<typename Point = std::pair<Integer, Integer>>
-	std::vector<Point> convex(Integer n, Integer dim) {
-		judgeAssert<std::invalid_argument>(dim <= 0x3FFF'FFFF, "Random::convex(): dim too large!");
-		judgeAssert<std::invalid_argument>(dim > 0, "Random::convex(): dim must be positive!");
-		judgeAssert<std::invalid_argument>(n <= 8*dim - 8, "Random::convex(): dim too small!");
+	std::vector<Point> convex(Integer n, Integer dimX, Integer dimY) {
+		judgeAssert<std::invalid_argument>(dimX <= 0x3FFF'FFFF, "Random::convex(): dimX too large!");
+		judgeAssert<std::invalid_argument>(dimY <= 0x3FFF'FFFF, "Random::convex(): dimY too large!");
+		judgeAssert<std::invalid_argument>(dimX > 0, "Random::convex(): dimX must be positive!");
+		judgeAssert<std::invalid_argument>(dimY > 0, "Random::convex(): dimY must be positive!");
+		judgeAssert<std::invalid_argument>(n <= 4*(dimX + dimY) - 8, "Random::convex(): dimX+dimY too small for n!");
 		judgeAssert<std::invalid_argument>(n >= 3, "Random::convex(): n too small!");
 
 		while (true) {
 			Integer left = 1 + binomial(n - 2, 0.5);
 			Integer down = 1 + binomial(n - 2, 0.5);
-			auto x = partition(2 * dim - 2, left, 0);
-			auto y = partition(2 * dim - 2, down, 0);
+			auto x = partition(2 * dimX - 2, left, 0);
+			auto y = partition(2 * dimY - 2, down, 0);
 			for (auto& z : x) z = -z;
 			for (auto& z : y) z = -z;
-			append(x, partition(2 * dim - 2, n - left, 0));
-			append(y, partition(2 * dim - 2, n - down, 0));
+			append(x, partition(2 * dimX - 2, n - left, 0));
+			append(y, partition(2 * dimY - 2, n - down, 0));
 			auto itX = std::partition(x.begin(), x.end(), [](Integer z){return z == 0;});
 			auto itY = std::partition(y.begin(), y.end(), [](Integer z){return z != 0;});
 			if (std::distance(x.begin(), itX) + std::distance(itY, y.end()) > n) continue;
@@ -1885,11 +1899,16 @@ namespace Random {
 			}
 			res.pop_back();
 			for (auto& point : res) {
-				getX(point) += dim - 1 - maxX;
-				getY(point) += dim - 1 - maxY;
+				getX(point) += dimX - 1 - maxX;
+				getY(point) += dimY - 1 - maxY;
 			}
+			rotate(res);
 			return res;
 		}
+	}
+	template<typename Point = std::pair<Integer, Integer>>
+	std::vector<Point> convex(Integer n, Integer dim) {
+		return convex(n, dim, dim);
 	}
 
 	template<typename Point = std::pair<Integer, Integer>>

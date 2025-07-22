@@ -478,8 +478,10 @@ Uniformly generates a string of length n with chars from the given alphabet or a
 Uniformly generates a bracket sequence of length 2n.
 
 **`std::vector<std::pair<Integer, Integer>> convex(Integer n, Integer dim)`**  
-**`std::vector<Point> convex(Integer n, Integer dim)`**  
-Generates `n` points forming a convex polygon with points in (-dim,dim)<sup>2</sup> (the polygon will always fill the width and height).
+**`std::vector<std::pair<Integer, Integer>> convex(Integer n, Integer dimX, Integer dimY)`**  
+**`std::vector<Point> convex(Integer n, Integer dim)`**   
+**`std::vector<Point> convex(Integer n, Integer dimX, Integer dimY)`**  
+Generates `n` points forming a convex polygon with points in (-dim,dim)<sup>2</sup> or (-dimX,dimX)\*(-dimY,dimY) (the polygon will always fill the width and height).
 The points will be in counter clockwise order.
 Note that points may be collinear.
 

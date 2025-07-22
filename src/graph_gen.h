@@ -11,7 +11,7 @@
 // This header requires validate.h zo to generate random graphs in a          //
 // deterministic and reproducable fashion.                                    //
 //============================================================================//
-//version 1.0.11                                                              //
+//version 1.0.12                                                              //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -914,9 +914,7 @@ Graph<E> randomGraph(const std::vector<Integer>& degree, Integer averageFlips = 
 	while (!pq.empty()) {
 		auto [d, c] = pq.top();
 		pq.pop();
-		if (std::ssize(pq) < d or d < 0) {
-			throw std::invalid_argument("randomGraph(): Invalid degree sequence!");
-		}
+		judgeAssert<std::invalid_argument>(std::ssize(pq) >= d and d >= 0, "randomGraph(): Invalid degree sequence!");
 		std::vector<std::pair<Integer, Integer>> todo;
 		for (Integer i = 0; i < d; i++) {
 			auto [dd, cc] = pq.top();
