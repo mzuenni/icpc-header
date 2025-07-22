@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-// version 2.6.5                                                              //
+// version 3.0.0                                                              //
 // https://github.com/mzuenni/icpc-header                                     //
 //============================================================================//
 
@@ -2482,7 +2482,7 @@ public:
 	}
 
 	template<typename... Args>
-	std::vector<std::string> strings(Args... args, Integer count, char separator) {
+	std::vector<std::string> strings(Integer count, Args... args, char separator) {
 		auto sepCall = checkSeparator(separator);
 		std::vector<std::string> res(count);
 		for (std::size_t i = 0; i < res.size(); i++) {
@@ -2496,29 +2496,29 @@ public:
 		return strings<>(count, separator);
 	}
 
-	std::vector<std::string> strings(Integer lower, Integer upper,
-	                                 Integer count, char separator = DEFAULT_SEPARATOR) {
-		return strings<Integer, Integer>(lower, upper, count, separator);
+	std::vector<std::string> strings(Integer count, Integer lower, Integer upper,
+	                                 char separator = DEFAULT_SEPARATOR) {
+		return strings<Integer, Integer>(count, lower, upper, separator);
 	}
 
-	std::vector<std::string> strings(Integer lower, Integer upper, Constraint& constraint,
-	                                 Integer count, char separator = DEFAULT_SEPARATOR) {
-		return strings<Integer, Integer, Constraint&>(lower, upper, constraint, count, separator);
+	std::vector<std::string> strings(Integer count, Integer lower, Integer upper,
+	                                 Constraint& constraint, char separator = DEFAULT_SEPARATOR) {
+		return strings<Integer, Integer, Constraint&>(count, lower, upper, constraint, separator);
 	}
 
-	std::vector<std::string> strings(const std::regex& pattern,
-	                                 Integer count, char separator = DEFAULT_SEPARATOR) {
-		return strings<const std::regex&>(pattern, count, separator);
+	std::vector<std::string> strings(Integer count, const std::regex& pattern,
+	                                 char separator = DEFAULT_SEPARATOR) {
+		return strings<const std::regex&>(count, pattern, separator);
 	}
 
-	std::vector<std::string> strings(const std::regex& pattern, Integer lower, Integer upper,
-	                                 Integer count, char separator = DEFAULT_SEPARATOR) {
-		return strings<const std::regex&, Integer, Integer>(pattern, lower, upper, count, separator);
+	std::vector<std::string> strings(Integer count, const std::regex& pattern, Integer lower, Integer upper,
+	                                 char separator = DEFAULT_SEPARATOR) {
+		return strings<const std::regex&, Integer, Integer>(count, pattern, lower, upper, separator);
 	}
 
-	std::vector<std::string> strings(const std::regex& pattern, Integer lower, Integer upper, Constraint& constraint,
-	                                 Integer count, char separator = DEFAULT_SEPARATOR) {
-		return strings<const std::regex&, Integer, Integer, Constraint&>(pattern, lower, upper, constraint, count, separator);
+	std::vector<std::string> strings(Integer count, const std::regex& pattern, Integer lower, Integer upper,
+	                                 Constraint& constraint, char separator = DEFAULT_SEPARATOR) {
+		return strings<const std::regex&, Integer, Integer, Constraint&>(count, pattern, lower, upper, constraint, separator);
 	}
 
 	Integer integer() {
@@ -2541,7 +2541,7 @@ public:
 	}
 
 	template<typename... Args>
-	std::vector<Integer> integers(Args... args, Integer count, char separator) {
+	std::vector<Integer> integers(Integer count, Args... args, char separator) {
 		auto sepCall = checkSeparator(separator);
 		std::vector<Integer> res(count);
 		for (std::size_t i = 0; i < res.size(); i++) {
@@ -2555,14 +2555,14 @@ public:
 		return integers<>(count, separator);
 	}
 
-	std::vector<Integer> integers(Integer lower, Integer upper,
-	                              Integer count, char separator = DEFAULT_SEPARATOR) {
-		return integers<Integer, Integer>(lower, upper, count, separator);
+	std::vector<Integer> integers(Integer count, Integer lower, Integer upper,
+	                              char separator = DEFAULT_SEPARATOR) {
+		return integers<Integer, Integer>(count, lower, upper, separator);
 	}
 
-	std::vector<Integer> integers(Integer lower, Integer upper, Constraint& constraint,
-	                              Integer count, char separator = DEFAULT_SEPARATOR) {
-		return integers<Integer, Integer, Constraint&>(lower, upper, constraint, count, separator);
+	std::vector<Integer> integers(Integer count, Integer lower, Integer upper,
+	                              Constraint& constraint, char separator = DEFAULT_SEPARATOR) {
+		return integers<Integer, Integer, Constraint&>(count, lower, upper, constraint, separator);
 	}
 
 	// this does not allow NaN or Inf!
@@ -2589,7 +2589,7 @@ public:
 	}
 
 	template<typename... Args>
-	std::vector<Real> reals(Args... args, Integer count, char separator) {
+	std::vector<Real> reals(Integer count, Args... args, char separator) {
 		auto sepCall = checkSeparator(separator);
 		std::vector<Real> res(count);
 		for (std::size_t i = 0; i < res.size(); i++) {
@@ -2603,14 +2603,14 @@ public:
 		return reals<>(count, separator);
 	}
 
-	std::vector<Real> reals(Real lower, Real upper,
-	                        Integer count, char separator = DEFAULT_SEPARATOR) {
-		return reals<Real, Real>(lower, upper, count, separator);
+	std::vector<Real> reals(Integer count, Real lower, Real upper,
+	                        char separator = DEFAULT_SEPARATOR) {
+		return reals<Real, Real>(count, lower, upper, separator);
 	}
 
-	std::vector<Real> reals(Real lower, Real upper, Constraint& constraint,
-	                        Integer count, char separator = DEFAULT_SEPARATOR) {
-		return reals<Real, Real, Constraint&>(lower, upper, constraint, count, separator);
+	std::vector<Real> reals(Integer count, Real lower, Real upper,
+	                        Constraint& constraint, char separator = DEFAULT_SEPARATOR) {
+		return reals<Real, Real, Constraint&>(count, lower, upper, constraint, separator);
 	}
 
 	Real realStrict(Real lower, Real upper, Integer minDecimals, Integer maxDecimals) {// does not use eps
@@ -2643,7 +2643,7 @@ public:
 	}
 
 	template<typename... Args>
-	std::vector<Real> realsStrict(Args... args, Integer count, char separator) {
+	std::vector<Real> realsStrict(Integer count, Args... args, char separator) {
 		auto sepCall = checkSeparator(separator);
 		std::vector<Real> res(count);
 		for (std::size_t i = 0; i < res.size(); i++) {
@@ -2653,14 +2653,14 @@ public:
 		return res;
 	}
 
-	std::vector<Real> realsStrict(Real lower, Real upper, Integer minDecimals, Integer maxDecimals,
-	                              Integer count, char separator = DEFAULT_SEPARATOR) {
-		return realsStrict<Real, Real, Integer, Integer>(lower, upper, minDecimals, maxDecimals, count, separator);
+	std::vector<Real> realsStrict(Integer count, Real lower, Real upper, Integer minDecimals, Integer maxDecimals,
+	                              char separator = DEFAULT_SEPARATOR) {
+		return realsStrict<Real, Real, Integer, Integer>(count, lower, upper, minDecimals, maxDecimals, separator);
 	}
 
-	std::vector<Real> realsStrict(Real lower, Real upper, Integer minDecimals, Integer maxDecimals, Constraint& constraint,
-	                              Integer count, char separator = DEFAULT_SEPARATOR) {
-		return realsStrict<Real, Real, Integer, Integer, Constraint&>(lower, upper, minDecimals, maxDecimals, constraint, count, separator);
+	std::vector<Real> realsStrict(Integer count, Real lower, Real upper, Integer minDecimals, Integer maxDecimals,
+	                              Constraint& constraint, char separator = DEFAULT_SEPARATOR) {
+		return realsStrict<Real, Real, Integer, Integer, Constraint&>(count, lower, upper, minDecimals, maxDecimals, constraint, separator);
 	}
 
 	void expectString(std::string_view expected) {

@@ -366,15 +366,15 @@ This is not supposed to be used for validators.
 If an constraint is provided it will be updated with the value of the parsed integer.
 This is supposed to be used for validators only.
 
-**`std::vector<std::string> strings([args], Integer count)`**  
-**`std::vector<std::string> strings([args], Integer count, char separator)`**  
-**`std::vector<Integer> integers([args], Integer count)`**  
-**`std::vector<Integer> integers([args], Integer count, char separator)`**  
-**`std::vector<Real> reals([args], Integer count)`**  
-**`std::vector<Real> reals([args], Integer count, char separator)`**  
-**`std::vector<Real> realsStrict([args], Integer count)`**  
-**`std::vector<Real> realsStrict([args], Integer count, char separator)`**  
-Will extract the next `count` tokens by calling `string([args])`, `integer([args])` or `real([args])`.
+**`std::vector<std::string> strings(Integer count, [args])`**  
+**`std::vector<std::string> strings(Integer count, [args], char separator)`**  
+**`std::vector<Integer> integers(Integer count, [args])`**  
+**`std::vector<Integer> integers(Integer count, [args], char separator)`**  
+**`std::vector<Real> reals(Integer count, [args])`**  
+**`std::vector<Real> reals(Integer count, [args], char separator)`**  
+**`std::vector<Real> realsStrict(Integer count, [args])`**  
+**`std::vector<Real> realsStrict(Integer count, [args], char separator)`**  
+Will extract the next `count` tokens by calling `string([args])`, `integer([args])`, `real([args])`, or `realStrict([args])`.
 The tokens are expected to be separated by the char `separator` which must be `space` or `newline`.
 If this parameter is not provided a `space` is expected.
 

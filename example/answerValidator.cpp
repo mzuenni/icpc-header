@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
 
 	Integer t = testIn.integer();						// read the number of testcases
 
-	ans.integers(0, 100, t, NEWLINE);					// for each testcase there should be one answer separated by newline
+	ans.integers(t, 0, 100, NEWLINE);					// for each testcase there should be one answer separated by newline
 	ans.newline();										// should also end with newline
 	ans.eof();											// there should be nothing else
 	juryOut << "OK possible" << AC;
