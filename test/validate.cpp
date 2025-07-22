@@ -533,6 +533,17 @@ void checkInputStream() {
 		InputStream in(rawIn, true, true, ValidateBase::juryOut, Verdicts::Verdict(23));
 		in.realStrict(-10, 10, 0, 3);
 	}, 23);
+	assertNoException([](){
+		std::istringstream rawIn("Das   ist 1\n2 3 test 3.1 4.1 5.9 ende\n");
+		InputStream in(rawIn, false, false, ValidateBase::juryOut, Verdicts::FAIL);
+
+		in.strings(2, 3, 4);
+		in.integers(3, 1, 4);
+		in.expectString("test");
+		in.reals(3, 3.0, 6.0);
+		in.expectString("ende");
+		in.eof();
+	});
 }
 
 void checkJoin() {
