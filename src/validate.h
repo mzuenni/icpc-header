@@ -20,7 +20,7 @@
 // reproducable fashion. (The randomness is consistent across compilers and   //
 // machines)                                                                  //
 //============================================================================//
-// version 3.0.0                                                              //
+// version 3.0.1                                                              //
 // https://github.com/mzuenni/icpc-header                                     //
 //============================================================================//
 
@@ -1973,6 +1973,7 @@ class ParameterBase {
 
 public:
 	std::string asString() const {
+		judgeAssert<std::invalid_argument>(token.has_value(), "asString(): missing arg");
 		return std::string(token.value());
 	}
 
@@ -1981,6 +1982,7 @@ public:
 	}
 
 	Integer asInteger() const {
+		judgeAssert<std::invalid_argument>(token.has_value(), "asInteger(): missing arg");
 		return parse<Integer>(token.value());
 	}
 
@@ -1989,6 +1991,7 @@ public:
 	}
 
 	Real asReal() const {
+		judgeAssert<std::invalid_argument>(token.has_value(), "asReal(): missing arg");
 		return parse<Real>(token.value());
 	}
 
