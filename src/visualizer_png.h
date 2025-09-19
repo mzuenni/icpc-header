@@ -3,7 +3,7 @@
 //============================================================================//
 // This header can be used to generate png files                              //
 //============================================================================//
-//version 1.0.0                                                               //
+//version 1.1.0                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -418,11 +418,10 @@ namespace Visualizer {
 	std::ifstream testAns;
 
 	void init(int argc, char** argv) {
-		assert(argc > 1);
-		std::string name = argv[1];
-		image = PNG(name + ".png");
-		testIn.open(name + ".in");
-		testAns.open(name + ".ans");
+		assert(argc > 2);
+		image = PNG("testcase.png");
+		testIn.open(argv[1]);
+		testAns.open(argv[2]);
 	}
 
 } // namespace Visualizer
