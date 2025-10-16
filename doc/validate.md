@@ -1,6 +1,31 @@
 # validate.h
 A simple library to validate team input, team output, and generate random data.
 
+### Table of Contents
+- **Global**
+  - [Global Types](#global-types)
+  - [Global Constants](#global-constants)
+- **Namespaces**
+  - [InputValidator](#namespace-inputvalidator)
+  - [AnswerValidator](#namespace-answervalidator)
+  - [OutputValidator](#namespace-outputvalidator)
+  - [Interactor](#namespace-interactor)
+  - [Multipass](#namespace-multipass)
+  - [Generator](#namespace-generator)
+  - [Random](#namespace-random)
+- **Classes**
+  - [CommandParser](#class-commandparser)
+  - [Command](#class-command)
+  - [Parameter](#class-parameter)
+  - [OutputStream](#class-outputstream)
+  - [InputStream](#class-inputstream)
+  - [boolean](#class-boolean)
+  - [ConstraintsLogger](#class-constraintslogger)
+- **Functions**
+  - [Math functions](#math-functions)
+  - [Utility functions](#utility-functions)
+  - [Geometry functions](#geometry-functions)
+
 
 ## Global Types
 **`Integer = std::int64_t`**  
