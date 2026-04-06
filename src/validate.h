@@ -2433,6 +2433,16 @@ private:
 		return res;
 	}
 
+	std::string getline() {
+		//using this is descouraged!
+		judgeAssert<std::invalid_argument>(spaceSensitive, "InputStream: getline() must be used with case sensitive input!");
+		noteof();
+		std::string res;
+		std::getline(*in, res, NEWLINE);
+		if (in->eof()) noteof();
+		return res;
+	}
+
 public:
 	std::string string() {
 		noteof();

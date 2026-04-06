@@ -19,7 +19,7 @@ bool verify(Integer n) {
 std::string parseAndVerify(InputStream& in, std::string_view who, Verdict onError) {
 	std::regex options = caseSensitive.regex("Yes|No");		// regex to check possible answers
 	std::string ans = in.string(options);					// read answer
-	teamAns.newline();										// check whitespaces
+	in.newline();											// check whitespaces
 
 	if (stringEqual(ans, "Yes")) {							// if the answer is yes
 		Integer n = in.integer();							// read the solution
