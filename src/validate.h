@@ -2197,8 +2197,8 @@ public:
 
 	friend std::ostream& operator<<(std::ostream& os, const Bounds<T>& bounds) {
 		os << bounds.hadMin << " " << bounds.hadMax << " ";
-		os << bounds.min << " " << bounds.max << " ";
-		return os << bounds.lower << " " << bounds.upper;
+		os << bounds.lower << " " << bounds.upper << " ";
+		return os << bounds.min << " " << bounds.max;
 	}
 
 };

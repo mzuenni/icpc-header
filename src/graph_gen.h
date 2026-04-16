@@ -8,7 +8,7 @@
 // - random graphs with a given degree sequence                               //
 // - random graphs with a power low distribution                              //
 // - various operations to construct graphs                                   //
-// This header requires validate.h zo to generate random graphs in a          //
+// This header requires validate.h to generate random graphs in a             //
 // deterministic and reproducable fashion.                                    //
 //============================================================================//
 //version 1.0.12                                                              //
