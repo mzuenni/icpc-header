@@ -191,7 +191,7 @@ public:
 		std::vector<std::size_t> deg(adj.size());
 		std::vector<Integer> order, todo;
 		for (std::size_t i = 0; i < adj.size(); i++) {
-			deg[i] = adj[i].size();
+			deg[i] = rev[i].size();
 			if (deg[i] == 0) todo.push_back(i);
 		}
 		while (!todo.empty()) {
