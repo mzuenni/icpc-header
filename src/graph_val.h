@@ -3,7 +3,7 @@
 //============================================================================//
 // This header can be used to validate graph problems.                        //
 //============================================================================//
-//version 1.1.1                                                               //
+//version 1.2.0                                                               //
 //https://github.com/mzuenni/icpc-header                                      //
 //============================================================================//
 
@@ -189,23 +189,22 @@ public:
 
 	std::optional<std::vector<Integer>> isDAG() const {
 		std::vector<std::size_t> deg(adj.size());
-		std::vector<Integer> order, todo;
+		std::vector<Integer> order;
+		order.reserve(adj.size());
 		for (std::size_t i = 0; i < adj.size(); i++) {
 			deg[i] = rev[i].size();
-			if (deg[i] == 0) todo.push_back(i);
+			if (deg[i] == 0) order.push_back(i);
 		}
-		while (!todo.empty()) {
-			order.push_back(todo.back());
-			todo.pop_back();
-			for (Integer y : adj[order.back()]) {
-				y -= offset;
-				deg[y]--;
-				if (deg[y] == 0) todo.push_back(y);
+		for (std::size_t i = 0; i < adj.size(); i++) {
+			if (i >= order.size()) return std::nullopt;
+			for (Integer y : adj[order[i]]) {
+				std::size_t j = y - offset;
+				deg[j]--;
+				if (deg[j] == 0) order.push_back(j);
 			}
 		}
 		for (Integer& x : order) x += offset;
-		if (order.size() == adj.size()) return order;
-		return std::nullopt;
+		return order;
 	}
 
 	std::optional<Integer> isTree() const {
