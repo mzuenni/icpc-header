@@ -2992,7 +2992,7 @@ namespace OutputValidator {
 		juryOut = OutputStream(std::filesystem::path(arguments[3]) / JUDGE_MESSAGE, MESSAGE_MODE);
 		teamOut = OutputStream(std::filesystem::path(arguments[3]) / TEAM_MESSAGE, MESSAGE_MODE);
 
-		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, juryOut, Verdicts::FAIL);
+		testIn = InputStream(std::filesystem::path(arguments[1]), false, true, juryOut, Verdicts::FAIL);
 		juryAns = InputStream(std::filesystem::path(arguments[2]), false, caseSensitive, juryOut, Verdicts::FAIL);
 		teamAns = InputStream(std::cin, spaceSensitive, caseSensitive, juryOut, Verdicts::WA);
 		initConstraints();
@@ -3016,7 +3016,7 @@ namespace Interactor {
 		teamOut = OutputStream(std::filesystem::path(arguments[3]) / TEAM_MESSAGE, MESSAGE_MODE);
 		toTeam = OutputStream(std::cout);
 
-		testIn = InputStream(std::filesystem::path(arguments[1]), false, caseSensitive, juryOut, Verdicts::FAIL);
+		testIn = InputStream(std::filesystem::path(arguments[1]), false, true, juryOut, Verdicts::FAIL);
 		fromTeam = InputStream(std::cin, spaceSensitive, caseSensitive, juryOut, Verdicts::WA);
 	}
 
