@@ -3086,6 +3086,14 @@ namespace Generator {
 		testOut = OutputStream(std::cout);
 	}
 
+	OutputStream createMetaFile(std::string_view ext) {
+		judgeAssert<std::logic_error>(!ext.empty(), "validate.h: Generator::createMetaFile() ext must not be empty!");
+		if (ext[0] == '.') {
+			ext.remove_prefix(1);
+		}
+		return OutputStream(std::filesystem::path("testcase." + std::string(ext)), std::ios::out);
+	}
+
 } // namespace Generator
 
 #endif
